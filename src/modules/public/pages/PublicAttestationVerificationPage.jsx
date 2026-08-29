@@ -1,44 +1,53 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { verifierAttestation } from '../api/publicApi';
+import { verifierAttestationParNumero, verifierAttestationParToken } from '../api/publicApi';
 import { Button } from '../../../shared/components/ui/Button';
 import { Field, inputClass } from '../../../shared/components/ui/Field';
 import { Alert } from '../../../shared/components/ui/Alert';
 import { Badge } from '../../../shared/components/ui/Badge';
 import { OntLogo } from '../../../shared/components/ui/OntLogo';
+import { LoadingBlock } from '../../../shared/components/ui/Spinner';
+
+// Les attestations émises avant l'introduction du jeton de vérification
+// portent encore un QR code encodant ce numéro séquentiel — reconnaissable
+// à ce format, contrairement au jeton aléatoire de 32 caractères qui l'a
+// remplacé.
+const FORMAT_NUMERO_ANCIEN = /^ATT-\d{4}-\d{6}$/;
 
 export function PublicAttestationVerificationPage() {
-  const { numero: numeroDeLurl } = useParams();
-  const [numero, setNumero] = useState(numeroDeLurl ?? '');
+  const { numero: parametreUrl } = useParams();
+  const estNumeroAncien = parametreUrl ? FORMAT_NUMERO_ANCIEN.test(parametreUrl) : false;
+  const estToken = Boolean(parametreUrl) && !estNumeroAncien;
+
+  const [numero, setNumero] = useState(estNumeroAncien ? parametreUrl : '');
+  const [nom, setNom] = useState('');
   const [attestation, setAttestation] = useState(null);
   const [erreur, setErreur] = useState(null);
-  const [enCours, setEnCours] = useState(false);
+  const [enCours, setEnCours] = useState(estToken);
   const [recherchee, setRecherchee] = useState(false);
 
-  async function verifier(numeroAVerifier) {
+  useEffect(() => {
+    if (!estToken) {
+      return;
+    }
+    setRecherchee(true);
+    verifierAttestationParToken(parametreUrl)
+      .then(setAttestation)
+      .catch((err) => setErreur(err.response?.data?.message ?? 'Aucune attestation ne correspond à ce lien.'))
+      .finally(() => setEnCours(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [estToken, parametreUrl]);
+
+  function soumettre(e) {
+    e.preventDefault();
     setErreur(null);
     setAttestation(null);
     setRecherchee(true);
     setEnCours(true);
-    try {
-      setAttestation(await verifierAttestation(numeroAVerifier.trim()));
-    } catch (err) {
-      setErreur(err.response?.data?.message ?? 'Aucune attestation ne correspond à ce numéro.');
-    } finally {
-      setEnCours(false);
-    }
-  }
-
-  useEffect(() => {
-    if (numeroDeLurl) {
-      verifier(numeroDeLurl);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [numeroDeLurl]);
-
-  function soumettre(e) {
-    e.preventDefault();
-    verifier(numero);
+    verifierAttestationParNumero(numero.trim(), nom.trim())
+      .then(setAttestation)
+      .catch((err) => setErreur(err.response?.data?.message ?? 'Aucune attestation ne correspond à ces informations.'))
+      .finally(() => setEnCours(false));
   }
 
   return (
@@ -54,21 +63,35 @@ export function PublicAttestationVerificationPage() {
           </p>
         </div>
 
-        <form onSubmit={soumettre}>
-          <Field label="Numéro d'attestation" htmlFor="numero" required>
-            <input
-              id="numero"
-              className={inputClass}
-              value={numero}
-              onChange={(e) => setNumero(e.target.value)}
-              placeholder="ATT-2026-000123"
-              required
-            />
-          </Field>
-          <Button type="submit" disabled={enCours} className="mt-4 w-full">
-            {enCours ? 'Vérification…' : 'Vérifier'}
-          </Button>
-        </form>
+        {estToken ? (
+          enCours && <LoadingBlock />
+        ) : (
+          <form onSubmit={soumettre} className="space-y-4">
+            <Field label="Numéro d'attestation" htmlFor="numero" required>
+              <input
+                id="numero"
+                className={inputClass}
+                value={numero}
+                onChange={(e) => setNumero(e.target.value)}
+                placeholder="ATT-2026-000123"
+                required
+              />
+            </Field>
+            <Field label="Nom du stagiaire" htmlFor="nom" required>
+              <input
+                id="nom"
+                className={inputClass}
+                value={nom}
+                onChange={(e) => setNom(e.target.value)}
+                placeholder="Nom indiqué sur l'attestation"
+                required
+              />
+            </Field>
+            <Button type="submit" disabled={enCours} className="w-full">
+              {enCours ? 'Vérification…' : 'Vérifier'}
+            </Button>
+          </form>
+        )}
 
         {erreur && (
           <Alert tone="error" className="mt-4">

@@ -1,12 +1,17 @@
 import { apiClient } from '../../../shared/api/client';
 
-export async function verifierDossier(numeroAccuseReception) {
-  const { data } = await apiClient.get(`/public/dossiers/${encodeURIComponent(numeroAccuseReception)}`);
+export async function verifierDossier(numero, nom) {
+  const { data } = await apiClient.post('/public/dossiers/verifier', { numero, nom });
   return data.data;
 }
 
-export async function verifierAttestation(numeroAttestation) {
-  const { data } = await apiClient.get(`/public/attestations/${encodeURIComponent(numeroAttestation)}`);
+export async function verifierAttestationParToken(token) {
+  const { data } = await apiClient.get(`/public/attestations/token/${encodeURIComponent(token)}`);
+  return data.data;
+}
+
+export async function verifierAttestationParNumero(numero, nom) {
+  const { data } = await apiClient.post('/public/attestations/verifier', { numero, nom });
   return data.data;
 }
 

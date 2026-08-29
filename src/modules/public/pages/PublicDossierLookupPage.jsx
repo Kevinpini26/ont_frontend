@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { verifierDossier } from '../api/publicApi';
 import { Button } from '../../../shared/components/ui/Button';
@@ -16,35 +16,25 @@ const TONE_STATUT_SIMPLIFIE = {
 
 export function PublicDossierLookupPage() {
   const [searchParams] = useSearchParams();
+  // Pré-remplissage depuis l'URL sans déclencher la recherche automatique :
+  // le numéro seul ne suffit plus à consulter un dossier, il ne doit donc
+  // plus apparaître dans l'historique du navigateur ni dans les journaux
+  // d'accès une fois la recherche effectuée (voir verifierDossier, en POST).
   const [numero, setNumero] = useState(searchParams.get('numero') ?? '');
+  const [nom, setNom] = useState('');
   const [dossier, setDossier] = useState(null);
   const [erreur, setErreur] = useState(null);
   const [enCours, setEnCours] = useState(false);
 
-  async function rechercher(numeroRecherche) {
+  function soumettre(e) {
+    e.preventDefault();
     setErreur(null);
     setDossier(null);
     setEnCours(true);
-    try {
-      setDossier(await verifierDossier(numeroRecherche.trim()));
-    } catch (err) {
-      setErreur(err.response?.data?.message ?? 'Aucun dossier ne correspond à ce numéro.');
-    } finally {
-      setEnCours(false);
-    }
-  }
-
-  useEffect(() => {
-    const numeroDeLurl = searchParams.get('numero');
-    if (numeroDeLurl) {
-      rechercher(numeroDeLurl);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  function soumettre(e) {
-    e.preventDefault();
-    rechercher(numero);
+    verifierDossier(numero.trim(), nom.trim())
+      .then(setDossier)
+      .catch((err) => setErreur(err.response?.data?.message ?? 'Aucun dossier ne correspond à ces informations.'))
+      .finally(() => setEnCours(false));
   }
 
   return (
@@ -53,11 +43,12 @@ export function PublicDossierLookupPage() {
         <div className="mb-6 text-center">
           <h1 className="font-heading text-lg font-semibold text-slate-900">Suivi de dossier</h1>
           <p className="mt-1 text-sm text-slate-500">
-            Renseignez le numéro d'accusé de réception remis lors du dépôt de votre courrier.
+            Renseignez le numéro d'accusé de réception remis lors du dépôt de votre courrier, ainsi que le nom indiqué
+            à cette occasion.
           </p>
         </div>
 
-        <form onSubmit={soumettre}>
+        <form onSubmit={soumettre} className="space-y-4">
           <Field label="Numéro d'accusé de réception" htmlFor="numero" required>
             <input
               id="numero"
@@ -68,7 +59,17 @@ export function PublicDossierLookupPage() {
               required
             />
           </Field>
-          <Button type="submit" disabled={enCours} className="mt-4 w-full">
+          <Field label="Nom (ou e-mail utilisé au dépôt en ligne)" htmlFor="nom" required>
+            <input
+              id="nom"
+              className={inputClass}
+              value={nom}
+              onChange={(e) => setNom(e.target.value)}
+              placeholder="Votre nom"
+              required
+            />
+          </Field>
+          <Button type="submit" disabled={enCours} className="w-full">
             {enCours ? 'Recherche…' : 'Vérifier'}
           </Button>
         </form>

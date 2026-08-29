@@ -30,6 +30,7 @@ const FORMULAIRE_VIDE = {
   objet: '',
   type: 'correspondance_generale',
   candidat_nom: '',
+  candidat_email: '',
   candidat_contact: '',
   candidat_etablissement: '',
   periode_souhaitee_debut: '',
@@ -121,6 +122,7 @@ export function CircuitQueuePage() {
         ...(estDemandeStage
           ? {
               candidat_nom: formulaire.candidat_nom,
+              candidat_email: formulaire.candidat_email,
               candidat_contact: formulaire.candidat_contact,
               candidat_etablissement: formulaire.candidat_etablissement,
               periode_souhaitee_debut: formulaire.periode_souhaitee_debut,
@@ -316,6 +318,15 @@ export function CircuitQueuePage() {
                       value={formulaire.candidat_nom}
                       onChange={(e) => setFormulaire((f) => ({ ...f, candidat_nom: e.target.value }))}
                       required
+                    />
+                  </Field>
+                  <Field label="E-mail (facultatif)" htmlFor="candidat_email" hint="Sert au suivi public du dossier et à l'envoi de l'accusé de réception.">
+                    <input
+                      id="candidat_email"
+                      type="email"
+                      className={inputClass}
+                      value={formulaire.candidat_email}
+                      onChange={(e) => setFormulaire((f) => ({ ...f, candidat_email: e.target.value }))}
                     />
                   </Field>
                   <Field label="Contact (téléphone/e-mail)" htmlFor="candidat_contact" required>
