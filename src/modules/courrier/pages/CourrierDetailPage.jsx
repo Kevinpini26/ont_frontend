@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Eye } from 'lucide-react';
 import {
@@ -29,29 +29,15 @@ import { Alert } from '../../../shared/components/ui/Alert';
 import { Badge } from '../../../shared/components/ui/Badge';
 import { LoadingBlock } from '../../../shared/components/ui/Spinner';
 import { DocumentPreviewModal } from '../../../shared/components/DocumentPreviewModal';
+import { useRequete } from '../../../shared/hooks/useRequete';
 
 export function CourrierDetailPage() {
   const { id } = useParams();
   const user = useAuthStore((s) => s.user);
 
-  const [courrier, setCourrier] = useState(null);
+  const { donnees: courrier, setDonnees: setCourrier, chargement } = useRequete((signal) => getCourrier(id, signal), [id]);
   const [erreur, setErreur] = useState(null);
-  const [chargement, setChargement] = useState(true);
   const [apercu, setApercu] = useState(null);
-
-  async function charger() {
-    setChargement(true);
-    try {
-      setCourrier(await getCourrier(id));
-    } finally {
-      setChargement(false);
-    }
-  }
-
-  useEffect(() => {
-    charger();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
 
   async function executer(action) {
     setErreur(null);

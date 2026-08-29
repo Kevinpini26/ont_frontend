@@ -14,6 +14,7 @@ import { StatCard } from '../../../shared/components/ui/StatCard';
 import { PeriodSelector } from '../../../shared/components/ui/PeriodSelector';
 import { SkeletonStatCards } from '../../../shared/components/ui/Skeleton';
 import { CHART_COLORS } from '../../../shared/chartColors';
+import { useRequete } from '../../../shared/hooks/useRequete';
 
 const LIEN_VOIR_TOUT = 'text-sm font-medium text-ont-blue-700 hover:underline dark:text-ont-blue-400';
 const AXIS_TICK = { fill: CHART_COLORS.axisTick, fontSize: 12 };
@@ -97,9 +98,12 @@ function ListeAlertes({ items, chargement, vide, rendu }) {
  */
 export function DfpDashboardPage() {
   const [periode, setPeriode] = useState('30j');
-  const [stats, setStats] = useState(null);
-  const [statsCourrier, setStatsCourrier] = useState(null);
-  const [statsChargement, setStatsChargement] = useState(true);
+  const { donnees: statsReponse, chargement: statsChargement } = useRequete(
+    (signal) =>
+      Promise.all([getStagiairesStatistiques({ periode }, signal), getCourriersStatistiquesDirection(periode, signal)]),
+    [periode],
+  );
+  const [stats, statsCourrier] = statsReponse ?? [null, null];
 
   const [alertes, setAlertes] = useState(null);
   const [chargementAlertes, setChargementAlertes] = useState(true);
@@ -108,16 +112,6 @@ export function DfpDashboardPage() {
   const [chargementCourriers, setChargementCourriers] = useState(true);
   const [stagiaires, setStagiaires] = useState([]);
   const [chargementStagiaires, setChargementStagiaires] = useState(true);
-
-  useEffect(() => {
-    setStatsChargement(true);
-    Promise.all([getStagiairesStatistiques({ periode }), getCourriersStatistiquesDirection(periode)])
-      .then(([stagiaires, courrier]) => {
-        setStats(stagiaires);
-        setStatsCourrier(courrier);
-      })
-      .finally(() => setStatsChargement(false));
-  }, [periode]);
 
   useEffect(() => {
     setChargementAlertes(true);

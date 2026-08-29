@@ -1,9 +1,11 @@
+import { useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import { LogOut } from 'lucide-react';
 import { navigationForUser } from '../navigation';
 import { ROLE_LABELS, POSTE_LABELS } from '../../modules/kernel/constants';
 import { OntLogo } from './ui/OntLogo';
 import { useSidebarCounts } from '../hooks/useSidebarCounts';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 const BADGE_TONES = {
   danger: 'bg-rose-500 text-white',
@@ -25,6 +27,16 @@ function BadgeCompteur({ compteur }) {
 export function Sidebar({ user, onLogout, mobileOpen, onCloseMobile }) {
   const sections = navigationForUser(user);
   const compteurs = useSidebarCounts(user);
+  const tiroirRef = useFocusTrap(mobileOpen);
+
+  useEffect(() => {
+    if (!mobileOpen) return undefined;
+    function surEchap(e) {
+      if (e.key === 'Escape') onCloseMobile();
+    }
+    document.addEventListener('keydown', surEchap);
+    return () => document.removeEventListener('keydown', surEchap);
+  }, [mobileOpen, onCloseMobile]);
 
   const contenu = (
     <div className="flex h-full flex-col">
@@ -98,7 +110,15 @@ export function Sidebar({ user, onLogout, mobileOpen, onCloseMobile }) {
       {mobileOpen && (
         <div className="fixed inset-0 z-40 lg:hidden">
           <div className="absolute inset-0 bg-black/50" onClick={onCloseMobile} />
-          <aside className="absolute inset-y-0 left-0 w-64 bg-ont-blue-950 shadow-xl">{contenu}</aside>
+          <aside
+            ref={tiroirRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Menu de navigation"
+            className="absolute inset-y-0 left-0 w-64 bg-ont-blue-950 shadow-xl"
+          >
+            {contenu}
+          </aside>
         </div>
       )}
     </>

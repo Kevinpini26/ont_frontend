@@ -1,7 +1,7 @@
 import { apiClient } from '../../../shared/api/client';
 
-export async function listCourriers(params = {}) {
-  const { data } = await apiClient.get('/courriers', { params });
+export async function listCourriers(params = {}, signal) {
+  const { data } = await apiClient.get('/courriers', { params, signal });
   return data;
 }
 
@@ -15,13 +15,13 @@ export async function getCourriersStatistiquesDg(seuilJours, periode = '30j') {
   return data;
 }
 
-export async function getCourriersStatistiquesDirection(periode = '30j') {
-  const { data } = await apiClient.get('/courriers/statistiques-direction', { params: { periode } });
+export async function getCourriersStatistiquesDirection(periode = '30j', signal) {
+  const { data } = await apiClient.get('/courriers/statistiques-direction', { params: { periode }, signal });
   return data;
 }
 
-export async function getCourrier(id) {
-  const { data } = await apiClient.get(`/courriers/${id}`);
+export async function getCourrier(id, signal) {
+  const { data } = await apiClient.get(`/courriers/${id}`, { signal });
   return data.data;
 }
 

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { GraduationCap } from 'lucide-react';
 import { listStagiaires } from '../api/stagiairesApi';
 import { listDirections } from '../../kernel/api/directionsApi';
+import { useRequete } from '../../../shared/hooks/useRequete';
 import { STATUT_LABELS, TYPE_STAGE_LABELS } from '../constants';
 import { SearchBar } from '../../../shared/components/SearchBar';
 import { ExportButtons } from '../../../shared/components/ExportButtons';
@@ -33,17 +34,13 @@ export function DfpStagiairesPage() {
   const [etablissement, setEtablissement] = useState('');
   const [recherche, setRecherche] = useState('');
   const [page, setPage] = useState(1);
-  const [stagiaires, setStagiaires] = useState([]);
-  const [meta, setMeta] = useState(null);
-  const [chargement, setChargement] = useState(true);
 
   useEffect(() => {
     listDirections().then(setDirections);
   }, []);
 
-  async function charger() {
-    setChargement(true);
-    try {
+  const { donnees: reponse, chargement } = useRequete(
+    (signal) => {
       const params = { page };
       if (directionId) params.direction_id = directionId;
       if (statut) params.statut = statut;
@@ -56,18 +53,12 @@ export function DfpStagiairesPage() {
       if (onglet === 'a_venir') params.a_venir = 1;
       if (onglet === 'echeance') params.echeance_proche = 1;
 
-      const { data, meta: metaPage } = await listStagiaires(params);
-      setStagiaires(data);
-      setMeta(metaPage);
-    } finally {
-      setChargement(false);
-    }
-  }
-
-  useEffect(() => {
-    charger();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onglet, directionId, statut, typeStage, maitreStage, conseillerStage, etablissement, recherche, page]);
+      return listStagiaires(params, signal);
+    },
+    [onglet, directionId, statut, typeStage, maitreStage, conseillerStage, etablissement, recherche, page],
+  );
+  const stagiaires = reponse?.data ?? [];
+  const meta = reponse?.meta ?? null;
 
   useEffect(() => {
     setPage(1);

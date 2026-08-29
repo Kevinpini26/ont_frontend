@@ -1,17 +1,17 @@
 import { apiClient } from '../../../shared/api/client';
 
-export async function listStagiaires(params = {}) {
-  const { data } = await apiClient.get('/stagiaires', { params });
+export async function listStagiaires(params = {}, signal) {
+  const { data } = await apiClient.get('/stagiaires', { params, signal });
   return data;
 }
 
-export async function getStagiairesStatistiques(params = {}) {
-  const { data } = await apiClient.get('/stagiaires/statistiques', { params });
+export async function getStagiairesStatistiques(params = {}, signal) {
+  const { data } = await apiClient.get('/stagiaires/statistiques', { params, signal });
   return data;
 }
 
-export async function getStagiairesAlertes(params = {}) {
-  const { data } = await apiClient.get('/stagiaires/alertes', { params });
+export async function getStagiairesAlertes(params = {}, signal) {
+  const { data } = await apiClient.get('/stagiaires/alertes', { params, signal });
   return data;
 }
 

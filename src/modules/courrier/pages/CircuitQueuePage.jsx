@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Navigate, useParams, Link } from 'react-router-dom';
 import { accuserReception, createCourrier, initierCourrierDg, listCourriers } from '../api/courrierApi';
+import { useRequete } from '../../../shared/hooks/useRequete';
 import { ACTION_PAR_POSTE, STATUT_LABELS, TYPE_LABELS } from '../constants';
 import { SearchBar } from '../../../shared/components/SearchBar';
 import { useAuthStore } from '../../kernel/store/authStore';
@@ -45,9 +46,13 @@ export function CircuitQueuePage() {
   // connecté, jamais du paramètre d'URL (qui ne sert qu'à la navigation) :
   // naviguer vers la file d'un autre poste ne donne accès à aucune action.
   const poste = user.poste;
-  const [courriers, setCourriers] = useState([]);
+  const {
+    donnees: courriersReponse,
+    chargement,
+    recharger: charger,
+  } = useRequete((signal) => listCourriers({}, signal), [poste]);
+  const courriers = courriersReponse?.data ?? [];
   const [recherche, setRecherche] = useState('');
-  const [chargement, setChargement] = useState(true);
   const [formulaire, setFormulaire] = useState(FORMULAIRE_VIDE);
   const [erreur, setErreur] = useState(null);
   const [envoiEnCours, setEnvoiEnCours] = useState(false);
@@ -58,20 +63,6 @@ export function CircuitQueuePage() {
   const [agents, setAgents] = useState([]);
   const [erreurDg, setErreurDg] = useState(null);
   const [envoiDgEnCours, setEnvoiDgEnCours] = useState(false);
-
-  async function charger() {
-    setChargement(true);
-    try {
-      const { data } = await listCourriers();
-      setCourriers(data);
-    } finally {
-      setChargement(false);
-    }
-  }
-
-  useEffect(() => {
-    charger();
-  }, [poste]);
 
   useEffect(() => {
     if (poste === 'secretariat_1' && afficherFormulaireDg) {

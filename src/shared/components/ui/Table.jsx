@@ -35,7 +35,10 @@ export function TableWrap({ children }) {
 
   return (
     <div className="relative">
-      <div ref={scrollRef} className="overflow-x-auto">
+      {/* tabIndex + role/aria-label : sans ça, un tableau plus large que
+          l'écran n'est défilable qu'à la souris/au doigt — un clavier seul
+          ne donne accès à rien au-delà du bord visible. */}
+      <div ref={scrollRef} tabIndex={0} role="region" aria-label="Tableau, défilement horizontal" className="overflow-x-auto">
         {children}
       </div>
       {peutDefilerGauche && (

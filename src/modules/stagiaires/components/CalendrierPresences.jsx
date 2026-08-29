@@ -118,13 +118,27 @@ export function CalendrierPresences({ stagiaire, presences, onChange }) {
     <div>
       <div className="mb-4 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <Button type="button" variant="secondary" size="sm" disabled={!peutReculer} onClick={() => setMoisAffiche((m) => ajouterMois(m, -1))}>
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            disabled={!peutReculer}
+            onClick={() => setMoisAffiche((m) => ajouterMois(m, -1))}
+            aria-label="Mois précédent"
+          >
             <ChevronLeft size={16} />
           </Button>
           <span className="min-w-[9rem] text-center text-sm font-semibold text-slate-900 dark:text-slate-100">
             {libelleMois(moisAffiche)}
           </span>
-          <Button type="button" variant="secondary" size="sm" disabled={!peutAvancer} onClick={() => setMoisAffiche((m) => ajouterMois(m, 1))}>
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            disabled={!peutAvancer}
+            onClick={() => setMoisAffiche((m) => ajouterMois(m, 1))}
+            aria-label="Mois suivant"
+          >
             <ChevronRight size={16} />
           </Button>
         </div>
@@ -171,6 +185,9 @@ export function CalendrierPresences({ stagiaire, presences, onChange }) {
             classes += ' ring-2 ring-inset ring-ont-blue-600';
           }
 
+          const raisonInactionnable = weekend ? 'week-end' : futur ? 'à venir' : horsPeriode ? 'hors période de stage' : null;
+          const libelleJour = `${jour}${coche ? ', présent' : absentSignale ? ', absent' : ''}${raisonInactionnable ? `, ${raisonInactionnable}` : ''}`;
+
           return (
             <button
               key={jour}
@@ -178,6 +195,8 @@ export function CalendrierPresences({ stagiaire, presences, onChange }) {
               disabled={!actionnable}
               onClick={() => cliquerJour(jour, actionnable, coche)}
               className={classes}
+              aria-label={libelleJour}
+              aria-pressed={actionnable ? coche : undefined}
               title={coche ? `Présent — cliquer pour ajuster` : actionnable ? 'Cliquer pour marquer présent' : undefined}
             >
               {numeroJour}

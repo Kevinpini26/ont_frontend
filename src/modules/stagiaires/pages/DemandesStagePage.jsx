@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { FileClock } from 'lucide-react';
 import { listStagiaires } from '../api/stagiairesApi';
 import { marquerConsulte } from '../../kernel/api/notificationsApi';
+import { useRequete } from '../../../shared/hooks/useRequete';
 import { SearchBar } from '../../../shared/components/SearchBar';
 import { PageHeader } from '../../../shared/components/ui/PageHeader';
 import { Card, CardBody } from '../../../shared/components/ui/Card';
@@ -23,21 +24,17 @@ import { TableWrap, tableClass, theadClass, thClass, tbodyClass, tdClass, trHove
 export function DemandesStagePage() {
   const [recherche, setRecherche] = useState('');
   const [page, setPage] = useState(1);
-  const [stagiaires, setStagiaires] = useState([]);
-  const [meta, setMeta] = useState(null);
-  const [chargement, setChargement] = useState(true);
 
-  useEffect(() => {
-    setChargement(true);
-    const params = { page, en_attente_traitement: 1 };
-    if (recherche) params.recherche = recherche;
-    listStagiaires(params)
-      .then(({ data, meta: metaPage }) => {
-        setStagiaires(data);
-        setMeta(metaPage);
-      })
-      .finally(() => setChargement(false));
-  }, [recherche, page]);
+  const { donnees: reponse, chargement } = useRequete(
+    (signal) => {
+      const params = { page, en_attente_traitement: 1 };
+      if (recherche) params.recherche = recherche;
+      return listStagiaires(params, signal);
+    },
+    [recherche, page],
+  );
+  const stagiaires = reponse?.data ?? [];
+  const meta = reponse?.meta ?? null;
 
   useEffect(() => {
     setPage(1);

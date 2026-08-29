@@ -145,11 +145,23 @@ export function HomePage() {
           <div className="hidden justify-center lg:flex">
             <div className="w-full max-w-md">
               <div className="overflow-hidden rounded-2xl border border-slate-200 shadow-lg">
-                <img
-                  src="/kinshasa-fleuve-congo.jpg"
-                  alt="Vue de Kinshasa depuis le fleuve Congo"
-                  className="aspect-[4/3] w-full object-cover"
-                />
+                {/* Masquée sur mobile (hidden lg:flex sur le conteneur
+                    parent) : loading="lazy" évite qu'un navigateur mobile
+                    télécharge quand même une image jamais affichée. Largeur
+                    et hauteur explicites pour réserver l'espace avant
+                    chargement et ne pas décaler la mise en page. */}
+                <picture>
+                  <source srcSet="/kinshasa-fleuve-congo.webp" type="image/webp" />
+                  <img
+                    src="/kinshasa-fleuve-congo.jpg"
+                    alt="Vue de Kinshasa depuis le fleuve Congo"
+                    width={1200}
+                    height={900}
+                    loading="lazy"
+                    decoding="async"
+                    className="aspect-[4/3] w-full object-cover"
+                  />
+                </picture>
               </div>
               <p className="mt-2 text-right text-xs text-slate-400">Kinshasa, vue depuis le fleuve Congo — Photo : Valdhy Mbemba / Unsplash</p>
             </div>

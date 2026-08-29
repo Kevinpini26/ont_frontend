@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Le protocole sitemap exige des URL absolues : DOMAINE-A-CONFIGURER
+  ci-dessous est un gabarit à remplacer par le domaine de production réel
+  au déploiement (voir le guide d'installation) — jamais un nom de domaine
+  inventé pour l'ONT.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://DOMAINE-A-CONFIGURER/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://DOMAINE-A-CONFIGURER/a-propos</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://DOMAINE-A-CONFIGURER/services</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://DOMAINE-A-CONFIGURER/demande-de-stage</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://DOMAINE-A-CONFIGURER/depot-courrier-externe</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://DOMAINE-A-CONFIGURER/suivi-dossier</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
+  </url>
+</urlset>

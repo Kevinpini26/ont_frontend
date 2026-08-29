@@ -1,0 +1,16 @@
+User-agent: *
+Allow: /
+Disallow: /connexion
+Disallow: /mot-de-passe-oublie
+Disallow: /reinitialiser-mot-de-passe
+Disallow: /changer-mot-de-passe
+Disallow: /admin/
+Disallow: /direction/
+Disallow: /circuit/
+Disallow: /stagiaires/
+Disallow: /courriers/
+Disallow: /liens/
+
+# La directive Sitemap exige une URL absolue par spécification — à ajouter
+# une fois le domaine de production connu, ex. :
+# Sitemap: https://<domaine>/sitemap.xml
