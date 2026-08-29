@@ -5,6 +5,9 @@ import { ROLES } from './modules/kernel/constants';
 import { useThemeSync } from './shared/hooks/useThemeSync';
 
 import { LoginPage } from './modules/kernel/pages/LoginPage';
+import { ChangerMotDePassePage } from './modules/kernel/pages/ChangerMotDePassePage';
+import { MotDePasseOubliePage } from './modules/kernel/pages/MotDePasseOubliePage';
+import { ReinitialiserMotDePassePage } from './modules/kernel/pages/ReinitialiserMotDePassePage';
 import { AdminDirectionsPage } from './modules/kernel/pages/AdminDirectionsPage';
 import { AdminUsersPage } from './modules/kernel/pages/AdminUsersPage';
 import { AdminAuditLogPage } from './modules/kernel/pages/AdminAuditLogPage';
@@ -51,6 +54,8 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/connexion" element={<LoginPage />} />
+      <Route path="/mot-de-passe-oublie" element={<MotDePasseOubliePage />} />
+      <Route path="/reinitialiser-mot-de-passe" element={<ReinitialiserMotDePassePage />} />
       <Route path="/verification-attestation" element={<PublicAttestationVerificationPage />} />
       <Route path="/verification-attestation/:numero" element={<PublicAttestationVerificationPage />} />
       <Route path="/liens/:token" element={<PublicLienPage />} />
@@ -106,6 +111,7 @@ function AppRoutes() {
         <Route element={<ProtectedRoute />}>
           <Route path="/courriers/:id" element={<CourrierDetailPage />} />
           <Route path="/stagiaires/:id" element={<StagiaireDetailPage />} />
+          <Route path="/changer-mot-de-passe" element={<ChangerMotDePassePage />} />
         </Route>
       </Route>
     </Routes>

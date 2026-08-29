@@ -28,8 +28,8 @@ export function LoginPage() {
     setEnCours(true);
 
     try {
-      const { user, token } = await loginRequest(email, password);
-      setSession(user, token);
+      const { user, token, expires_at: expiresAt } = await loginRequest(email, password);
+      setSession(user, token, expiresAt);
       navigate('/');
     } catch (err) {
       setErreur(
@@ -85,6 +85,9 @@ export function LoginPage() {
         </div>
 
         <p className="mt-5 space-y-1 text-center text-sm text-slate-500 dark:text-slate-400">
+          <a href="/mot-de-passe-oublie" className="block font-medium text-ont-blue-700 hover:underline dark:text-ont-blue-400">
+            Mot de passe oublié ?
+          </a>
           <a href="/demande-de-stage" className="block font-medium text-ont-blue-700 hover:underline dark:text-ont-blue-400">
             Déposer une demande de stage →
           </a>

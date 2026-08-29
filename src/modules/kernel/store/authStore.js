@@ -1,13 +1,21 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { createJSONStorage, persist } from 'zustand/middleware';
 
+// sessionStorage plutôt que localStorage (défaut de persist) : le jeton
+// reste lisible par du JavaScript malveillant en cas de XSS dans les deux
+// cas — une vraie protection demanderait un cookie HttpOnly émis par le
+// backend, qui impliquerait de faire basculer Sanctum en mode SPA à
+// cookies (CSRF, credentials, domaines "stateful") — mais au moins il ne
+// survit plus à la fermeture de l'onglet ni ne se partage entre onglets,
+// contrairement à localStorage.
 export const useAuthStore = create(
   persist(
     (set) => ({
       user: null,
       token: null,
+      expiresAt: null,
 
-      setSession: (user, token) => set({ user, token }),
+      setSession: (user, token, expiresAt = null) => set({ user, token, expiresAt }),
 
       setUser: (user) => set({ user }),
 
@@ -15,12 +23,13 @@ export const useAuthStore = create(
         if (callApi) {
           import('../api/authApi').then(({ logout }) => logout().catch(() => {}));
         }
-        set({ user: null, token: null });
+        set({ user: null, token: null, expiresAt: null });
       },
     }),
     {
       name: 'ont-auth',
-      partialize: (state) => ({ user: state.user, token: state.token }),
+      storage: createJSONStorage(() => sessionStorage),
+      partialize: (state) => ({ user: state.user, token: state.token, expiresAt: state.expiresAt }),
     },
   ),
 );
