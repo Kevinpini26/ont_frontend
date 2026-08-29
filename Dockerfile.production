@@ -1,0 +1,24 @@
+# Image de production — distincte de Dockerfile (développement local, Vite
+# dev server). Multi-étapes : build Vite puis nginx statique, l'étape de
+# build (node_modules, sources) n'est jamais présente dans l'image finale.
+
+FROM node:20-alpine AS build
+
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
+
+COPY . .
+# VITE_API_BASE_URL doit pointer vers l'API en production au moment du
+# build (Vite l'inline dans le bundle — ce n'est pas une variable lue au
+# démarrage du conteneur, contrairement à un backend classique).
+ARG VITE_API_BASE_URL
+ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
+RUN npm run build
+
+FROM nginx:1.27-alpine AS final
+
+COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=build /app/dist /usr/share/nginx/html
+
+EXPOSE 80
