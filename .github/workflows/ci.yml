@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Installer Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Installer les dépendances
+        run: npm ci
+
+      - name: Lint (oxlint)
+        run: npx oxlint src
+
+      - name: Tests
+        run: npx vitest run
+
+      - name: Build
+        run: npm run build
+
+      - name: Vérifier le budget de taille du paquet initial
+        run: |
+          # Seul le chunk d'entrée (index-*.js) doit rester sous 350 kB avant
+          # gzip — les chunks chargés à la demande (React.lazy par page,
+          # @tiptap, recharts) ne sont pas concernés par ce budget, voir
+          # App.jsx.
+          TAILLE=$(stat -c%s dist/assets/index-*.js)
+          echo "Taille du chunk initial : ${TAILLE} octets"
+          if [ "$TAILLE" -gt 358400 ]; then
+            echo "::error::Le chunk initial dépasse 350 kB (${TAILLE} octets)."
+            exit 1
+          fi
