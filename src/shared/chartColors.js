@@ -6,10 +6,11 @@
  * alignée avec la charte graphique ONT en un seul endroit.
  */
 export const CHART_COLORS = {
-  ontBlue600: '#1e5fa8',
-  ontGold500: '#f5a623',
-  ontGreen500: '#6fbe44',
-  ontPurple500: '#8b5fbf',
+  ontBlue600: '#0e6cd5',
+  ontGold500: '#fec012',
+  ontGreen500: '#96c024',
+  ontViolet500: '#a254cd',
+  ontRed500: '#e11821',
   axisTick: '#64748b',
   grid: '#e2e8f0',
 };

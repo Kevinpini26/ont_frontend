@@ -237,7 +237,7 @@ export function ActionsDfp({ stagiaire, executer }) {
               </Field>
               {estProfessionnel ? (
                 <div className="flex items-end">
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                  <p className="text-xs text-text-subtle">
                     Durée fixée à 3 mois à compter de la date de début. Une prolongation sera possible ensuite.
                   </p>
                 </div>
@@ -247,7 +247,7 @@ export function ActionsDfp({ stagiaire, executer }) {
                 </Field>
               )}
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p className="text-xs text-text-subtle">
               La convention de stage sera générée automatiquement et un lien de signature envoyé au stagiaire.
             </p>
             <Button
@@ -270,7 +270,7 @@ export function ActionsDfp({ stagiaire, executer }) {
         <CardHeader title="Évaluation DFP" description="Grille officielle ONT — indépendante de celle de la direction." />
         <CardBody className="space-y-4">
           {stagiaire.objectifs?.length > 0 && (
-            <div className="rounded-lg bg-slate-50 p-3 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+            <div className="rounded-field bg-surface-sunken p-3 text-xs text-text-muted">
               <p className="mb-1 font-medium">Objectifs fixés au démarrage :</p>
               <ul className="list-disc pl-4">
                 {stagiaire.objectifs.map((o, i) => (

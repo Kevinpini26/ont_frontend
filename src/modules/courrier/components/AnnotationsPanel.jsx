@@ -48,11 +48,11 @@ export function AnnotationsPanel({ courrierId }) {
         ) : annotations.length === 0 ? (
           <EmptyState title="Aucune annotation pour le moment" />
         ) : (
-          <ul className="mb-4 divide-y divide-slate-100 dark:divide-slate-800">
+          <ul className="mb-4 divide-y divide-border">
             {annotations.map((a) => (
               <li key={a.id} className="py-2.5">
-                <p className="text-sm text-slate-800 dark:text-slate-200">{a.contenu}</p>
-                <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-sm text-text">{a.contenu}</p>
+                <p className="mt-0.5 text-xs text-text-subtle">
                   {a.auteur?.name} · {new Date(a.created_at).toLocaleString('fr-FR')}
                 </p>
               </li>

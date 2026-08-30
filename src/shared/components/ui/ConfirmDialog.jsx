@@ -38,19 +38,19 @@ export function ConfirmDialog({
       <div className="absolute inset-0 bg-black/50" onClick={onCancel} />
       <div
         ref={conteneurRef}
-        className="relative w-full max-w-sm rounded-xl border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-800 dark:bg-slate-900"
+        className="relative w-full max-w-sm rounded-modal border border-border-strong bg-surface-raised p-6 shadow-raised"
       >
         <div className="flex items-start gap-3">
           {tone === 'danger' && (
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-rose-100 text-rose-600 dark:bg-rose-950 dark:text-rose-400">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-ont-red-500/10 text-ont-red-700 dark:text-ont-red-300">
               <AlertTriangle size={20} />
             </div>
           )}
           <div className="min-w-0">
-            <h3 id="confirm-dialog-title" className="font-heading text-base font-semibold text-slate-900 dark:text-slate-100">
+            <h3 id="confirm-dialog-title" className="font-heading text-section-title font-semibold text-text">
               {title}
             </h3>
-            {description && <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{description}</p>}
+            {description && <p className="mt-1 text-sm text-text-muted">{description}</p>}
           </div>
         </div>
         <div className="mt-6 flex justify-end gap-3">

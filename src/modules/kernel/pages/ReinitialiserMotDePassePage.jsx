@@ -39,11 +39,11 @@ export function ReinitialiserMotDePassePage() {
   }
 
   return (
-    <div className="flex min-h-svh items-center justify-center bg-slate-100 px-4 dark:bg-slate-950">
-      <div className="w-full max-w-sm rounded-xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+    <div className="flex min-h-svh items-center justify-center bg-surface-sunken px-4">
+      <div className="w-full max-w-sm rounded-card border border-border bg-surface p-8">
         <div className="mb-6 flex flex-col items-center text-center">
           <OntLogo className="mb-3 h-12 w-12" />
-          <h1 className="font-heading text-lg font-semibold text-slate-900 dark:text-slate-50">Réinitialiser le mot de passe</h1>
+          <h1 className="font-heading text-lg font-semibold text-text">Réinitialiser le mot de passe</h1>
         </div>
 
         {succes ? (

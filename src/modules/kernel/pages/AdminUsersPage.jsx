@@ -301,7 +301,7 @@ export function AdminUsersPage() {
                 <tbody className={tbodyClass}>
                   {usersFiltres.map((u) => (
                     <tr key={u.id} className={trHoverClass}>
-                      <td className={`${tdClass} font-medium text-slate-900 dark:text-slate-100`}>{u.name}</td>
+                      <td className={`${tdClass} font-medium text-text`}>{u.name}</td>
                       <td className={tdClass}>{u.email}</td>
                       <td className={tdClass}>
                         <Badge tone="info">{u.role_label}</Badge>

@@ -51,14 +51,14 @@ export function PublicAttestationVerificationPage() {
   }
 
   return (
-    <div className="flex min-h-svh items-center justify-center bg-slate-100 px-4 dark:bg-slate-950">
-      <div className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+    <div className="flex min-h-svh items-center justify-center bg-surface-sunken px-4">
+      <div className="w-full max-w-md rounded-card border border-border bg-surface p-8 shadow-sm">
         <div className="mb-6 flex flex-col items-center text-center">
           <OntLogo className="mb-3 h-12 w-12" />
-          <h1 className="font-heading text-lg font-semibold text-slate-900 dark:text-slate-50">
+          <h1 className="font-heading text-lg font-semibold text-text">
             Vérification d'attestation
           </h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          <p className="mt-1 text-sm text-text-subtle">
             Confirmez l'authenticité d'une attestation de stage délivrée par l'ONT.
           </p>
         </div>
@@ -102,18 +102,18 @@ export function PublicAttestationVerificationPage() {
         {recherchee && !erreur && !enCours && attestation && (
           <div className="mt-6 rounded-lg border border-ont-green-200 bg-ont-green-50 p-4 dark:border-ont-green-800 dark:bg-ont-green-900/20">
             <Badge tone="success">Attestation authentique</Badge>
-            <dl className="mt-3 space-y-1 text-sm text-slate-700 dark:text-slate-300">
+            <dl className="mt-3 space-y-1 text-sm text-text-muted">
               <div className="flex justify-between gap-4">
-                <dt className="text-slate-500 dark:text-slate-400">Numéro</dt>
+                <dt className="text-text-subtle">Numéro</dt>
                 <dd className="font-medium">{attestation.numero_attestation}</dd>
               </div>
               <div className="flex justify-between gap-4">
-                <dt className="text-slate-500 dark:text-slate-400">Stagiaire</dt>
+                <dt className="text-text-subtle">Stagiaire</dt>
                 <dd className="font-medium">{attestation.nom}</dd>
               </div>
               {attestation.date_debut_stage && (
                 <div className="flex justify-between gap-4">
-                  <dt className="text-slate-500 dark:text-slate-400">Période de stage</dt>
+                  <dt className="text-text-subtle">Période de stage</dt>
                   <dd className="font-medium">
                     {attestation.date_debut_stage} au {attestation.date_fin_stage}
                   </dd>
@@ -123,7 +123,7 @@ export function PublicAttestationVerificationPage() {
           </div>
         )}
 
-        <p className="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">
+        <p className="mt-6 text-center text-sm text-text-subtle">
           <a href="/connexion" className="font-medium text-ont-blue-700 hover:underline dark:text-ont-blue-400">
             Espace agent →
           </a>

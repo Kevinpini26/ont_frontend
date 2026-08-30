@@ -38,7 +38,7 @@ function ServiceRow({ service, index }) {
   return (
     <div
       ref={ref}
-      className={`grid grid-cols-1 items-center gap-8 rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition-shadow duration-300 hover:shadow-md sm:p-8 md:grid-cols-[auto_1fr] ${className}`}
+      className={`grid grid-cols-1 items-center gap-8 rounded-card border border-border bg-surface p-6 shadow-card transition-shadow duration-300 hover:shadow-raised sm:p-8 md:grid-cols-[auto_1fr] ${className}`}
     >
       <div
         className={`flex h-14 w-14 items-center justify-center rounded-xl bg-ont-blue-700 text-white ${inverse ? 'md:order-2' : ''}`}
@@ -46,15 +46,15 @@ function ServiceRow({ service, index }) {
         <Icone size={26} />
       </div>
       <div className={inverse ? 'md:order-1' : ''}>
-        <h2 className="mb-3 font-heading text-xl font-semibold text-slate-900">{service.titre}</h2>
+        <h2 className="mb-3 font-heading text-xl font-semibold text-text">{service.titre}</h2>
         <dl className="mb-5 space-y-2 text-sm">
           <div className="flex gap-2">
-            <dt className="shrink-0 font-medium text-slate-700">Pour qui —</dt>
-            <dd className="text-slate-500">{service.public}</dd>
+            <dt className="shrink-0 font-medium text-text-muted">Pour qui —</dt>
+            <dd className="text-text-subtle">{service.public}</dd>
           </div>
           <div className="flex gap-2">
-            <dt className="shrink-0 font-medium text-slate-700">À préparer —</dt>
-            <dd className="text-slate-500">{service.preparer}</dd>
+            <dt className="shrink-0 font-medium text-text-muted">À préparer —</dt>
+            <dd className="text-text-subtle">{service.preparer}</dd>
           </div>
         </dl>
         <Link to={service.to}>
@@ -75,8 +75,8 @@ export function ServicesPage() {
     <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6 lg:px-8">
       <div ref={intro.ref} className={`mb-12 max-w-2xl ${intro.className}`}>
         <p className="mb-3 text-sm font-semibold tracking-wide text-ont-gold-600 uppercase">Services</p>
-        <h1 className="mb-4 font-heading text-3xl font-bold text-slate-900">Nos services numériques</h1>
-        <p className="text-slate-500">
+        <h1 className="mb-4 font-heading text-3xl font-bold text-text">Nos services numériques</h1>
+        <p className="text-text-subtle">
           Trois démarches disponibles directement en ligne, sans compte ni déplacement au siège de l'Office.
         </p>
       </div>

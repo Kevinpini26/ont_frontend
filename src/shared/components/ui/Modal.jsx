@@ -28,10 +28,10 @@ export function Modal({ open, onClose, title, wide = false, children }) {
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
       <div
         ref={conteneurRef}
-        className={`relative flex max-h-full w-full flex-col rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-800 dark:bg-slate-900 ${wide ? 'max-w-4xl' : 'max-w-lg'}`}
+        className={`relative flex max-h-full w-full flex-col rounded-modal border border-border-strong bg-surface-raised shadow-raised ${wide ? 'max-w-4xl' : 'max-w-lg'}`}
       >
-        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3 dark:border-slate-800">
-          <h3 id="modal-title" className="font-heading text-base font-semibold text-slate-900 dark:text-slate-100">
+        <div className="flex items-center justify-between border-b border-border px-5 py-3">
+          <h3 id="modal-title" className="font-heading text-section-title font-semibold text-text">
             {title}
           </h3>
           <Button type="button" variant="ghost" size="sm" onClick={onClose} aria-label="Fermer">

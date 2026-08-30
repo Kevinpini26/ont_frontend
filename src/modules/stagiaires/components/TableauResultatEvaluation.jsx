@@ -42,9 +42,9 @@ export function TableauResultatEvaluation({ sections, grilleDirection, grilleDfp
 
               return (
                 <Fragment key={section.cle}>
-                  <tr className="bg-slate-50 dark:bg-slate-800/60">
-                    <td colSpan={4} className={`${tdClass} font-heading font-semibold text-slate-900 dark:text-slate-100`}>
-                      {section.titre} <span className="font-mono text-xs font-normal text-slate-500 dark:text-slate-400">/ {bareme}</span>
+                  <tr className="bg-surface-sunken">
+                    <td colSpan={4} className={`${tdClass} font-heading font-semibold text-text`}>
+                      {section.titre} <span className="font-mono text-xs font-normal text-text-subtle">/ {bareme}</span>
                     </td>
                   </tr>
                   {section.champs.map((champ) => {

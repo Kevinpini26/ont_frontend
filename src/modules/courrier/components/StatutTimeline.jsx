@@ -34,7 +34,7 @@ export function StatutTimeline({ statut, necessiteAvisDg = true, initieParDg = f
                 ? 'bg-ont-blue-700 text-white'
                 : franchie
                   ? 'bg-ont-green-50 text-ont-green-700 dark:bg-ont-green-900/40 dark:text-ont-green-300'
-                  : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
+                  : 'bg-surface-sunken text-text-subtle'
             }`}
           >
             {franchie && <CheckCircle2 size={16} aria-hidden="true" />}

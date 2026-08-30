@@ -21,9 +21,9 @@ const LIEN_VOIR_TOUT = 'text-sm font-medium text-ont-blue-700 hover:underline da
 function ChartTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-md border border-slate-200 bg-white px-3 py-2 text-xs shadow-md dark:border-slate-700 dark:bg-slate-800">
-      <p className="font-medium text-slate-900 dark:text-slate-100">{label}</p>
-      <p className="text-slate-600 dark:text-slate-300">{payload[0].value}</p>
+    <div className="rounded-field border border-border-strong bg-surface-raised px-3 py-2 text-xs shadow-raised">
+      <p className="font-medium text-text">{label}</p>
+      <p className="text-text-muted">{payload[0].value}</p>
     </div>
   );
 }
@@ -32,10 +32,10 @@ function DerniersCourriers({ courriers, chargement }) {
   if (chargement) return <LoadingBlock />;
   if (courriers.length === 0) return <EmptyState icon={<Mail size={28} />} title="Aucun courrier pour le moment" />;
   return (
-    <ul className="divide-y divide-slate-100 dark:divide-slate-800">
+    <ul className="divide-y divide-border">
       {courriers.map((c) => (
         <li key={c.id} className="flex items-center justify-between gap-3 py-2.5 text-sm">
-          <Link to={`/courriers/${c.id}`} className="min-w-0 flex-1 truncate text-slate-700 hover:text-ont-blue-700 dark:text-slate-300">
+          <Link to={`/courriers/${c.id}`} className="min-w-0 flex-1 truncate text-text-muted hover:text-ont-blue-700">
             {c.objet}
           </Link>
           <Badge tone="info">{STATUT_LABELS[c.statut]}</Badge>
@@ -49,10 +49,10 @@ function DerniersStagiaires({ stagiaires, chargement }) {
   if (chargement) return <LoadingBlock />;
   if (stagiaires.length === 0) return <EmptyState icon={<GraduationCap size={28} />} title="Aucun stagiaire pour le moment" />;
   return (
-    <ul className="divide-y divide-slate-100 dark:divide-slate-800">
+    <ul className="divide-y divide-border">
       {stagiaires.map((s) => (
         <li key={s.id} className="flex items-center justify-between gap-3 py-2.5 text-sm">
-          <Link to={`/stagiaires/${s.id}`} className="min-w-0 flex-1 truncate text-slate-700 hover:text-ont-blue-700 dark:text-slate-300">
+          <Link to={`/stagiaires/${s.id}`} className="min-w-0 flex-1 truncate text-text-muted hover:text-ont-blue-700">
             {s.nom}
           </Link>
           <Badge tone="info">{s.statut_label}</Badge>
@@ -73,12 +73,12 @@ function ListeAlertes({ items, chargement, vide, rendu }) {
   if (chargement) return <LoadingBlock />;
   if (items.length === 0) return <EmptyState title={vide} />;
   return (
-    <ul className="divide-y divide-slate-100 dark:divide-slate-800">
+    <ul className="divide-y divide-border">
       {items.map((item) => (
         <li key={item.id}>
           <Link
             to={`/stagiaires/${item.id}`}
-            className="flex items-center justify-between gap-3 py-2.5 text-sm text-slate-700 hover:text-ont-blue-700 dark:text-slate-300"
+            className="flex items-center justify-between gap-3 py-2.5 text-sm text-text-muted hover:text-ont-blue-700"
           >
             {rendu(item)}
           </Link>

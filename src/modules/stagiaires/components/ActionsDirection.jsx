@@ -49,7 +49,7 @@ export function ActionsDirection({ stagiaire, executer }) {
         <CardHeader title="Évaluation du travail effectué" description="Grille officielle ONT." />
         <CardBody className="space-y-4">
           {stagiaire.objectifs?.length > 0 && (
-            <div className="rounded-lg bg-slate-50 p-3 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+            <div className="rounded-field bg-surface-sunken p-3 text-xs text-text-muted">
               <p className="mb-1 font-medium">Objectifs fixés au démarrage — notez le travail au regard de ceux-ci :</p>
               <ul className="list-disc pl-4">
                 {stagiaire.objectifs.map((o, i) => (

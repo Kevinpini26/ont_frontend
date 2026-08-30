@@ -238,11 +238,11 @@ export function CircuitQueuePage() {
                     type="file"
                     accept=".pdf,.jpg,.jpeg,.png"
                     onChange={(e) => setFormulaireDg((f) => ({ ...f, piece_jointe: e.target.files?.[0] ?? null }))}
-                    className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-md file:border-0 file:bg-ont-blue-50 file:px-3 file:py-2 file:text-sm file:font-medium file:text-ont-blue-700 hover:file:bg-ont-blue-100 dark:text-slate-300 dark:file:bg-ont-blue-950 dark:file:text-ont-blue-300"
+                    className="block w-full text-sm text-text-muted file:mr-3 file:rounded-field file:border-0 file:bg-ont-blue-50 file:px-3 file:py-2 file:text-sm file:font-medium file:text-ont-blue-700 hover:file:bg-ont-blue-100 dark:file:bg-ont-blue-950 dark:file:text-ont-blue-300"
                   />
                 </Field>
 
-                <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+                <label className="flex items-center gap-2 text-sm text-text-muted">
                   <input
                     type="checkbox"
                     checked={formulaireDg.validation_dg_requise}
@@ -295,7 +295,7 @@ export function CircuitQueuePage() {
                   type="file"
                   accept=".pdf,.jpg,.jpeg,.png"
                   onChange={(e) => setFormulaire((f) => ({ ...f, piece_jointe: e.target.files?.[0] ?? null }))}
-                  className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-md file:border-0 file:bg-ont-blue-50 file:px-3 file:py-2 file:text-sm file:font-medium file:text-ont-blue-700 hover:file:bg-ont-blue-100 dark:text-slate-300 dark:file:bg-ont-blue-950 dark:file:text-ont-blue-300"
+                  className="block w-full text-sm text-text-muted file:mr-3 file:rounded-field file:border-0 file:bg-ont-blue-50 file:px-3 file:py-2 file:text-sm file:font-medium file:text-ont-blue-700 hover:file:bg-ont-blue-100 dark:file:bg-ont-blue-950 dark:file:text-ont-blue-300"
                   required
                 />
               </Field>
@@ -405,7 +405,7 @@ export function CircuitQueuePage() {
 
                     return (
                       <tr key={c.id} className={trHoverClass}>
-                        <td className={`${tdClass} whitespace-nowrap font-medium text-slate-900 dark:text-slate-100`}>{c.numero_accuse_reception}</td>
+                        <td className={`${tdClass} whitespace-nowrap font-medium text-text`}>{c.numero_accuse_reception}</td>
                         <td className={`${tdClass} max-w-[16rem] truncate`} title={c.objet}>{c.objet}</td>
                         <td className={tdClass}>{TYPE_LABELS[c.type]}</td>
                         <td className={tdClass}>

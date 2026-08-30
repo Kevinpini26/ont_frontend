@@ -89,10 +89,10 @@ export function GrilleEvaluationProfessionnelleForm({ valeurs, onChange, suggest
   return (
     <div className="space-y-5">
       {SECTIONS_GRILLE_PRO.map((section) => (
-        <div key={section.cle} className="rounded-lg border border-slate-200 dark:border-slate-800">
-          <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-4 py-2.5 dark:border-slate-800 dark:bg-slate-800/60">
-            <h4 className="font-heading text-sm font-semibold text-slate-900 dark:text-slate-100">{section.titre}</h4>
-            <span className="font-mono text-xs font-semibold text-slate-600 dark:text-slate-300">
+        <div key={section.cle} className="rounded-lg border border-border">
+          <div className="flex items-center justify-between border-b border-border bg-surface-sunken px-4 py-2.5">
+            <h4 className="font-heading text-sm font-semibold text-text">{section.titre}</h4>
+            <span className="font-mono text-xs font-semibold text-text-muted">
               {sousTotal(section, valeurs)} / {section.champs.length * 10}
             </span>
           </div>
@@ -101,8 +101,8 @@ export function GrilleEvaluationProfessionnelleForm({ valeurs, onChange, suggest
               <div key={champ.cle}>
                 {readOnly ? (
                   <p className="text-sm">
-                    <span className="text-slate-500 dark:text-slate-400">{champ.label} : </span>
-                    <span className="font-medium text-slate-900 dark:text-slate-100">
+                    <span className="text-text-subtle">{champ.label} : </span>
+                    <span className="font-medium text-text">
                       {valeurs[section.cle]?.[champ.cle] ?? '—'} / 10
                     </span>
                   </p>
@@ -120,7 +120,7 @@ export function GrilleEvaluationProfessionnelleForm({ valeurs, onChange, suggest
                       required
                     />
                     {champ.suggestion && suggestionAssiduite && (
-                      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                      <p className="mt-1 text-xs text-text-subtle">
                         Suggestion d'après les présences : {suggestionAssiduite.ponctualite + suggestionAssiduite.regularite} / 10 (
                         {suggestionAssiduite.detail})
                       </p>

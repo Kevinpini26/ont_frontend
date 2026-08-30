@@ -21,11 +21,11 @@ export function PublicLienPage() {
   }, [token]);
 
   return (
-    <div className="flex min-h-svh items-center justify-center bg-slate-100 px-4 py-10 dark:bg-slate-950">
-      <div className="w-full max-w-lg rounded-xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+    <div className="flex min-h-svh items-center justify-center bg-surface-sunken px-4 py-10">
+      <div className="w-full max-w-lg rounded-card border border-border bg-surface p-8 shadow-sm">
         <div className="mb-6 flex flex-col items-center text-center">
           <OntLogo className="mb-3 h-12 w-12" />
-          <h1 className="font-heading text-lg font-semibold text-slate-900 dark:text-slate-50">Office National du Tourisme</h1>
+          <h1 className="font-heading text-lg font-semibold text-text">Office National du Tourisme</h1>
         </div>
 
         {chargement ? (
@@ -64,8 +64,8 @@ function ConventionForm({ token, lien }) {
 
   return (
     <div>
-      <h2 className="mb-1 text-center text-base font-semibold text-slate-900 dark:text-slate-100">Convention de stage</h2>
-      <p className="mb-6 text-center text-sm text-slate-500 dark:text-slate-400">
+      <h2 className="mb-1 text-center text-base font-semibold text-text">Convention de stage</h2>
+      <p className="mb-6 text-center text-sm text-text-subtle">
         Bonjour {lien.stagiaire.nom}, votre stage au sein de la direction {lien.stagiaire.direction} a été validé
         {lien.stagiaire.date_debut_stage && ` du ${lien.stagiaire.date_debut_stage} au ${lien.stagiaire.date_fin_stage}`}.
       </p>
@@ -79,7 +79,7 @@ function ConventionForm({ token, lien }) {
           <Button type="button" variant="secondary" className="w-full" onClick={() => telechargerConventionPublique(token)}>
             Consulter la convention (PDF)
           </Button>
-          <label className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-300">
+          <label className="flex items-start gap-2 text-sm text-text-muted">
             <input type="checkbox" className="mt-1" onChange={(e) => e.target.checked && signer()} disabled={envoi} />
             Je certifie avoir pris connaissance de cette convention de stage et j'y appose ma signature électronique.
           </label>
@@ -122,8 +122,8 @@ function RetourForm({ token }) {
 
   return (
     <div>
-      <h2 className="mb-1 text-center text-base font-semibold text-slate-900 dark:text-slate-100">Votre avis sur votre stage</h2>
-      <p className="mb-6 text-center text-sm text-slate-500 dark:text-slate-400">
+      <h2 className="mb-1 text-center text-base font-semibold text-text">Votre avis sur votre stage</h2>
+      <p className="mb-6 text-center text-sm text-text-subtle">
         Ce formulaire est confidentiel : vos réponses ne sont consultables que par la DFP, jamais par votre direction d'accueil.
       </p>
 

@@ -102,16 +102,16 @@ export function CourrierDetailPage() {
         <Card>
           <CardHeader title="Informations" />
           <CardBody className="space-y-3 text-sm">
-            <p className="text-slate-700 dark:text-slate-300">
-              <span className="font-medium text-slate-900 dark:text-slate-100">Origine : </span>
+            <p className="text-text-muted">
+              <span className="font-medium text-text">Origine : </span>
               {courrier.direction_origine?.nom ?? '—'}
               <br />
-              <span className="font-medium text-slate-900 dark:text-slate-100">Destination : </span>
+              <span className="font-medium text-text">Destination : </span>
               {courrier.direction_destination?.nom ?? 'Direction Générale'}
             </p>
             {courrier.avis_dg && (
-              <p className="text-slate-700 dark:text-slate-300">
-                <span className="font-medium text-slate-900 dark:text-slate-100">Avis DG : </span>
+              <p className="text-text-muted">
+                <span className="font-medium text-text">Avis DG : </span>
                 {courrier.avis_dg}
                 {courrier.avis_dg_rendu_par && ` — rendu par ${courrier.avis_dg_rendu_par}`}
                 {courrier.avis_dg_rendu_en_interim && (
@@ -138,20 +138,20 @@ export function CourrierDetailPage() {
               </Button>
             )}
             {courrier.candidat && courrier.anonymise_at ? (
-              <div className="rounded-lg bg-slate-100 p-3 text-sm dark:bg-slate-800">
-                <p className="font-medium text-slate-700 dark:text-slate-300">Candidature non retenue — dossier anonymisé</p>
-                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              <div className="rounded-field bg-surface-sunken p-3 text-sm">
+                <p className="font-medium text-text-muted">Candidature non retenue — dossier anonymisé</p>
+                <p className="mt-1 text-xs text-text-subtle">
                   Les données personnelles du candidat ont été supprimées conformément à la politique de conservation
                   (12 mois après l'avis défavorable de la Direction Générale).
                 </p>
               </div>
             ) : (
               courrier.candidat && (
-                <div className="rounded-lg bg-ont-gold-50 p-3 text-sm dark:bg-ont-gold-900/20">
+                <div className="rounded-card bg-ont-gold-50 p-3 text-sm dark:bg-ont-gold-900/20">
                   <p className="mb-1 font-medium text-ont-gold-800 dark:text-ont-gold-300">
                     Candidat (demande de stage{courrier.candidat.type_stage_label ? ` — ${courrier.candidat.type_stage_label}` : ''})
                   </p>
-                  <p className="text-slate-700 dark:text-slate-300">
+                  <p className="text-text-muted">
                     {courrier.candidat.nom} — {courrier.candidat.contact}
                     <br />
                     {courrier.candidat.etablissement}
@@ -249,9 +249,9 @@ export function CourrierDetailPage() {
               )
             )}
             {courrier.expediteur_externe_nom && (
-              <div className="rounded-lg bg-ont-blue-50 p-3 text-sm dark:bg-ont-blue-900/20">
+              <div className="rounded-card bg-ont-blue-50 p-3 text-sm dark:bg-ont-blue-900/20">
                 <p className="mb-1 font-medium text-ont-blue-800 dark:text-ont-blue-300">Expéditeur externe</p>
-                <p className="text-slate-700 dark:text-slate-300">
+                <p className="text-text-muted">
                   {courrier.expediteur_externe_nom}
                   {courrier.expediteur_externe_email && <> — {courrier.expediteur_externe_email}</>}
                   {courrier.expediteur_externe_telephone && <> — {courrier.expediteur_externe_telephone}</>}

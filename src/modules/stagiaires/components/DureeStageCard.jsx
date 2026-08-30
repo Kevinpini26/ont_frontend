@@ -121,20 +121,20 @@ export function DureeStageCard({ stagiaire, user, executer }) {
           </form>
         )}
         {!edition && (
-          <p className="text-sm text-slate-700 dark:text-slate-300">
+          <p className="text-sm text-text-muted">
             {stagiaire.date_debut_stage} → {stagiaire.date_fin_stage}
           </p>
         )}
         {historique.length > 0 && (
           <div>
-            <h4 className="mb-2 font-heading text-sm font-semibold text-slate-900 dark:text-slate-100">Historique des prolongations</h4>
-            <ul className="space-y-2 text-sm text-slate-700 dark:text-slate-300">
+            <h4 className="mb-2 font-heading text-sm font-semibold text-text">Historique des prolongations</h4>
+            <ul className="space-y-2 text-sm text-text-muted">
               {historique.map((p, i) => (
-                <li key={i} className="rounded-lg bg-slate-50 p-3 dark:bg-slate-800">
+                <li key={i} className="rounded-field bg-surface-sunken p-3">
                   <p>
                     {p.ancienne_date_fin} → <span className="font-medium">{p.nouvelle_date_fin}</span>
                   </p>
-                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                  <p className="mt-1 text-xs text-text-subtle">
                     {p.prolonge_par ?? 'DFP'} — {new Date(p.created_at).toLocaleDateString('fr-FR')}
                   </p>
                   <p className="mt-1 italic">« {p.motif} »</p>

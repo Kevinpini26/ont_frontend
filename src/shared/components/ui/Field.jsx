@@ -1,18 +1,18 @@
 export const inputClass =
-  'block w-full rounded-md border-0 px-3 py-2 text-sm text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-ont-blue-600 disabled:bg-slate-100 disabled:text-slate-500 dark:bg-slate-800 dark:text-slate-100 dark:ring-slate-700 dark:focus:ring-ont-blue-500';
+  'block w-full rounded-field border-0 bg-surface px-3 py-2 text-sm text-text shadow-sm ring-1 ring-inset ring-border-strong placeholder:text-text-subtle focus:ring-2 focus:ring-inset focus:ring-ont-blue-600 disabled:bg-surface-sunken disabled:text-text-subtle dark:focus:ring-ont-blue-500';
 
 export function Field({ label, htmlFor, hint, error, required, children }) {
   return (
     <div>
       {label && (
-        <label htmlFor={htmlFor} className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
+        <label htmlFor={htmlFor} className="mb-1.5 block text-sm font-medium text-text-muted">
           {label}
-          {required && <span className="ml-0.5 text-rose-600">*</span>}
+          {required && <span className="ml-0.5 text-ont-red-700 dark:text-ont-red-300">*</span>}
         </label>
       )}
       {children}
-      {hint && !error && <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{hint}</p>}
-      {error && <p className="mt-1 text-xs text-rose-600 dark:text-rose-400">{error}</p>}
+      {hint && !error && <p className="mt-1 text-xs text-text-subtle">{hint}</p>}
+      {error && <p className="mt-1 text-xs text-ont-red-700 dark:text-ont-red-300">{error}</p>}
     </div>
   );
 }

@@ -1,9 +1,9 @@
 const TONES = {
-  neutral: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
+  neutral: 'bg-surface-sunken text-text-muted',
   info: 'bg-ont-blue-50 text-ont-blue-700 dark:bg-ont-blue-950 dark:text-ont-blue-300',
   success: 'bg-ont-green-50 text-ont-green-700 dark:bg-ont-green-900/40 dark:text-ont-green-300',
   warning: 'bg-ont-gold-100 text-ont-gold-800 dark:bg-ont-gold-900/40 dark:text-ont-gold-300',
-  danger: 'bg-rose-50 text-rose-700 dark:bg-rose-950 dark:text-rose-300',
+  danger: 'bg-ont-red-500/10 text-ont-red-700 dark:bg-ont-red-500/20 dark:text-ont-red-300',
 };
 
 export function Badge({ tone = 'neutral', className = '', children }) {

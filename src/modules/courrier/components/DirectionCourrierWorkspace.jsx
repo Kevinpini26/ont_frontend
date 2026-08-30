@@ -267,7 +267,7 @@ function TableauCourriers({ courriers, chargement }) {
         <tbody className={tbodyClass}>
           {courriers.map((c) => (
             <tr key={c.id} className={trHoverClass}>
-              <td className={`${tdClass} whitespace-nowrap font-medium text-slate-900 dark:text-slate-100`}>{c.numero_accuse_reception}</td>
+              <td className={`${tdClass} whitespace-nowrap font-medium text-text`}>{c.numero_accuse_reception}</td>
               <td className={`${tdClass} max-w-[14rem]`} title={c.objet}>
                 <div className="flex items-center gap-2">
                   <span className="truncate">{c.objet}</span>

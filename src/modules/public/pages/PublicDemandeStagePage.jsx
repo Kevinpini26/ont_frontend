@@ -61,16 +61,16 @@ export function PublicDemandeStagePage() {
   if (numeroObtenu) {
     return (
       <div className="mx-auto max-w-md px-4 py-16 sm:px-6 lg:px-8">
-        <div className="rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm">
-          <h1 className="font-heading text-lg font-semibold text-slate-900">Demande envoyée</h1>
-          <p className="mt-2 text-sm text-slate-600">
+        <div className="rounded-card border border-border bg-surface p-8 text-center shadow-sm">
+          <h1 className="font-heading text-lg font-semibold text-text">Demande envoyée</h1>
+          <p className="mt-2 text-sm text-text-muted">
             Votre demande de stage a bien été reçue. Un e-mail de confirmation vous a été envoyé avec votre numéro
             d'accusé de réception :
           </p>
           <p className="mt-3 rounded-md bg-ont-blue-50 px-3 py-2 font-mono text-sm font-semibold text-ont-blue-800">
             {numeroObtenu}
           </p>
-          <p className="mt-3 text-xs text-slate-500">
+          <p className="mt-3 text-xs text-text-subtle">
             Conservez ce numéro, il vous permettra de suivre l'état de votre dossier.
           </p>
           <a
@@ -86,10 +86,10 @@ export function PublicDemandeStagePage() {
 
   return (
     <div className="mx-auto max-w-lg px-4 py-16 sm:px-6 lg:px-8">
-      <div className="rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
+      <div className="rounded-card border border-border bg-surface p-8 shadow-sm">
         <div className="mb-6 text-center">
-          <h1 className="font-heading text-lg font-semibold text-slate-900">Demande de stage</h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <h1 className="font-heading text-lg font-semibold text-text">Demande de stage</h1>
+          <p className="mt-1 text-sm text-text-subtle">
             Déposez votre demande de stage à l'Office National du Tourisme.
           </p>
         </div>
@@ -226,7 +226,7 @@ export function PublicDemandeStagePage() {
           </Button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-slate-500">
+        <p className="mt-6 text-center text-sm text-text-subtle">
           <a href="/suivi-dossier" className="font-medium text-ont-blue-700 hover:underline">
             Suivre une demande déjà déposée →
           </a>

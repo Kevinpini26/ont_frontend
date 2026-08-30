@@ -128,7 +128,7 @@ export function CalendrierPresences({ stagiaire, presences, onChange }) {
           >
             <ChevronLeft size={16} />
           </Button>
-          <span className="min-w-[9rem] text-center text-sm font-semibold text-slate-900 dark:text-slate-100">
+          <span className="min-w-[9rem] text-center text-sm font-semibold text-text">
             {libelleMois(moisAffiche)}
           </span>
           <Button
@@ -142,16 +142,16 @@ export function CalendrierPresences({ stagiaire, presences, onChange }) {
             <ChevronRight size={16} />
           </Button>
         </div>
-        <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+        <div className="flex flex-wrap items-center gap-3 text-xs text-text-subtle">
           <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-ont-green-500" /> Présent</span>
-          <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-rose-400" /> Absent</span>
-          <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-slate-300 dark:bg-slate-600" /> Week-end / hors période</span>
+          <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-ont-red-500" /> Absent</span>
+          <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-border-strong" /> Week-end / hors période</span>
         </div>
       </div>
 
       <div className="grid grid-cols-7 gap-1.5">
         {JOURS_SEMAINE.map((j) => (
-          <div key={j} className="pb-1 text-center text-xs font-medium text-slate-400 dark:text-slate-500">
+          <div key={j} className="pb-1 text-center text-xs font-medium text-text-subtle">
             {j}
           </div>
         ))}
@@ -171,15 +171,15 @@ export function CalendrierPresences({ stagiaire, presences, onChange }) {
 
           let classes = 'flex h-10 items-center justify-center rounded-md text-sm transition-colors';
           if (weekend || horsPeriode) {
-            classes += ' bg-slate-50 text-slate-300 dark:bg-slate-900 dark:text-slate-700';
+            classes += ' bg-surface-sunken text-text-subtle';
           } else if (futur) {
-            classes += ' text-slate-400 dark:text-slate-600';
+            classes += ' text-text-subtle';
           } else if (coche) {
             classes += ' cursor-pointer bg-ont-green-100 font-semibold text-ont-green-800 hover:bg-ont-green-200 dark:bg-ont-green-900/40 dark:text-ont-green-300';
           } else if (absentSignale) {
-            classes += ' cursor-pointer bg-rose-100 font-semibold text-rose-700 hover:bg-rose-200 dark:bg-rose-950/60 dark:text-rose-300';
+            classes += ' cursor-pointer bg-ont-red-500/10 font-semibold text-ont-red-700 hover:bg-ont-red-500/20 dark:text-ont-red-300';
           } else {
-            classes += ' cursor-pointer bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700';
+            classes += ' cursor-pointer bg-surface-sunken text-text-muted hover:bg-border';
           }
           if (jourSelectionne === jour) {
             classes += ' ring-2 ring-inset ring-ont-blue-600';
@@ -206,10 +206,10 @@ export function CalendrierPresences({ stagiaire, presences, onChange }) {
       </div>
 
       {jourSelectionne && (
-        <div className="mt-5 rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-800/60">
+        <div className="mt-5 rounded-field border border-border bg-surface-sunken p-4">
           <div className="mb-3 flex items-center justify-between">
-            <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{jourSelectionne}</p>
-            <button type="button" onClick={fermerEditeur} className="text-xs text-slate-500 hover:underline dark:text-slate-400">
+            <p className="text-sm font-semibold text-text">{jourSelectionne}</p>
+            <button type="button" onClick={fermerEditeur} className="text-xs text-text-subtle hover:underline">
               Fermer
             </button>
           </div>

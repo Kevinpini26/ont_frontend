@@ -42,18 +42,18 @@ export function TableWrap({ children }) {
         {children}
       </div>
       {peutDefilerGauche && (
-        <div className="pointer-events-none absolute inset-y-0 left-0 w-6 bg-gradient-to-r from-white to-transparent dark:from-slate-900" />
+        <div className="pointer-events-none absolute inset-y-0 left-0 w-6 bg-gradient-to-r from-surface to-transparent" />
       )}
       {peutDefilerDroite && (
-        <div className="pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-white to-transparent dark:from-slate-900" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-surface to-transparent" />
       )}
     </div>
   );
 }
 
 export const tableClass = 'w-full min-w-full text-left text-sm';
-export const theadClass = 'border-b border-slate-200 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:text-slate-400';
+export const theadClass = 'border-b border-border text-label font-semibold uppercase tracking-wide text-text-subtle';
 export const thClass = 'px-4 py-2.5 font-semibold whitespace-nowrap';
-export const tbodyClass = 'divide-y divide-slate-100 dark:divide-slate-800';
-export const tdClass = 'px-4 py-3 align-middle text-slate-700 dark:text-slate-300';
-export const trHoverClass = 'hover:bg-slate-50 dark:hover:bg-slate-800/50';
+export const tbodyClass = 'divide-y divide-border';
+export const tdClass = 'px-4 py-3 align-middle text-text-muted';
+export const trHoverClass = 'hover:bg-surface-sunken';

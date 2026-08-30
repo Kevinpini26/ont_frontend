@@ -71,7 +71,7 @@ export function DocumentsCard({ stagiaire, user }) {
                 type="file"
                 onChange={(e) => setFichier(e.target.files[0])}
                 accept=".pdf,.jpg,.jpeg,.png"
-                className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-md file:border-0 file:bg-ont-blue-50 file:px-3 file:py-2 file:text-sm file:font-medium file:text-ont-blue-700 hover:file:bg-ont-blue-100 dark:text-slate-300 dark:file:bg-ont-blue-950 dark:file:text-ont-blue-300"
+                className="block w-full text-sm text-text-muted file:mr-3 file:rounded-field file:border-0 file:bg-ont-blue-50 file:px-3 file:py-2 file:text-sm file:font-medium file:text-ont-blue-700 hover:file:bg-ont-blue-100 dark:file:bg-ont-blue-950 dark:file:text-ont-blue-300"
               />
             </Field>
             <div className="flex items-end">
@@ -85,10 +85,10 @@ export function DocumentsCard({ stagiaire, user }) {
         {documents.length === 0 ? (
           <EmptyState title="Aucun document" />
         ) : (
-          <ul className="divide-y divide-slate-100 dark:divide-slate-800">
+          <ul className="divide-y divide-border">
             {documents.map((d) => (
               <li key={d.id} className="flex items-center justify-between py-2.5 text-sm">
-                <span className="text-slate-700 dark:text-slate-300">
+                <span className="text-text-muted">
                   {DOCUMENT_TYPE_LABELS[d.type]} — {d.nom_original}
                 </span>
                 <Button type="button" variant="secondary" size="sm" onClick={() => setDocumentApercu(d)}>

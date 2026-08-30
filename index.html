@@ -27,14 +27,24 @@
     <meta name="twitter:card" content="summary_large_image" />
     <script>
       // Applique la classe .dark avant le premier rendu React (évite un flash de
-      // thème sombre) — sauf sur le portail public, qui reste clair par charte
-      // graphique quel que soit le thème système. Garder cette liste synchronisée
-      // avec PUBLIC_LIGHT_PATHS dans src/App.jsx.
+      // thème incorrect) — sauf sur le portail public, qui reste clair par
+      // charte graphique quel que soit le thème choisi. Garder cette liste
+      // synchronisée avec PUBLIC_LIGHT_PATHS dans src/shared/hooks/useThemeSync.js.
+      // Lit la préférence choisie (voir src/shared/store/themeStore.js, persistée
+      // par le middleware "persist" de Zustand sous la clé "ont-theme") ; à
+      // défaut, retombe sur la préférence système, jamais sur "clair" par défaut.
       (function () {
         var portailPublic = ['/', '/a-propos', '/services', '/demande-de-stage', '/depot-courrier-externe', '/suivi-dossier'];
-        if (portailPublic.indexOf(window.location.pathname) === -1 && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-          document.documentElement.classList.add('dark');
-        }
+        if (portailPublic.indexOf(window.location.pathname) !== -1) return;
+
+        var theme = 'system';
+        try {
+          var stocke = JSON.parse(localStorage.getItem('ont-theme'));
+          if (stocke && stocke.state && stocke.state.theme) theme = stocke.state.theme;
+        } catch (e) {}
+
+        var sombre = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        if (sombre) document.documentElement.classList.add('dark');
       })();
     </script>
   </head>

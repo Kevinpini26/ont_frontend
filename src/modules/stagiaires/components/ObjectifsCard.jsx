@@ -52,7 +52,7 @@ export function ObjectifsCard({ stagiaire, user, executer }) {
       <CardBody>
         {edition && peutDefinir ? (
           <form onSubmit={soumettre} className="space-y-3">
-            <p className="text-xs text-slate-500 dark:text-slate-400">Entre 2 et 5 objectifs courts.</p>
+            <p className="text-xs text-text-subtle">Entre 2 et 5 objectifs courts.</p>
             {objectifs.map((objectif, index) => (
               <div key={index} className="flex items-center gap-2">
                 <input
@@ -80,7 +80,7 @@ export function ObjectifsCard({ stagiaire, user, executer }) {
             </div>
           </form>
         ) : stagiaire.objectifs?.length ? (
-          <ul className="list-disc space-y-1 pl-5 text-sm text-slate-700 dark:text-slate-300">
+          <ul className="list-disc space-y-1 pl-5 text-sm text-text-muted">
             {stagiaire.objectifs.map((objectif, index) => (
               <li key={index}>{objectif}</li>
             ))}

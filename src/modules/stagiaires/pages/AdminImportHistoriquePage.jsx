@@ -46,14 +46,14 @@ export function AdminImportHistoriquePage() {
       <Card className="mb-6">
         <CardHeader title="Format attendu" />
         <CardBody>
-          <p className="mb-3 text-sm text-slate-600 dark:text-slate-300">
+          <p className="mb-3 text-sm text-text-muted">
             La première ligne doit contenir exactement ces colonnes, dans cet ordre. Seules <strong>nom</strong> et{' '}
             <strong>etablissement_origine</strong> sont obligatoires ; les autres peuvent être laissées vides.
           </p>
-          <code className="block overflow-x-auto rounded-md bg-slate-100 px-3 py-2 text-xs text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+          <code className="block overflow-x-auto rounded-field bg-surface-sunken px-3 py-2 text-xs text-text-muted">
             {COLONNES_ATTENDUES.join(',')}
           </code>
-          <ul className="mt-3 list-inside list-disc text-sm text-slate-600 dark:text-slate-300">
+          <ul className="mt-3 list-inside list-disc text-sm text-text-muted">
             <li>direction_code doit correspondre au code d'une direction existante</li>
             <li>statut : dossier_recu, en_attente_affectation, affecte, stage_en_cours, evaluation_en_cours ou cloture (par défaut : cloture)</li>
             <li>dates au format AAAA-MM-JJ</li>
@@ -74,7 +74,7 @@ export function AdminImportHistoriquePage() {
                 type="file"
                 accept=".csv,text/csv"
                 onChange={(e) => setFichier(e.target.files[0])}
-                className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-md file:border-0 file:bg-ont-blue-50 file:px-3 file:py-2 file:text-sm file:font-medium file:text-ont-blue-700 hover:file:bg-ont-blue-100 dark:text-slate-300 dark:file:bg-ont-blue-950 dark:file:text-ont-blue-300"
+                className="block w-full text-sm text-text-muted file:mr-3 file:rounded-field file:border-0 file:bg-ont-blue-50 file:px-3 file:py-2 file:text-sm file:font-medium file:text-ont-blue-700 hover:file:bg-ont-blue-100 dark:file:bg-ont-blue-950 dark:file:text-ont-blue-300"
               />
             </Field>
             <Button type="submit" disabled={!fichier || envoi}>
@@ -95,11 +95,11 @@ export function AdminImportHistoriquePage() {
             </div>
 
             {rapport.rejetes.length > 0 && (
-              <ul className="divide-y divide-slate-100 text-sm dark:divide-slate-800">
+              <ul className="divide-y divide-border text-sm">
                 {rapport.rejetes.map((r) => (
                   <li key={r.ligne} className="py-2.5">
-                    <span className="font-medium text-slate-700 dark:text-slate-200">Ligne {r.ligne} : </span>
-                    <span className="text-slate-600 dark:text-slate-400">{r.raisons.join(' ')}</span>
+                    <span className="font-medium text-text-muted">Ligne {r.ligne} : </span>
+                    <span className="text-text-muted">{r.raisons.join(' ')}</span>
                   </li>
                 ))}
               </ul>

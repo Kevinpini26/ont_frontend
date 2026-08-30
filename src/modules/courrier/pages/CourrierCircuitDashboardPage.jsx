@@ -16,9 +16,9 @@ const AXIS_TICK = { fill: CHART_COLORS.axisTick, fontSize: 11 };
 function VolumeTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-md border border-slate-200 bg-white px-3 py-2 text-xs shadow-md dark:border-slate-700 dark:bg-slate-800">
-      <p className="font-medium text-slate-900 dark:text-slate-100">{label}</p>
-      <p className="text-slate-600 dark:text-slate-300">{payload[0].value} courrier(s)</p>
+    <div className="rounded-field border border-border-strong bg-surface-raised px-3 py-2 text-xs shadow-raised">
+      <p className="font-medium text-text">{label}</p>
+      <p className="text-text-muted">{payload[0].value} courrier(s)</p>
     </div>
   );
 }
@@ -26,9 +26,9 @@ function VolumeTooltip({ active, payload, label }) {
 function DureeTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-md border border-slate-200 bg-white px-3 py-2 text-xs shadow-md dark:border-slate-700 dark:bg-slate-800">
-      <p className="font-medium text-slate-900 dark:text-slate-100">{label}</p>
-      <p className="text-slate-600 dark:text-slate-300">{payload[0].value} h en moyenne</p>
+    <div className="rounded-field border border-border-strong bg-surface-raised px-3 py-2 text-xs shadow-raised">
+      <p className="font-medium text-text">{label}</p>
+      <p className="text-text-muted">{payload[0].value} h en moyenne</p>
     </div>
   );
 }

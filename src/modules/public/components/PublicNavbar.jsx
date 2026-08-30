@@ -13,7 +13,7 @@ const LIENS = [
 
 const lienClass = ({ isActive }) =>
   `rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-    isActive ? 'text-ont-blue-700' : 'text-slate-600 hover:text-ont-blue-700'
+    isActive ? 'text-ont-blue-700' : 'text-text-muted hover:text-ont-blue-700'
   }`;
 
 /**
@@ -32,8 +32,8 @@ export function PublicNavbar() {
     <header
       className={`fixed inset-x-0 top-0 z-50 border-b transition-all duration-300 ${
         scrolled
-          ? 'border-slate-200 bg-white/95 shadow-sm backdrop-blur'
-          : 'border-transparent bg-white/70 backdrop-blur-sm'
+          ? 'border-border bg-surface/95 shadow-sm backdrop-blur'
+          : 'border-transparent bg-surface/70 backdrop-blur-sm'
       }`}
     >
       <div
@@ -43,7 +43,7 @@ export function PublicNavbar() {
       >
         <Link to="/" className="flex min-w-0 items-center gap-2.5" onClick={() => setMobileOpen(false)}>
           <OntLogo className="h-9 w-9 shrink-0" />
-          <span className="font-heading text-sm leading-tight font-semibold text-slate-900">
+          <span className="font-heading text-sm leading-tight font-semibold text-text">
             Office National
             <br />
             du Tourisme
@@ -68,7 +68,7 @@ export function PublicNavbar() {
           <button
             type="button"
             onClick={() => setMobileOpen((o) => !o)}
-            className="flex h-10 w-10 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100 lg:hidden"
+            className="flex h-10 w-10 items-center justify-center rounded-md text-text-muted hover:bg-surface-sunken lg:hidden"
             aria-label={mobileOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
             aria-expanded={mobileOpen}
           >
@@ -78,7 +78,7 @@ export function PublicNavbar() {
       </div>
 
       {mobileOpen && (
-        <nav className="border-t border-slate-200 bg-white px-4 py-3 lg:hidden">
+        <nav className="border-t border-border bg-surface px-4 py-3 lg:hidden">
           <div className="flex flex-col gap-1">
             {LIENS.map((lien) => (
               <NavLink key={lien.to} to={lien.to} end={lien.to === '/'} onClick={() => setMobileOpen(false)} className={lienClass}>

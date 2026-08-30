@@ -22,9 +22,9 @@ export function BordereauxTimeline({ transitions }) {
         ) : (
           <ol className="space-y-3">
             {transitions.map((t, index) => (
-              <li key={index} className="rounded-lg border border-slate-200 p-3 text-sm dark:border-slate-800">
+              <li key={index} className="rounded-field border border-border p-3 text-sm">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="text-slate-800 dark:text-slate-200">
+                  <p className="text-text">
                     <span className="font-medium">{t.statut_label}</span>
                     {' — transmis par '}
                     <span className="font-medium">{t.emetteur ?? 'Guichet public'}</span>
@@ -35,7 +35,7 @@ export function BordereauxTimeline({ transitions }) {
                       </>
                     )}
                   </p>
-                  <span className="whitespace-nowrap text-xs text-slate-500 dark:text-slate-400">
+                  <span className="whitespace-nowrap text-xs text-text-subtle">
                     {new Date(t.created_at).toLocaleString('fr-FR')}
                   </span>
                 </div>

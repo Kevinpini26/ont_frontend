@@ -41,16 +41,16 @@ export function ChangerMotDePassePage() {
   }
 
   return (
-    <div className="flex min-h-svh items-center justify-center bg-slate-100 px-4 dark:bg-slate-950">
+    <div className="flex min-h-svh items-center justify-center bg-surface-sunken px-4">
       <form
         onSubmit={soumettre}
-        className="w-full max-w-sm rounded-xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+        className="w-full max-w-sm rounded-card border border-border bg-surface p-8"
       >
         <div className="mb-6 flex flex-col items-center text-center">
           <OntLogo className="mb-3 h-12 w-12" />
-          <h1 className="font-heading text-lg font-semibold text-slate-900 dark:text-slate-50">Changer de mot de passe</h1>
+          <h1 className="font-heading text-lg font-semibold text-text">Changer de mot de passe</h1>
           {obligatoire && (
-            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            <p className="mt-1 text-sm text-text-subtle">
               Un mot de passe vous a été attribué par l'administrateur : choisissez-en un nouveau avant de continuer.
             </p>
           )}

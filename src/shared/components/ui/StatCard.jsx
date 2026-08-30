@@ -1,11 +1,17 @@
 import { TrendingDown, TrendingUp } from 'lucide-react';
 
+/*
+ * TONES sera repris en Lot C1 (icône dans un rond ont-blue-50/ont-blue-700
+ * plutôt qu'un carré de couleur pleine) — ici uniquement la correction des
+ * jetons de couleur et des contrastes, pas la refonte de forme.
+ */
 const TONES = {
   primary: 'bg-ont-blue-700 text-white',
-  accent: 'bg-ont-gold-500 text-white',
-  neutral: 'bg-slate-800 text-white dark:bg-slate-700',
+  // Texte ont-blue-950, jamais blanc (2,03 de contraste seulement) — voir Button.
+  accent: 'bg-ont-gold-400 text-ont-blue-950',
+  neutral: 'bg-gray-700 text-white',
   success: 'bg-ont-green-600 text-white',
-  danger: 'bg-rose-600 text-white',
+  danger: 'bg-ont-red-500 text-white',
 };
 
 /**
@@ -20,19 +26,19 @@ export function StatCard({ label, value, hint, icon, tone = 'primary', variation
   const variationEstPositive = variationVisible && (variationSens === 'hausse-positive' ? variation >= 0 : variation <= 0);
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+    <div className="rounded-card border border-border bg-surface p-5">
       <div className="flex items-start gap-4">
         {icon && (
-          <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg ${TONES[tone]}`}>{icon}</div>
+          <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-field ${TONES[tone]}`}>{icon}</div>
         )}
         <div className="min-w-0 flex-1">
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">{label}</p>
+          <p className="text-label font-medium uppercase tracking-wide text-text-subtle">{label}</p>
           <div className="mt-1 flex flex-wrap items-baseline gap-x-2">
-            <p className="text-2xl font-semibold text-slate-900 dark:text-slate-50">{value}</p>
+            <p className="text-stat font-semibold tracking-tight text-text tabular-nums">{value}</p>
             {variationVisible && (
               <span
-                className={`inline-flex items-center gap-0.5 text-xs font-semibold ${
-                  variationEstPositive ? 'text-ont-green-600 dark:text-ont-green-400' : 'text-rose-600 dark:text-rose-400'
+                className={`inline-flex items-center gap-0.5 text-xs font-semibold tabular-nums ${
+                  variationEstPositive ? 'text-ont-green-600 dark:text-ont-green-400' : 'text-ont-red-700 dark:text-ont-red-300'
                 }`}
               >
                 {variation >= 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
@@ -40,7 +46,7 @@ export function StatCard({ label, value, hint, icon, tone = 'primary', variation
               </span>
             )}
           </div>
-          {hint && <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{hint}</p>}
+          {hint && <p className="mt-0.5 text-label text-text-subtle">{hint}</p>}
         </div>
       </div>
     </div>

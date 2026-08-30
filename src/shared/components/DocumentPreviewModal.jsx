@@ -68,7 +68,7 @@ export function DocumentPreviewModal({ open, onClose, title, url, downloadFilena
 
         {!chargement && !erreur && blobUrl && (
           <>
-            {estPdf && <embed src={blobUrl} type="application/pdf" className="h-[70vh] w-full rounded-lg border border-slate-200 dark:border-slate-800" />}
+            {estPdf && <embed src={blobUrl} type="application/pdf" className="h-[70vh] w-full rounded-field border border-border" />}
 
             {estImage && (
               <div className="flex flex-col gap-2">
@@ -76,12 +76,12 @@ export function DocumentPreviewModal({ open, onClose, title, url, downloadFilena
                   <Button type="button" variant="secondary" size="sm" onClick={() => setZoom((z) => Math.max(0.5, z - 0.25))} aria-label="Réduire">
                     <ZoomOut size={16} />
                   </Button>
-                  <span className="font-mono text-xs text-slate-500 dark:text-slate-400">{Math.round(zoom * 100)}%</span>
+                  <span className="font-mono text-xs text-text-subtle">{Math.round(zoom * 100)}%</span>
                   <Button type="button" variant="secondary" size="sm" onClick={() => setZoom((z) => Math.min(3, z + 0.25))} aria-label="Agrandir">
                     <ZoomIn size={16} />
                   </Button>
                 </div>
-                <div className="max-h-[65vh] overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-800/50">
+                <div className="max-h-[65vh] overflow-auto rounded-field border border-border bg-surface-sunken p-3">
                   <img
                     src={blobUrl}
                     alt={title}

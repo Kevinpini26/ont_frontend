@@ -149,7 +149,7 @@ export function DfpStagiairesPage() {
           </div>
 
           <div className="mb-4 flex items-center justify-between">
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-sm text-text-subtle">
               {meta ? `${meta.total} résultat${meta.total > 1 ? 's' : ''}` : ''}
             </p>
             <ExportButtons
@@ -193,7 +193,7 @@ export function DfpStagiairesPage() {
                 <tbody className={tbodyClass}>
                   {stagiaires.map((s) => (
                     <tr key={s.id} className={trHoverClass}>
-                      <td className={`${tdClass} whitespace-nowrap font-medium text-slate-900 dark:text-slate-100`}>{s.nom}</td>
+                      <td className={`${tdClass} whitespace-nowrap font-medium text-text`}>{s.nom}</td>
                       <td className={tdClass}>
                         <Badge tone="neutral">{s.type_stage_label}</Badge>
                       </td>

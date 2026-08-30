@@ -80,17 +80,17 @@ export function StagiaireDetailPage() {
       <div className="mb-6 space-y-6">
         <Card>
           <CardHeader title="Informations" />
-          <CardBody className="space-y-2 text-sm text-slate-700 dark:text-slate-300">
+          <CardBody className="space-y-2 text-sm text-text-muted">
             <p>
-              <span className="font-medium text-slate-900 dark:text-slate-100">Type de stage : </span>
+              <span className="font-medium text-text">Type de stage : </span>
               {stagiaire.type_stage_label}
             </p>
             <p>
-              <span className="font-medium text-slate-900 dark:text-slate-100">Contact : </span>
+              <span className="font-medium text-text">Contact : </span>
               {stagiaire.contact}
             </p>
             <p>
-              <span className="font-medium text-slate-900 dark:text-slate-100">Direction d'accueil : </span>
+              <span className="font-medium text-text">Direction d'accueil : </span>
               {stagiaire.direction?.nom ?? '—'}
               {stagiaire.affecte_hors_quota && (
                 <Badge tone="warning" className="ml-2">
@@ -100,12 +100,12 @@ export function StagiaireDetailPage() {
             </p>
             {stagiaire.periode_debut_demandee && (
               <p>
-                <span className="font-medium text-slate-900 dark:text-slate-100">Période souhaitée (indicative) : </span>
+                <span className="font-medium text-text">Période souhaitée (indicative) : </span>
                 {stagiaire.periode_debut_demandee} → {stagiaire.periode_fin_demandee}
               </p>
             )}
             <p>
-              <span className="font-medium text-slate-900 dark:text-slate-100">Stage : </span>
+              <span className="font-medium text-text">Stage : </span>
               {stagiaire.date_debut_stage ?? '—'} → {stagiaire.date_fin_stage ?? '—'}
               {stagiaire.jours_restants !== null && stagiaire.date_fin_stage && ` (${stagiaire.jours_restants} jour(s) restant(s))`}
             </p>
@@ -113,7 +113,7 @@ export function StagiaireDetailPage() {
               <p className="flex items-center gap-2">
                 <BadgeReussite />
                 <span>
-                  <span className="font-medium text-slate-900 dark:text-slate-100">Note finale : </span>
+                  <span className="font-medium text-text">Note finale : </span>
                   {stagiaire.evaluation.note_finale} / 100 (direction : {stagiaire.evaluation.direction.total} · DFP :{' '}
                   {stagiaire.evaluation.dfp.total})
                 </span>

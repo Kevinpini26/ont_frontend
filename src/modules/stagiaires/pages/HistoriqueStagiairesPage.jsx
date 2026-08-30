@@ -131,7 +131,7 @@ export function HistoriqueStagiairesPage() {
                 <tbody className={tbodyClass}>
                   {stagiaires.map((s) => (
                     <tr key={s.id} className={trHoverClass}>
-                      <td className={`${tdClass} whitespace-nowrap font-medium text-slate-900 dark:text-slate-100`}>{s.nom}</td>
+                      <td className={`${tdClass} whitespace-nowrap font-medium text-text`}>{s.nom}</td>
                       <td className={tdClass}>
                         <Badge tone="neutral">{s.type_stage_label}</Badge>
                       </td>

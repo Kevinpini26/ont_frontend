@@ -26,12 +26,12 @@ export function MotDePasseOubliePage() {
   }
 
   return (
-    <div className="flex min-h-svh items-center justify-center bg-slate-100 px-4 dark:bg-slate-950">
-      <div className="w-full max-w-sm rounded-xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+    <div className="flex min-h-svh items-center justify-center bg-surface-sunken px-4">
+      <div className="w-full max-w-sm rounded-card border border-border bg-surface p-8">
         <div className="mb-6 flex flex-col items-center text-center">
           <OntLogo className="mb-3 h-12 w-12" />
-          <h1 className="font-heading text-lg font-semibold text-slate-900 dark:text-slate-50">Mot de passe oublié</h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          <h1 className="font-heading text-lg font-semibold text-text">Mot de passe oublié</h1>
+          <p className="mt-1 text-sm text-text-subtle">
             Indiquez votre adresse e-mail : un lien de réinitialisation vous sera envoyé s'il correspond à un compte.
           </p>
         </div>
@@ -56,7 +56,7 @@ export function MotDePasseOubliePage() {
           </form>
         )}
 
-        <p className="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">
+        <p className="mt-6 text-center text-sm text-text-subtle">
           <a href="/connexion" className="font-medium text-ont-blue-700 hover:underline dark:text-ont-blue-400">
             ← Retour à la connexion
           </a>

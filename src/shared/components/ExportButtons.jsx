@@ -44,6 +44,12 @@ export function ExportButtons({ data, columns, filename = 'export' }) {
     const fenetre = window.open('', '_blank');
     if (!fenetre) return;
 
+    // Hex en dur ci-dessous, à dessein : ce HTML est écrit dans une fenêtre
+    // et un document entièrement séparés (aucune classe Tailwind ni variable
+    // CSS de l'application n'y est chargée) — valeurs alignées sur --border
+    // et --surface-sunken en thème clair (voir index.css), jamais réutilisées
+    // ailleurs dans le code applicatif.
+
     const lignes = data
       .map((row) => `<tr>${columns.map((c) => `<td>${escapeHtml(c.value(row))}</td>`).join('')}</tr>`)
       .join('');
@@ -57,8 +63,8 @@ export function ExportButtons({ data, columns, filename = 'export' }) {
         <style>
           body { font-family: sans-serif; }
           table { width: 100%; border-collapse: collapse; }
-          th, td { border: 1px solid #999; padding: 6px 8px; font-size: 12px; text-align: left; }
-          th { background: #f0f0f0; }
+          th, td { border: 1px solid #e2e8f0; padding: 6px 8px; font-size: 12px; text-align: left; }
+          th { background: #f1f5f9; }
         </style>
       </head>
       <body>

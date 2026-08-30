@@ -62,7 +62,7 @@ export function PresencesApercuPage() {
                     const regulariteFaible = suggestion && suggestion.regularite < 3;
                     return (
                       <tr key={s.id} className={trHoverClass}>
-                        <td className={`${tdClass} whitespace-nowrap font-medium text-slate-900 dark:text-slate-100`}>{s.nom}</td>
+                        <td className={`${tdClass} whitespace-nowrap font-medium text-text`}>{s.nom}</td>
                         <td className={tdClass}>{s.direction?.code ?? '—'}</td>
                         <td className={tdClass}>
                           {suggestion ? (
@@ -72,7 +72,7 @@ export function PresencesApercuPage() {
                           )}
                         </td>
                         <td className={tdClass}>{suggestion ? `${suggestion.ponctualite} / 5` : '—'}</td>
-                        <td className={`${tdClass} max-w-[20rem] truncate text-xs text-slate-500 dark:text-slate-400`} title={suggestion?.detail}>
+                        <td className={`${tdClass} max-w-[20rem] truncate text-xs text-text-subtle`} title={suggestion?.detail}>
                           {suggestion?.detail ?? '—'}
                         </td>
                         <td className={tdClass}>

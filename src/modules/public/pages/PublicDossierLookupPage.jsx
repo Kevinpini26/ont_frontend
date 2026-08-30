@@ -39,10 +39,10 @@ export function PublicDossierLookupPage() {
 
   return (
     <div className="mx-auto max-w-md px-4 py-16 sm:px-6 lg:px-8">
-      <div className="rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
+      <div className="rounded-card border border-border bg-surface p-8 shadow-sm">
         <div className="mb-6 text-center">
-          <h1 className="font-heading text-lg font-semibold text-slate-900">Suivi de dossier</h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <h1 className="font-heading text-lg font-semibold text-text">Suivi de dossier</h1>
+          <p className="mt-1 text-sm text-text-subtle">
             Renseignez le numéro d'accusé de réception remis lors du dépôt de votre courrier, ainsi que le nom indiqué
             à cette occasion.
           </p>
@@ -77,16 +77,16 @@ export function PublicDossierLookupPage() {
         {erreur && <Alert tone="error" className="mt-4">{erreur}</Alert>}
 
         {dossier && (
-          <div className="mt-6 rounded-lg border border-slate-200 p-4">
-            <h3 className="font-heading text-sm font-semibold text-slate-900">{dossier.objet}</h3>
+          <div className="mt-6 rounded-field border border-border p-4">
+            <h3 className="font-heading text-sm font-semibold text-text">{dossier.objet}</h3>
             <div className="mt-2">
               <Badge tone={TONE_STATUT_SIMPLIFIE[dossier.statut_simplifie] ?? 'info'}>{dossier.statut_simplifie}</Badge>
             </div>
-            <p className="mt-2 text-xs text-slate-500">Reçu le {dossier.date_reception}</p>
+            <p className="mt-2 text-xs text-text-subtle">Reçu le {dossier.date_reception}</p>
           </div>
         )}
 
-        <div className="mt-6 space-y-2 text-center text-sm text-slate-500">
+        <div className="mt-6 space-y-2 text-center text-sm text-text-subtle">
           <p>
             <a href="/demande-de-stage" className="font-medium text-ont-blue-700 hover:underline">
               Déposer une demande de stage →

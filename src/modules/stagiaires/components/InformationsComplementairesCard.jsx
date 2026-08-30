@@ -70,10 +70,10 @@ export function InformationsComplementairesCard({ stagiaire, user, executer }) {
             </Button>
           </form>
         ) : renseignes.length > 0 ? (
-          <dl className="space-y-1 text-sm text-slate-700 dark:text-slate-300">
+          <dl className="space-y-1 text-sm text-text-muted">
             {renseignes.map(({ cle, label }) => (
               <div key={cle}>
-                <span className="font-medium text-slate-900 dark:text-slate-100">{label} : </span>
+                <span className="font-medium text-text">{label} : </span>
                 {stagiaire[cle]}
               </div>
             ))}

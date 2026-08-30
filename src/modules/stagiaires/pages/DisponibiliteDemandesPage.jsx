@@ -53,10 +53,10 @@ export function DisponibiliteDemandesPage() {
                 return (
                   <div
                     key={cle}
-                    className="flex items-center justify-between rounded-lg border border-slate-200 px-4 py-3 dark:border-slate-800"
+                    className="flex items-center justify-between rounded-field border border-border px-4 py-3"
                   >
                     <div className="flex items-center gap-3">
-                      <span className="text-sm font-medium text-slate-900 dark:text-slate-100">{libelle}</span>
+                      <span className="text-sm font-medium text-text">{libelle}</span>
                       <Badge tone={ouvert ? 'success' : 'warning'}>{ouvert ? 'Ouvert' : 'Fermé'}</Badge>
                     </div>
                     <Button

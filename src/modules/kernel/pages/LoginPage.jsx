@@ -43,15 +43,15 @@ export function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-svh items-center justify-center bg-slate-100 px-4 dark:bg-slate-950">
+    <div className="flex min-h-svh items-center justify-center bg-surface-sunken px-4">
       <form
         onSubmit={soumettre}
-        className="w-full max-w-sm rounded-xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+        className="w-full max-w-sm rounded-card border border-border bg-surface p-8"
       >
         <div className="mb-6 flex flex-col items-center text-center">
           <OntLogo className="mb-3 h-12 w-12" />
-          <h1 className="font-heading text-lg font-semibold text-slate-900 dark:text-slate-50">Office National du Tourisme</h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Système d'information — Connexion</p>
+          <h1 className="font-heading text-lg font-semibold text-text">Office National du Tourisme</h1>
+          <p className="mt-1 text-sm text-text-subtle">Système d'information — Connexion</p>
         </div>
 
         {erreur && <Alert tone="error" className="mb-4">{erreur}</Alert>}
@@ -84,7 +84,7 @@ export function LoginPage() {
           </Button>
         </div>
 
-        <p className="mt-5 space-y-1 text-center text-sm text-slate-500 dark:text-slate-400">
+        <p className="mt-5 space-y-1 text-center text-sm text-text-subtle">
           <a href="/mot-de-passe-oublie" className="block font-medium text-ont-blue-700 hover:underline dark:text-ont-blue-400">
             Mot de passe oublié ?
           </a>

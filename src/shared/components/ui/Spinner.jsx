@@ -16,7 +16,7 @@ export function Spinner({ className = '' }) {
 
 export function LoadingBlock({ label = 'Chargement…' }) {
   return (
-    <div className="flex items-center justify-center gap-2 py-12 text-sm text-slate-500 dark:text-slate-400">
+    <div className="flex items-center justify-center gap-2 py-12 text-sm text-text-subtle">
       <Spinner />
       {label}
     </div>

@@ -103,7 +103,7 @@ export function DirectionStagiairesPage() {
             </Field>
           </div>
 
-          <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
+          <p className="mb-4 text-sm text-text-subtle">
             {meta ? `${meta.total} résultat${meta.total > 1 ? 's' : ''}` : ''}
           </p>
 
@@ -127,7 +127,7 @@ export function DirectionStagiairesPage() {
                 <tbody className={tbodyClass}>
                   {stagiaires.map((s) => (
                     <tr key={s.id} className={trHoverClass}>
-                      <td className={`${tdClass} whitespace-nowrap font-medium text-slate-900 dark:text-slate-100`}>{s.nom}</td>
+                      <td className={`${tdClass} whitespace-nowrap font-medium text-text`}>{s.nom}</td>
                       <td className={`${tdClass} max-w-[14rem] truncate`} title={s.etablissement_origine}>{s.etablissement_origine}</td>
                       <td className={tdClass}>
                         <Badge tone="info">{s.statut_label}</Badge>

@@ -8,7 +8,7 @@ import { useSidebarCounts } from '../hooks/useSidebarCounts';
 import { useFocusTrap } from '../hooks/useFocusTrap';
 
 const BADGE_TONES = {
-  danger: 'bg-rose-500 text-white',
+  danger: 'bg-ont-red-500 text-white',
   warning: 'bg-ont-gold-500 text-white',
 };
 
@@ -61,7 +61,7 @@ export function Sidebar({ user, onLogout, mobileOpen, onCloseMobile }) {
                     to={item.to}
                     onClick={onCloseMobile}
                     className={({ isActive }) =>
-                      `flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                      `flex items-center gap-2.5 rounded-field px-3 py-2 text-sm font-medium transition-colors ${
                         isActive
                           ? 'bg-ont-blue-700 text-white'
                           : 'text-ont-blue-100 hover:bg-ont-blue-900 hover:text-white'
@@ -88,7 +88,7 @@ export function Sidebar({ user, onLogout, mobileOpen, onCloseMobile }) {
         <button
           type="button"
           onClick={onLogout}
-          className="mt-3 flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-ont-blue-100 hover:bg-ont-blue-900 hover:text-white"
+          className="mt-3 flex w-full items-center gap-2 rounded-field px-3 py-2 text-sm font-medium text-ont-blue-100 hover:bg-ont-blue-900 hover:text-white"
         >
           <LogOut size={20} />
           Déconnexion
@@ -115,7 +115,7 @@ export function Sidebar({ user, onLogout, mobileOpen, onCloseMobile }) {
             role="dialog"
             aria-modal="true"
             aria-label="Menu de navigation"
-            className="absolute inset-y-0 left-0 w-64 bg-ont-blue-950 shadow-xl"
+            className="absolute inset-y-0 left-0 w-64 bg-ont-blue-950 shadow-raised"
           >
             {contenu}
           </aside>

@@ -93,10 +93,10 @@ export function GrilleEvaluationForm({ valeurs, onChange, suggestionAssiduite, r
   return (
     <div className="space-y-5">
       {SECTIONS_GRILLE.map((section) => (
-        <div key={section.cle} className="rounded-lg border border-slate-200 dark:border-slate-800">
-          <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-4 py-2.5 dark:border-slate-800 dark:bg-slate-800/60">
-            <h4 className="font-heading text-sm font-semibold text-slate-900 dark:text-slate-100">{section.titre}</h4>
-            <span className="font-mono text-xs font-semibold text-slate-600 dark:text-slate-300">
+        <div key={section.cle} className="rounded-lg border border-border">
+          <div className="flex items-center justify-between border-b border-border bg-surface-sunken px-4 py-2.5">
+            <h4 className="font-heading text-sm font-semibold text-text">{section.titre}</h4>
+            <span className="font-mono text-xs font-semibold text-text-muted">
               {sousTotal(section, valeurs)} / {section.bareme}
             </span>
           </div>
@@ -105,8 +105,8 @@ export function GrilleEvaluationForm({ valeurs, onChange, suggestionAssiduite, r
               <div key={champ.cle}>
                 {readOnly ? (
                   <p className="text-sm">
-                    <span className="text-slate-500 dark:text-slate-400">{champ.label} : </span>
-                    <span className="font-medium text-slate-900 dark:text-slate-100">
+                    <span className="text-text-subtle">{champ.label} : </span>
+                    <span className="font-medium text-text">
                       {valeurs[section.cle]?.[champ.cle] ?? '—'} / {champ.max}
                     </span>
                   </p>
@@ -124,7 +124,7 @@ export function GrilleEvaluationForm({ valeurs, onChange, suggestionAssiduite, r
                       required
                     />
                     {champ.suggestion && suggestionAssiduite && (
-                      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                      <p className="mt-1 text-xs text-text-subtle">
                         Suggestion d'après les présences : {suggestionAssiduite[champ.suggestion]} / 5 ({suggestionAssiduite.detail})
                       </p>
                     )}
@@ -135,7 +135,7 @@ export function GrilleEvaluationForm({ valeurs, onChange, suggestionAssiduite, r
             <div className="sm:col-span-2">
               {readOnly ? (
                 valeurs[section.cle]?.justification && (
-                  <p className="text-sm italic text-slate-600 dark:text-slate-300">
+                  <p className="text-sm italic text-text-muted">
                     « {valeurs[section.cle].justification} »
                   </p>
                 )

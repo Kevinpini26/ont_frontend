@@ -10,7 +10,7 @@ import { PublicFooter } from './PublicFooter';
  */
 export function PublicLayout() {
   return (
-    <div className="flex min-h-svh flex-col bg-white">
+    <div className="flex min-h-svh flex-col bg-surface">
       <PublicNavbar />
       <main className="flex-1 pt-20">
         <Outlet />

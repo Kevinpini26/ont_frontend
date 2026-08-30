@@ -40,8 +40,8 @@ function Pilier({ pilier }) {
         <Icone size={22} />
       </div>
       <div>
-        <h3 className="mb-1.5 font-heading text-base font-semibold text-slate-900">{pilier.titre}</h3>
-        <p className="text-sm leading-relaxed text-slate-500">{pilier.texte}</p>
+        <h3 className="mb-1.5 font-heading text-base font-semibold text-text">{pilier.titre}</h3>
+        <p className="text-sm leading-relaxed text-text-subtle">{pilier.texte}</p>
       </div>
     </div>
   );
@@ -56,10 +56,10 @@ export function AboutPage() {
       <div ref={hero.ref} className={`mb-16 grid grid-cols-1 items-center gap-10 lg:grid-cols-2 ${hero.className}`}>
         <div>
           <p className="mb-3 text-sm font-semibold tracking-wide text-ont-gold-600 uppercase">À propos</p>
-          <h1 className="mb-5 font-heading text-3xl font-bold text-slate-900 sm:text-4xl">
+          <h1 className="mb-5 font-heading text-3xl font-bold text-text sm:text-4xl">
             L'Office National du Tourisme de la RDC
           </h1>
-          <p className="text-base leading-relaxed text-slate-600">
+          <p className="text-base leading-relaxed text-text-muted">
             Ce portail est l'outil de gestion administrative interne de l'Office : il centralise le circuit du courrier et le suivi
             des stagiaires accueillis par ses différentes directions. Il ne remplace pas le site institutionnel de l'Office, dédié à
             la promotion touristique de la RDC.
@@ -78,10 +78,10 @@ export function AboutPage() {
 
       <div
         ref={contact.ref}
-        className={`rounded-xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 ${contact.className}`}
+        className={`rounded-card border border-border bg-surface p-6 shadow-card sm:p-8 ${contact.className}`}
       >
-        <h2 className="mb-4 font-heading text-lg font-semibold text-slate-900">Nous contacter</h2>
-        <ul className="grid grid-cols-1 gap-3 text-sm text-slate-600 sm:grid-cols-2">
+        <h2 className="mb-4 font-heading text-lg font-semibold text-text">Nous contacter</h2>
+        <ul className="grid grid-cols-1 gap-3 text-sm text-text-muted sm:grid-cols-2">
           {COORDONNEES.map(({ icone: Icone, texte, href }) => (
             <li key={texte} className="flex items-start gap-2.5">
               <Icone size={18} className="mt-0.5 shrink-0 text-ont-blue-600" />

@@ -25,7 +25,7 @@ export function RetourExperienceCard({ stagiaireId }) {
         ) : absent || !retour ? (
           <EmptyState title="Aucun retour soumis pour le moment" description="Le lien envoyé au stagiaire est à usage unique." />
         ) : (
-          <div className="space-y-2 text-sm text-slate-700 dark:text-slate-300">
+          <div className="space-y-2 text-sm text-text-muted">
             <p>Encadrement : <strong>{retour.note_encadrement} / 5</strong></p>
             <p>Missions confiées : <strong>{retour.note_missions} / 5</strong></p>
             <p>Ambiance : <strong>{retour.note_ambiance} / 5</strong></p>

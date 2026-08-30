@@ -204,12 +204,12 @@ export function AdminDirectionsPage() {
                 <tbody className={tbodyClass}>
                   {directionsFiltrees.map((d) => (
                     <tr key={d.id} className={trHoverClass}>
-                      <td className={`${tdClass} font-medium text-slate-900 dark:text-slate-100`}>{d.code}</td>
+                      <td className={`${tdClass} font-medium text-text`}>{d.code}</td>
                       <td className={`${tdClass} max-w-[16rem] truncate`} title={d.nom}>{d.nom}</td>
                       <td className={tdClass}>
                         <Badge tone={d.actif ? 'success' : 'neutral'}>{d.actif ? 'Active' : 'Inactive'}</Badge>
                       </td>
-                      <td className={tdClass}>{d.capacite_max ?? <span className="text-slate-400">Illimitée</span>}</td>
+                      <td className={tdClass}>{d.capacite_max ?? <span className="text-text-subtle">Illimitée</span>}</td>
                       <td className={tdClass}>
                         <div className="flex gap-2">
                           <Button type="button" variant="secondary" size="sm" onClick={() => commencerEdition(d)}>
