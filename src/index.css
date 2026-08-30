@@ -203,9 +203,11 @@ textarea {
   @apply bg-transparent;
 }
 
-/* Pulsation subtile (opacité/échelle légères) des badges de notification de
-   la sidebar tant que leur valeur est > 0 — attire l'œil sans distraire,
-   voir Sidebar.jsx::BadgeCompteur. */
+/* Pulsation subtile (opacité/échelle légères) des badges de compteur de la
+   sidebar — seulement 3 battements, rejoués en remontant le composant sur un
+   changement de "key" (voir Sidebar.jsx::BadgeCompteur), jamais en continu :
+   une pulsation infinie fatigue l'œil sans plus attirer l'attention passé
+   les premières secondes. */
 @keyframes pulse-badge {
   0%,
   100% {
@@ -219,7 +221,42 @@ textarea {
 }
 
 .animate-pulse-badge {
-  animation: pulse-badge 2s ease-in-out infinite;
+  animation: pulse-badge 2s ease-in-out 3;
+}
+
+/* Transition d'entrée au changement de route (voir RouteTransition.jsx) —
+   désactivée sous prefers-reduced-motion : la page apparaît directement,
+   sans temps de latence artificiel. */
+@keyframes entree-page {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-entree-page {
+  animation: entree-page 180ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-entree-page {
+    animation: none;
+  }
+
+  /* Filet de sécurité global : tout ce qui reste (rail actif de la sidebar,
+     repliage, survols) passe en transition quasi instantanée plutôt que
+     d'être traqué composant par composant. */
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
 }
 
 /* N'imprimer qu'un élément précis (ex. le tableau récapitulatif d'évaluation) :

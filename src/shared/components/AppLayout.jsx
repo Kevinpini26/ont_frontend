@@ -1,23 +1,67 @@
-import { useState } from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
-import { Menu } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Link, Outlet, useNavigate } from 'react-router-dom';
+import { ChevronRight, Menu, Search } from 'lucide-react';
 import { useAuthStore } from '../../modules/kernel/store/authStore';
 import { useSessionExpiryWatcher } from '../hooks/useSessionExpiryWatcher';
+import { usePageTitle } from '../hooks/usePageTitle';
+import { accueilDeSection } from '../navigation';
 import { NotificationsBell } from './NotificationsBell';
 import { Sidebar } from './Sidebar';
 import { ThemeSelector } from './ThemeSelector';
+import { UserMenu } from './UserMenu';
+import { CommandPalette } from './CommandPalette';
+import { RouteTransition } from './RouteTransition';
+
+function FilDAriane({ user }) {
+  const { section, label } = usePageTitle(user);
+  const accueilSection = section ? accueilDeSection(section, user) : null;
+
+  if (!label) return null;
+
+  return (
+    <div className="hidden min-w-0 items-center gap-1.5 text-sm md:flex">
+      {section && (
+        <>
+          {accueilSection ? (
+            <Link to={accueilSection} className="shrink-0 text-text-subtle hover:text-text">
+              {section}
+            </Link>
+          ) : (
+            <span className="shrink-0 text-text-subtle">{section}</span>
+          )}
+          <ChevronRight size={14} className="shrink-0 text-text-subtle" />
+        </>
+      )}
+      <span aria-current="page" className="truncate font-medium text-text">
+        {label}
+      </span>
+    </div>
+  );
+}
 
 export function AppLayout() {
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [rechercheOuverte, setRechercheOuverte] = useState(false);
   const sessionExpireBientot = useSessionExpiryWatcher();
 
   function seDeconnecter() {
     logout();
     navigate('/connexion');
   }
+
+  useEffect(() => {
+    function surRaccourci(e) {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setRechercheOuverte(true);
+      }
+    }
+    document.addEventListener('keydown', surRaccourci);
+    return () => document.removeEventListener('keydown', surRaccourci);
+  }, []);
 
   if (!user) return <Outlet />;
 
@@ -38,25 +82,54 @@ export function AppLayout() {
           </div>
         )}
 
-        <header className="sticky top-0 z-10 flex h-14 items-center justify-between border-b border-border bg-surface/90 px-4 backdrop-blur lg:justify-end">
+        {/* Pas de flou d'arrière-plan (contrairement à la maquette de départ) :
+            une bordure basse nette suffit à détacher la barre du contenu qui
+            défile dessous. */}
+        <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b border-border bg-surface px-4">
           <button
             type="button"
             onClick={() => setMobileOpen(true)}
-            className="flex h-9 w-9 items-center justify-center rounded-field text-text-muted hover:bg-surface-sunken lg:hidden"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-field text-text-muted hover:bg-surface-sunken lg:hidden"
             aria-label="Ouvrir le menu"
           >
             <Menu size={20} />
           </button>
-          <div className="flex items-center gap-3">
+
+          <FilDAriane user={user} />
+
+          <button
+            type="button"
+            onClick={() => setRechercheOuverte(true)}
+            className="mx-auto flex w-full max-w-sm items-center gap-2 rounded-field border border-border bg-surface-sunken px-3 py-1.5 text-sm text-text-subtle hover:border-border-strong"
+          >
+            <Search size={15} className="shrink-0" />
+            <span className="flex-1 text-left">Rechercher…</span>
+            <kbd className="hidden shrink-0 rounded border border-border bg-surface px-1.5 py-0.5 text-[11px] sm:block">Ctrl K</kbd>
+          </button>
+
+          <div className="flex shrink-0 items-center gap-3">
             <ThemeSelector />
             <NotificationsBell />
+            <UserMenu
+              user={user}
+              onLogout={seDeconnecter}
+              trigger={
+                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-ont-blue-700 text-sm font-semibold text-white">
+                  {user.name.charAt(0).toUpperCase()}
+                </span>
+              }
+            />
           </div>
         </header>
 
-        <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
-          <Outlet />
+        <main className="mx-auto w-full max-w-[1440px] flex-1 px-4 py-6 sm:px-6 lg:px-8">
+          <RouteTransition>
+            <Outlet />
+          </RouteTransition>
         </main>
       </div>
+
+      <CommandPalette open={rechercheOuverte} onClose={() => setRechercheOuverte(false)} />
     </div>
   );
 }

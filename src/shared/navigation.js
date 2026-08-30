@@ -84,3 +84,47 @@ export function navigationForUser(user) {
 
   return [];
 }
+
+/**
+ * Pages qui n'apparaissent pas dans navigationForUser (fiches de détail,
+ * comptes) mais doivent quand même porter un titre lisible dans l'en-tête
+ * et être trouvables depuis la palette de commandes.
+ */
+const PAGES_HORS_NAVIGATION = [
+  { label: 'Changer le mot de passe', to: '/changer-mot-de-passe' },
+];
+
+/**
+ * Fil d'Ariane (section + libellé de la page) et liste aplatie des pages
+ * pour la palette de commandes — dérivés de navigationForUser, jamais
+ * dupliqués : une page ajoutée à la sidebar apparaît automatiquement aux
+ * deux endroits.
+ */
+export function pagesPourUtilisateur(user) {
+  const pages = navigationForUser(user).flatMap((section) =>
+    section.items.map((item) => ({ section: section.title, label: item.label, to: item.to, icon: item.icon })),
+  );
+
+  return [...pages, ...PAGES_HORS_NAVIGATION.map((p) => ({ section: null, ...p }))];
+}
+
+/**
+ * Résout la page courante (section + libellé) à partir du chemin exact —
+ * suffit ici : les chemins de navigationForUser sont déjà résolus par
+ * utilisateur (ex. /circuit/${user.poste}), aucun paramètre à faire
+ * correspondre. Les fiches de détail (ex. /courriers/:id) ne sont pas dans
+ * cette liste ; l'appelant fournit alors son propre titre.
+ */
+export function pageCourante(pathname, user) {
+  return pagesPourUtilisateur(user).find((p) => p.to === pathname) ?? null;
+}
+
+/**
+ * Route de la première page d'une section — sert de cible au segment de
+ * section du fil d'Ariane (voir AppLayout) : une section n'a pas de route
+ * propre, seulement des pages, on retombe donc sur la première.
+ */
+export function accueilDeSection(titreSection, user) {
+  const section = navigationForUser(user).find((s) => s.title === titreSection);
+  return section?.items[0]?.to ?? null;
+}
