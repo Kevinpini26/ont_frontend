@@ -10,7 +10,6 @@ import {
 import { listDirections } from '../../kernel/api/directionsApi';
 import { GrilleEvaluationForm, SECTIONS_GRILLE, grilleVide } from './GrilleEvaluationForm';
 import { GrilleEvaluationProfessionnelleForm, SECTIONS_GRILLE_PRO, grilleProVide } from './GrilleEvaluationProfessionnelleForm';
-import { BadgeReussite } from './BadgeReussite';
 import { TableauResultatEvaluation } from './TableauResultatEvaluation';
 import { Card, CardBody, CardHeader } from '../../../shared/components/ui/Card';
 import { Button } from '../../../shared/components/ui/Button';
@@ -311,21 +310,18 @@ export function ActionsDfp({ stagiaire, executer }) {
             title="Résultat de l'évaluation"
             description="Détail complet des deux évaluations — visible par la DFP uniquement, imprimable pour retranscription sur la fiche physique."
             action={
-              <div className="flex items-center gap-2">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => {
-                    document.getElementById('zone-impression-evaluation')?.classList.add('zone-impression');
-                    window.print();
-                    document.getElementById('zone-impression-evaluation')?.classList.remove('zone-impression');
-                  }}
-                >
-                  Imprimer
-                </Button>
-                <BadgeReussite />
-              </div>
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  document.getElementById('zone-impression-evaluation')?.classList.add('zone-impression');
+                  window.print();
+                  document.getElementById('zone-impression-evaluation')?.classList.remove('zone-impression');
+                }}
+              >
+                Imprimer
+              </Button>
             }
           />
           <CardBody>

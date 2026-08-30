@@ -8,9 +8,18 @@ import { Alert } from '../../../shared/components/ui/Alert';
 
 // Mêmes références horaires que AssiduiteCalculateur::HEURE_ARRIVEE_REFERENCE
 // / HEURE_DEPART_REFERENCE côté backend — un premier clic sur un jour vide
-// crée une présence "à l'heure" par défaut.
+// crée une présence "à l'heure" par défaut, et la même référence distingue
+// ici un jour "présent" (à l'heure) d'un jour "partiel" (pointé, mais en
+// écart d'arrivée ou de départ).
 const HEURE_ARRIVEE_DEFAUT = '08:30';
 const HEURE_DEPART_DEFAUT = '15:30';
+
+function estALHeure(presence) {
+  if (!presence?.heure_arrivee) return false;
+  const arriveeOk = presence.heure_arrivee.slice(0, 5) <= HEURE_ARRIVEE_DEFAUT;
+  const departOk = !presence.heure_depart || presence.heure_depart.slice(0, 5) >= HEURE_DEPART_DEFAUT;
+  return arriveeOk && departOk;
+}
 
 /**
  * Calendrier mensuel de présence, sur la fiche du stagiaire. Remplace la
@@ -40,8 +49,6 @@ export function CalendrierPresences({ stagiaire, presences, onChange }) {
     for (const p of presences) map[p.date] = p;
     return map;
   }, [presences]);
-
-  const regulariteFaible = stagiaire.assiduite_suggestion && stagiaire.assiduite_suggestion.regularite < 3;
 
   const jours = useMemo(() => joursDuMois(moisAffiche), [moisAffiche]);
   const decalageDebut = (jours[0].jourSemaine + 6) % 7; // grille commençant le lundi
@@ -143,9 +150,10 @@ export function CalendrierPresences({ stagiaire, presences, onChange }) {
           </Button>
         </div>
         <div className="flex flex-wrap items-center gap-3 text-xs text-text-subtle">
-          <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-ont-green-500" /> Présent</span>
-          <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-ont-red-500" /> Absent</span>
-          <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-border-strong" /> Week-end / hors période</span>
+          <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-ont-green-300" /> Présent</span>
+          <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-ont-gold-300" /> Partiel</span>
+          <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-ont-red-500/40" /> Absent</span>
+          <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-border-strong" /> Non saisi</span>
         </div>
       </div>
 
@@ -164,20 +172,25 @@ export function CalendrierPresences({ stagiaire, presences, onChange }) {
           const weekend = jourSemaine === 0 || jourSemaine === 6;
           const futur = jour > aujourdHui;
           const horsPeriode = (debutStage && jour < debutStage) || (finStage && jour > finStage);
-          const coche = Boolean(presencesParDate[jour]);
+          const presence = presencesParDate[jour];
+          const coche = Boolean(presence);
           const actionnable = !weekend && !futur && !horsPeriode;
-          const absentSignale = actionnable && !coche && regulariteFaible;
+          // Un jour ouvré passé, dans la période, sans pointage est une
+          // absence de fait — pas une simple case neutre — dès qu'il est
+          // révolu, pas seulement quand une moyenne globale est mauvaise.
+          const absent = actionnable && !coche;
+          const partiel = coche && !estALHeure(presence);
           const numeroJour = Number(jour.slice(8, 10));
 
           let classes = 'flex h-10 items-center justify-center rounded-md text-sm transition-colors';
-          if (weekend || horsPeriode) {
+          if (weekend || horsPeriode || futur) {
             classes += ' bg-surface-sunken text-text-subtle';
-          } else if (futur) {
-            classes += ' text-text-subtle';
-          } else if (coche) {
-            classes += ' cursor-pointer bg-ont-green-100 font-semibold text-ont-green-800 hover:bg-ont-green-200 dark:bg-ont-green-900/40 dark:text-ont-green-300';
-          } else if (absentSignale) {
-            classes += ' cursor-pointer bg-ont-red-500/10 font-semibold text-ont-red-700 hover:bg-ont-red-500/20 dark:text-ont-red-300';
+          } else if (coche && !partiel) {
+            classes += ' cursor-pointer bg-ont-green-300 font-semibold text-ont-green-900 hover:brightness-95';
+          } else if (partiel) {
+            classes += ' cursor-pointer bg-ont-gold-300 font-semibold text-ont-gold-900 hover:brightness-95';
+          } else if (absent) {
+            classes += ' cursor-pointer bg-ont-red-500/40 font-semibold text-ont-red-900 hover:bg-ont-red-500/55 dark:text-ont-red-100';
           } else {
             classes += ' cursor-pointer bg-surface-sunken text-text-muted hover:bg-border';
           }
@@ -186,7 +199,14 @@ export function CalendrierPresences({ stagiaire, presences, onChange }) {
           }
 
           const raisonInactionnable = weekend ? 'week-end' : futur ? 'à venir' : horsPeriode ? 'hors période de stage' : null;
-          const libelleJour = `${jour}${coche ? ', présent' : absentSignale ? ', absent' : ''}${raisonInactionnable ? `, ${raisonInactionnable}` : ''}`;
+          const libelleJour = `${jour}${coche ? (partiel ? ', présent (partiel)' : ', présent') : absent ? ', absent' : ''}${
+            raisonInactionnable ? `, ${raisonInactionnable}` : ''
+          }`;
+          const infoBulle = coche
+            ? `Arrivée ${presence.heure_arrivee?.slice(0, 5) ?? '—'} · Départ ${presence.heure_depart?.slice(0, 5) ?? '—'}`
+            : actionnable
+              ? 'Cliquer pour marquer présent'
+              : undefined;
 
           return (
             <button
@@ -197,13 +217,15 @@ export function CalendrierPresences({ stagiaire, presences, onChange }) {
               className={classes}
               aria-label={libelleJour}
               aria-pressed={actionnable ? coche : undefined}
-              title={coche ? `Présent — cliquer pour ajuster` : actionnable ? 'Cliquer pour marquer présent' : undefined}
+              title={infoBulle}
             >
               {numeroJour}
             </button>
           );
         })}
       </div>
+
+      <TauxAssiduiteMois jours={jours} presencesParDate={presencesParDate} aujourdHui={aujourdHui} debutStage={debutStage} finStage={finStage} />
 
       {jourSelectionne && (
         <div className="mt-5 rounded-field border border-border bg-surface-sunken p-4">
@@ -245,5 +267,38 @@ export function CalendrierPresences({ stagiaire, presences, onChange }) {
         </div>
       )}
     </div>
+  );
+}
+
+/**
+ * Taux d'assiduité du mois affiché : jours pointés / jours ouvrés déjà
+ * révolus dans ce mois (bornés par la période du stage et aujourd'hui) —
+ * pas les jours ouvrés du mois entier, un mois en cours ne peut pas être
+ * jugé sur des jours qui n'ont pas encore eu lieu.
+ */
+function TauxAssiduiteMois({ jours, presencesParDate, aujourdHui, debutStage, finStage }) {
+  let joursActionnables = 0;
+  let joursPointes = 0;
+
+  for (const { dateStr: jour, jourSemaine } of jours) {
+    const weekend = jourSemaine === 0 || jourSemaine === 6;
+    const futur = jour > aujourdHui;
+    const horsPeriode = (debutStage && jour < debutStage) || (finStage && jour > finStage);
+    if (weekend || futur || horsPeriode) continue;
+    joursActionnables++;
+    if (presencesParDate[jour]) joursPointes++;
+  }
+
+  if (joursActionnables === 0) return null;
+
+  const taux = Math.round((joursPointes / joursActionnables) * 100);
+
+  return (
+    <p className="mt-4 border-t border-border pt-3 text-sm text-text-muted">
+      Assiduité du mois : <span className="text-base font-semibold text-text">{taux} %</span>{' '}
+      <span className="text-text-subtle">
+        ({joursPointes} / {joursActionnables} jour(s) ouvré(s) pointé(s))
+      </span>
+    </p>
   );
 }

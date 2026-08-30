@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Eye } from 'lucide-react';
 import {
@@ -90,6 +90,7 @@ export function CourrierDetailPage() {
         necessiteAvisDg={courrier.necessite_avis_dg}
         initieParDg={courrier.initie_par_dg}
         validationDgRequise={courrier.validation_dg_requise}
+        transitions={courrier.transitions}
       />
 
       <div className="mb-6">

@@ -1,5 +1,6 @@
 import { Fragment } from 'react';
 import { TableWrap, tableClass, theadClass, thClass, tbodyClass, tdClass } from '../../../shared/components/ui/Table';
+import { BadgeReussite } from './BadgeReussite';
 
 function moyenne(a, b) {
   return Math.round(((a + b) / 2) * 10) / 10;
@@ -75,19 +76,22 @@ export function TableauResultatEvaluation({ sections, grilleDirection, grilleDfp
                 </Fragment>
               );
             })}
-            <tr className="bg-ont-gold-50 font-bold dark:bg-ont-gold-900/20">
+            <tr className="bg-ont-blue-50 font-bold dark:bg-ont-blue-950/60">
               <td className={tdClass}>Total général</td>
               <td className={`${tdClass} text-right font-mono`}>{totalDirection} / 100</td>
               <td className={`${tdClass} text-right font-mono`}>{totalDfp} / 100</td>
-              <td className={`${tdClass} text-right font-mono text-ont-gold-800 dark:text-ont-gold-300`}>{noteFinale} / 100</td>
+              <td className={`${tdClass} text-right font-mono text-ont-blue-800 dark:text-ont-blue-300`}>{noteFinale} / 100</td>
             </tr>
           </tbody>
         </table>
       </TableWrap>
 
-      <div className="flex items-center justify-between rounded-lg bg-ont-gold-50 px-5 py-4 dark:bg-ont-gold-900/20">
-        <span className="font-heading text-base font-semibold text-ont-gold-800 dark:text-ont-gold-300">Moyenne finale</span>
-        <span className="font-mono text-2xl font-bold text-ont-gold-800 dark:text-ont-gold-300">{noteFinale} / 100</span>
+      <div className="flex items-center justify-between gap-4 rounded-lg bg-ont-blue-50 px-5 py-4 dark:bg-ont-blue-950/60">
+        <div>
+          <span className="font-heading text-base font-semibold text-ont-blue-800 dark:text-ont-blue-300">Moyenne finale</span>
+          <p className="font-mono text-2xl font-bold text-ont-blue-800 dark:text-ont-blue-300">{noteFinale} / 100</p>
+        </div>
+        <BadgeReussite noteFinale={noteFinale} className="h-28 w-28 shrink-0" />
       </div>
     </div>
   );

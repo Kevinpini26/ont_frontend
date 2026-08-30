@@ -91,62 +91,47 @@ export function GrilleEvaluationForm({ valeurs, onChange, suggestionAssiduite, r
   }
 
   return (
-    <div className="space-y-5">
+    // max-h + overflow-y-auto : un conteneur de défilement propre à cette
+    // grille, pour que "sticky bottom-0" sur le total général le colle
+    // réellement au bas de CETTE zone pendant la saisie (un sticky au bout
+    // d'un fragment de page normale n'a rien à dépasser, donc rien à coller).
+    <div className="max-h-[65vh] overflow-y-auto rounded-lg border border-border">
       {SECTIONS_GRILLE.map((section) => (
-        <div key={section.cle} className="rounded-lg border border-border">
-          <div className="flex items-center justify-between border-b border-border bg-surface-sunken px-4 py-2.5">
+        <div key={section.cle} className="border-b border-border last:border-b-0">
+          <div className="flex items-center justify-between bg-surface-sunken px-4 py-2.5">
             <h4 className="font-heading text-sm font-semibold text-text">{section.titre}</h4>
-            <span className="font-mono text-xs font-semibold text-text-muted">
+            <span className="font-mono text-xs font-semibold tabular-nums text-text-muted">
               {sousTotal(section, valeurs)} / {section.bareme}
             </span>
           </div>
-          <div className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2">
+          <div className="divide-y divide-border">
             {section.champs.map((champ) => (
-              <div key={champ.cle}>
-                {readOnly ? (
-                  <p className="text-sm">
-                    <span className="text-text-subtle">{champ.label} : </span>
-                    <span className="font-medium text-text">
-                      {valeurs[section.cle]?.[champ.cle] ?? '—'} / {champ.max}
-                    </span>
-                  </p>
-                ) : (
-                  <Field label={`${champ.label} (/${champ.max})`} htmlFor={`${section.cle}_${champ.cle}`}>
-                    <input
-                      id={`${section.cle}_${champ.cle}`}
-                      type="number"
-                      min="0"
-                      max={champ.max}
-                      step="0.5"
-                      className={inputClass}
-                      value={valeurs[section.cle]?.[champ.cle] ?? ''}
-                      onChange={(e) => majChamp(section.cle, champ.cle, e.target.value)}
-                      required
-                    />
-                    {champ.suggestion && suggestionAssiduite && (
-                      <p className="mt-1 text-xs text-text-subtle">
-                        Suggestion d'après les présences : {suggestionAssiduite[champ.suggestion]} / 5 ({suggestionAssiduite.detail})
-                      </p>
-                    )}
-                  </Field>
-                )}
-              </div>
+              <RubriqueLigne
+                key={champ.cle}
+                id={`${section.cle}_${champ.cle}`}
+                label={champ.label}
+                max={champ.max}
+                valeur={valeurs[section.cle]?.[champ.cle] ?? ''}
+                onChange={(v) => majChamp(section.cle, champ.cle, v)}
+                readOnly={readOnly}
+                suggestion={
+                  champ.suggestion && suggestionAssiduite
+                    ? `Suggestion d'après les présences : ${suggestionAssiduite[champ.suggestion]} / 5 (${suggestionAssiduite.detail})`
+                    : null
+                }
+              />
             ))}
-            <div className="sm:col-span-2">
+            <div className="px-4 py-3">
               {readOnly ? (
                 valeurs[section.cle]?.justification && (
-                  <p className="text-sm italic text-text-muted">
-                    « {valeurs[section.cle].justification} »
-                  </p>
+                  <p className="text-sm italic text-text-muted">« {valeurs[section.cle].justification} »</p>
                 )
               ) : (
                 <Field label="Justification de l'appréciation" htmlFor={`${section.cle}_justification`}>
-                  <textarea
+                  <TextareaAutoExtensible
                     id={`${section.cle}_justification`}
-                    rows={2}
-                    className={inputClass}
                     value={valeurs[section.cle]?.justification ?? ''}
-                    onChange={(e) => majChamp(section.cle, 'justification', e.target.value)}
+                    onChange={(v) => majChamp(section.cle, 'justification', v)}
                   />
                 </Field>
               )}
@@ -155,10 +140,88 @@ export function GrilleEvaluationForm({ valeurs, onChange, suggestionAssiduite, r
         </div>
       ))}
 
-      <div className="flex items-center justify-between rounded-lg bg-ont-blue-50 px-4 py-3 dark:bg-ont-blue-900/20">
-        <span className="font-heading text-sm font-semibold text-ont-blue-800 dark:text-ont-blue-300">Total général</span>
-        <span className="font-mono text-lg font-bold text-ont-blue-800 dark:text-ont-blue-300">{totalGrille(valeurs)} / 100</span>
+      <div className="sticky bottom-0 z-10 flex items-center justify-between border-t border-border-strong bg-ont-blue-50 px-4 py-3 dark:bg-ont-blue-900/90">
+        <span className="font-heading text-sm font-semibold text-ont-blue-800 dark:text-ont-blue-200">Total général</span>
+        <span className="font-mono text-lg font-bold tabular-nums text-ont-blue-800 dark:text-ont-blue-200">{totalGrille(valeurs)} / 100</span>
       </div>
     </div>
+  );
+}
+
+/**
+ * Une rubrique par ligne, curseur à droite — plus rapide à parcourir que
+ * des champs numériques empilés en grille, et le curseur rend visible d'un
+ * coup d'œil où se situe la note sur le barème.
+ */
+export function RubriqueLigne({ id, label, max, valeur, onChange, readOnly, suggestion }) {
+  if (readOnly) {
+    return (
+      <p className="flex items-center justify-between gap-4 px-4 py-2.5 text-sm">
+        <span className="text-text-subtle">{label}</span>
+        <span className="shrink-0 font-mono font-medium tabular-nums text-text">
+          {valeur === '' ? '—' : valeur} / {max}
+        </span>
+      </p>
+    );
+  }
+
+  return (
+    <div className="px-4 py-2.5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <label htmlFor={id} className="text-sm text-text">
+          {label}
+        </label>
+        <div className="flex shrink-0 items-center gap-3">
+          {/* Curseur visuel — reflète la note, mais reste secondaire : le
+              champ numérique ci-dessous porte le label et la saisie au
+              clavier, plus précise qu'un glisser-déposer pour une note au
+              demi-point près. */}
+          <input
+            type="range"
+            aria-hidden="true"
+            tabIndex={-1}
+            min="0"
+            max={max}
+            step="0.5"
+            value={valeur === '' ? 0 : valeur}
+            onChange={(e) => onChange(e.target.value)}
+            className="w-24 accent-ont-blue-600 sm:w-32"
+          />
+          <input
+            id={id}
+            type="number"
+            min="0"
+            max={max}
+            step="0.5"
+            value={valeur}
+            onChange={(e) => onChange(e.target.value)}
+            required
+            className="w-16 rounded-field border border-border-strong bg-surface px-2 py-1 text-right font-mono text-sm tabular-nums text-text"
+          />
+          <span className="shrink-0 text-xs text-text-subtle">/ {max}</span>
+        </div>
+      </div>
+      {suggestion && <p className="mt-1 text-xs text-text-subtle">{suggestion}</p>}
+    </div>
+  );
+}
+
+/** Textarea qui grandit avec son contenu — pas de barre de défilement interne à gérer pour une justification qui déborde de 2 lignes. */
+export function TextareaAutoExtensible({ id, value, onChange }) {
+  return (
+    <textarea
+      id={id}
+      rows={2}
+      className={`${inputClass} resize-none overflow-hidden`}
+      value={value}
+      onChange={(e) => {
+        onChange(e.target.value);
+        e.target.style.height = 'auto';
+        e.target.style.height = `${e.target.scrollHeight}px`;
+      }}
+      ref={(el) => {
+        if (el && el.scrollHeight > el.clientHeight) el.style.height = `${el.scrollHeight}px`;
+      }}
+    />
   );
 }

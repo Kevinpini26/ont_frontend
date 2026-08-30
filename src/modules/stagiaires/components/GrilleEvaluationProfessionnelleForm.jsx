@@ -1,5 +1,4 @@
 import { useEffect, useRef } from 'react';
-import { Field, inputClass } from '../../../shared/components/ui/Field';
 
 /**
  * Grille d'évaluation officielle ONT — stage professionnel. Dix rubriques
@@ -87,55 +86,76 @@ export function GrilleEvaluationProfessionnelleForm({ valeurs, onChange, suggest
   const total = totalGrillePro(valeurs);
 
   return (
-    <div className="space-y-5">
+    <div className="max-h-[65vh] overflow-y-auto rounded-lg border border-border">
       {SECTIONS_GRILLE_PRO.map((section) => (
-        <div key={section.cle} className="rounded-lg border border-border">
-          <div className="flex items-center justify-between border-b border-border bg-surface-sunken px-4 py-2.5">
+        <div key={section.cle} className="border-b border-border last:border-b-0">
+          <div className="flex items-center justify-between bg-surface-sunken px-4 py-2.5">
             <h4 className="font-heading text-sm font-semibold text-text">{section.titre}</h4>
-            <span className="font-mono text-xs font-semibold text-text-muted">
+            <span className="font-mono text-xs font-semibold tabular-nums text-text-muted">
               {sousTotal(section, valeurs)} / {section.champs.length * 10}
             </span>
           </div>
-          <div className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2">
-            {section.champs.map((champ) => (
-              <div key={champ.cle}>
-                {readOnly ? (
-                  <p className="text-sm">
-                    <span className="text-text-subtle">{champ.label} : </span>
-                    <span className="font-medium text-text">
-                      {valeurs[section.cle]?.[champ.cle] ?? '—'} / 10
-                    </span>
+          <div className="divide-y divide-border">
+            {section.champs.map((champ) => {
+              const id = `${section.cle}_${champ.cle}`;
+              const valeur = valeurs[section.cle]?.[champ.cle] ?? '';
+
+              if (readOnly) {
+                return (
+                  <p key={champ.cle} className="flex items-center justify-between gap-4 px-4 py-2.5 text-sm">
+                    <span className="text-text-subtle">{champ.label}</span>
+                    <span className="shrink-0 font-mono font-medium tabular-nums text-text">{valeur || '—'} / 10</span>
                   </p>
-                ) : (
-                  <Field label={`${champ.label} (/10)`} htmlFor={`${section.cle}_${champ.cle}`}>
-                    <input
-                      id={`${section.cle}_${champ.cle}`}
-                      type="number"
-                      min="0"
-                      max="10"
-                      step="0.5"
-                      className={inputClass}
-                      value={valeurs[section.cle]?.[champ.cle] ?? ''}
-                      onChange={(e) => majChamp(section.cle, champ.cle, e.target.value)}
-                      required
-                    />
-                    {champ.suggestion && suggestionAssiduite && (
-                      <p className="mt-1 text-xs text-text-subtle">
-                        Suggestion d'après les présences : {suggestionAssiduite.ponctualite + suggestionAssiduite.regularite} / 10 (
-                        {suggestionAssiduite.detail})
-                      </p>
-                    )}
-                  </Field>
-                )}
-              </div>
-            ))}
+                );
+              }
+
+              return (
+                <div key={champ.cle} className="px-4 py-2.5">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <label htmlFor={id} className="text-sm text-text">
+                      {champ.label} (/10)
+                    </label>
+                    <div className="flex shrink-0 items-center gap-3">
+                      <input
+                        type="range"
+                        aria-hidden="true"
+                        tabIndex={-1}
+                        min="0"
+                        max="10"
+                        step="0.5"
+                        value={valeur === '' ? 0 : valeur}
+                        onChange={(e) => majChamp(section.cle, champ.cle, e.target.value)}
+                        className="w-24 accent-ont-blue-600 sm:w-32"
+                      />
+                      <input
+                        id={id}
+                        type="number"
+                        min="0"
+                        max="10"
+                        step="0.5"
+                        value={valeur}
+                        onChange={(e) => majChamp(section.cle, champ.cle, e.target.value)}
+                        required
+                        className="w-16 rounded-field border border-border-strong bg-surface px-2 py-1 text-right font-mono text-sm tabular-nums text-text"
+                      />
+                    </div>
+                  </div>
+                  {champ.suggestion && suggestionAssiduite && (
+                    <p className="mt-1 text-xs text-text-subtle">
+                      Suggestion d'après les présences : {suggestionAssiduite.ponctualite + suggestionAssiduite.regularite} / 10 (
+                      {suggestionAssiduite.detail})
+                    </p>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       ))}
 
-      <div className="flex items-center justify-between rounded-lg bg-ont-blue-50 px-4 py-3 dark:bg-ont-blue-900/20">
-        <span className="font-heading text-sm font-semibold text-ont-blue-800 dark:text-ont-blue-300">Total général</span>
-        <span className="font-mono text-lg font-bold text-ont-blue-800 dark:text-ont-blue-300">
+      <div className="sticky bottom-0 z-10 flex items-center justify-between border-t border-border-strong bg-ont-blue-50 px-4 py-3 dark:bg-ont-blue-900/90">
+        <span className="font-heading text-sm font-semibold text-ont-blue-800 dark:text-ont-blue-200">Total général</span>
+        <span className="font-mono text-lg font-bold tabular-nums text-ont-blue-800 dark:text-ont-blue-200">
           {total} / 100 ({total}%)
         </span>
       </div>
