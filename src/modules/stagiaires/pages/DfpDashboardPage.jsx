@@ -9,10 +9,9 @@ import { PageHeader } from '../../../shared/components/ui/PageHeader';
 import { Card, CardBody, CardHeader } from '../../../shared/components/ui/Card';
 import { Badge } from '../../../shared/components/ui/Badge';
 import { EmptyState } from '../../../shared/components/ui/EmptyState';
-import { LoadingBlock } from '../../../shared/components/ui/Spinner';
 import { StatCard } from '../../../shared/components/ui/StatCard';
 import { PeriodSelector } from '../../../shared/components/ui/PeriodSelector';
-import { SkeletonStatCards } from '../../../shared/components/ui/Skeleton';
+import { SkeletonLines, SkeletonStatCards } from '../../../shared/components/ui/Skeleton';
 import { ZoneAlertes } from '../../../shared/components/ZoneAlertes';
 import { CHART_COLORS } from '../../../shared/chartColors';
 import { useRequete } from '../../../shared/hooks/useRequete';
@@ -31,7 +30,7 @@ function ChartTooltip({ active, payload, label }) {
 }
 
 function DerniersCourriers({ courriers, chargement }) {
-  if (chargement) return <LoadingBlock />;
+  if (chargement) return <SkeletonLines lignes={5} />;
   if (courriers.length === 0) return <EmptyState icon={<Mail size={28} />} title="Aucun courrier pour le moment" />;
   return (
     <ul className="divide-y divide-border">
@@ -48,7 +47,7 @@ function DerniersCourriers({ courriers, chargement }) {
 }
 
 function DerniersStagiaires({ stagiaires, chargement }) {
-  if (chargement) return <LoadingBlock />;
+  if (chargement) return <SkeletonLines lignes={5} />;
   if (stagiaires.length === 0) return <EmptyState icon={<GraduationCap size={28} />} title="Aucun stagiaire pour le moment" />;
   return (
     <ul className="divide-y divide-border">

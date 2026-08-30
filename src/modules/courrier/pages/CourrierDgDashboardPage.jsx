@@ -15,8 +15,17 @@ import { PeriodSelector } from '../../../shared/components/ui/PeriodSelector';
 import { SkeletonChart, SkeletonStatCards } from '../../../shared/components/ui/Skeleton';
 import { Pagination } from '../../../shared/components/ui/Pagination';
 import { EmptyState } from '../../../shared/components/ui/EmptyState';
-import { LoadingBlock } from '../../../shared/components/ui/Spinner';
-import { TableWrap, tableClass, theadClass, thClass, tbodyClass, tdClass, trHoverClass } from '../../../shared/components/ui/Table';
+import {
+  TableWrap,
+  tableClass,
+  theadClass,
+  thClass,
+  tbodyClass,
+  tdClass,
+  tdClassPremiere,
+  trHoverClass,
+  SkeletonRows,
+} from '../../../shared/components/ui/Table';
 import { ZoneAlertes } from '../../../shared/components/ZoneAlertes';
 import { CHART_COLORS } from '../../../shared/chartColors';
 import { STATUT_LABELS, TYPE_LABELS } from '../constants';
@@ -261,9 +270,7 @@ export function CourrierDgDashboardPage() {
             </Field>
           </div>
 
-          {chargementTable ? (
-            <LoadingBlock />
-          ) : courriers.length === 0 ? (
+          {!chargementTable && courriers.length === 0 ? (
             <EmptyState title="Aucun courrier ne correspond" />
           ) : (
             <TableWrap>
@@ -278,23 +285,27 @@ export function CourrierDgDashboardPage() {
                   </tr>
                 </thead>
                 <tbody className={tbodyClass}>
-                  {courriers.map((c) => (
-                    <tr key={c.id} className={trHoverClass}>
-                      <td className={`${tdClass} whitespace-nowrap font-medium text-text`}>{c.numero_accuse_reception}</td>
-                      <td className={`${tdClass} max-w-[16rem] truncate`} title={c.objet}>{c.objet}</td>
-                      <td className={tdClass}>{TYPE_LABELS[c.type]}</td>
-                      <td className={tdClass}>
-                        <Badge tone="info">{c.statut_label}</Badge>
-                      </td>
-                      <td className={tdClass}>
-                        <Link to={`/courriers/${c.id}`}>
-                          <Button type="button" variant="secondary" size="sm">
-                            Suivre
-                          </Button>
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
+                  {chargementTable ? (
+                    <SkeletonRows colonnes={5} />
+                  ) : (
+                    courriers.map((c) => (
+                      <tr key={c.id} className={trHoverClass}>
+                        <td className={`${tdClassPremiere} whitespace-nowrap`}>{c.numero_accuse_reception}</td>
+                        <td className={`${tdClass} max-w-[16rem] truncate`} title={c.objet}>{c.objet}</td>
+                        <td className={tdClass}>{TYPE_LABELS[c.type]}</td>
+                        <td className={tdClass}>
+                          <Badge tone="info">{c.statut_label}</Badge>
+                        </td>
+                        <td className={tdClass}>
+                          <Link to={`/courriers/${c.id}`}>
+                            <Button type="button" variant="secondary" size="sm">
+                              Suivre
+                            </Button>
+                          </Link>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </TableWrap>

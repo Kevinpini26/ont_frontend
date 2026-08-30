@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { listStagiaires } from '../api/stagiairesApi';
 import { listDirections } from '../../kernel/api/directionsApi';
@@ -8,9 +8,21 @@ import { Button } from '../../../shared/components/ui/Button';
 import { Field, inputClass } from '../../../shared/components/ui/Field';
 import { Badge } from '../../../shared/components/ui/Badge';
 import { EmptyState } from '../../../shared/components/ui/EmptyState';
-import { LoadingBlock } from '../../../shared/components/ui/Spinner';
 import { ExportButtons } from '../../../shared/components/ExportButtons';
-import { TableWrap, tableClass, theadClass, thClass, tbodyClass, tdClass, trHoverClass } from '../../../shared/components/ui/Table';
+import {
+  TableWrap,
+  tableClass,
+  theadClass,
+  thClass,
+  tbodyClass,
+  tdClass,
+  tdClassPremiere,
+  tdClassChiffre,
+  trHoverClass,
+  SkeletonRows,
+  ThSortable,
+  basculerTri,
+} from '../../../shared/components/ui/Table';
 import { GraduationCap } from 'lucide-react';
 
 const ANNEE_COURANTE = new Date().getFullYear();
@@ -24,10 +36,32 @@ export function HistoriqueStagiairesPage() {
   const [nom, setNom] = useState('');
   const [stagiaires, setStagiaires] = useState([]);
   const [chargement, setChargement] = useState(true);
+  const [tri, setTri] = useState(null);
 
   useEffect(() => {
     listDirections().then(setDirections);
   }, []);
+
+  function onTri(colonne) {
+    setTri((t) => basculerTri(t, colonne));
+  }
+
+  const stagiairesTries = useMemo(() => {
+    if (!tri) return stagiaires;
+    const copie = [...stagiaires];
+    copie.sort((a, b) => {
+      let cmp;
+      if (tri.colonne === 'cloture_at') {
+        cmp = new Date(a.cloture_at ?? 0) - new Date(b.cloture_at ?? 0);
+      } else if (tri.colonne === 'note_finale') {
+        cmp = (a.evaluation?.note_finale ?? -1) - (b.evaluation?.note_finale ?? -1);
+      } else {
+        cmp = String(a.nom).localeCompare(String(b.nom), 'fr');
+      }
+      return tri.sens === 'asc' ? cmp : -cmp;
+    });
+    return copie;
+  }, [stagiaires, tri]);
 
   async function rechercher() {
     setChargement(true);
@@ -108,9 +142,7 @@ export function HistoriqueStagiairesPage() {
           }
         />
         <CardBody className="p-0">
-          {chargement ? (
-            <LoadingBlock />
-          ) : stagiaires.length === 0 ? (
+          {!chargement && stagiaires.length === 0 ? (
             <div className="p-6">
               <EmptyState icon={<GraduationCap size={32} />} title="Aucun dossier ne correspond à ces critères" />
             </div>
@@ -119,37 +151,41 @@ export function HistoriqueStagiairesPage() {
               <table className={tableClass}>
                 <thead className={theadClass}>
                   <tr>
-                    <th className={thClass}>Nom</th>
+                    <ThSortable label="Nom" sortKey="nom" tri={tri} onTri={onTri} />
                     <th className={thClass}>Type</th>
                     <th className={thClass}>Établissement</th>
                     <th className={thClass}>Direction</th>
-                    <th className={thClass}>Clôturé le</th>
-                    <th className={thClass}>Note finale</th>
+                    <ThSortable label="Clôturé le" sortKey="cloture_at" tri={tri} onTri={onTri} className="text-right" />
+                    <ThSortable label="Note finale" sortKey="note_finale" tri={tri} onTri={onTri} className="text-right" />
                     <th className={thClass}></th>
                   </tr>
                 </thead>
                 <tbody className={tbodyClass}>
-                  {stagiaires.map((s) => (
-                    <tr key={s.id} className={trHoverClass}>
-                      <td className={`${tdClass} whitespace-nowrap font-medium text-text`}>{s.nom}</td>
-                      <td className={tdClass}>
-                        <Badge tone="neutral">{s.type_stage_label}</Badge>
-                      </td>
-                      <td className={`${tdClass} max-w-[14rem] truncate`} title={s.etablissement_origine}>{s.etablissement_origine}</td>
-                      <td className={tdClass}>{s.direction?.code ?? '—'}</td>
-                      <td className={tdClass}>{s.cloture_at ? new Date(s.cloture_at).toLocaleDateString('fr-FR') : '—'}</td>
-                      <td className={tdClass}>
-                        <Badge tone="info">{s.evaluation?.note_finale ?? '—'} / 100</Badge>
-                      </td>
-                      <td className={tdClass}>
-                        <Link to={`/stagiaires/${s.id}`}>
-                          <Button type="button" variant="secondary" size="sm">
-                            Ouvrir
-                          </Button>
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
+                  {chargement ? (
+                    <SkeletonRows colonnes={7} />
+                  ) : (
+                    stagiairesTries.map((s) => (
+                      <tr key={s.id} className={trHoverClass}>
+                        <td className={`${tdClassPremiere} whitespace-nowrap`}>{s.nom}</td>
+                        <td className={tdClass}>
+                          <Badge tone="neutral">{s.type_stage_label}</Badge>
+                        </td>
+                        <td className={`${tdClass} max-w-[14rem] truncate`} title={s.etablissement_origine}>{s.etablissement_origine}</td>
+                        <td className={tdClass}>{s.direction?.code ?? '—'}</td>
+                        <td className={tdClassChiffre}>{s.cloture_at ? new Date(s.cloture_at).toLocaleDateString('fr-FR') : '—'}</td>
+                        <td className={tdClassChiffre}>
+                          <Badge tone="info">{s.evaluation?.note_finale ?? '—'} / 100</Badge>
+                        </td>
+                        <td className={tdClass}>
+                          <Link to={`/stagiaires/${s.id}`}>
+                            <Button type="button" variant="secondary" size="sm">
+                              Ouvrir
+                            </Button>
+                          </Link>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </TableWrap>

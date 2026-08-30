@@ -3,7 +3,7 @@ import { ajouterAnnotation, listAnnotations } from '../api/courrierApi';
 import { Card, CardBody, CardHeader } from '../../../shared/components/ui/Card';
 import { Button } from '../../../shared/components/ui/Button';
 import { inputClass } from '../../../shared/components/ui/Field';
-import { LoadingBlock } from '../../../shared/components/ui/Spinner';
+import { SkeletonLines } from '../../../shared/components/ui/Skeleton';
 import { EmptyState } from '../../../shared/components/ui/EmptyState';
 
 export function AnnotationsPanel({ courrierId }) {
@@ -44,7 +44,7 @@ export function AnnotationsPanel({ courrierId }) {
       <CardHeader title="Annotations" />
       <CardBody>
         {chargement ? (
-          <LoadingBlock />
+          <SkeletonLines lignes={3} />
         ) : annotations.length === 0 ? (
           <EmptyState title="Aucune annotation pour le moment" />
         ) : (

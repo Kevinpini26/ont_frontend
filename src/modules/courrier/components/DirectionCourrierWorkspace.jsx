@@ -13,10 +13,19 @@ import { Field, inputClass } from '../../../shared/components/ui/Field';
 import { Alert } from '../../../shared/components/ui/Alert';
 import { Badge } from '../../../shared/components/ui/Badge';
 import { EmptyState } from '../../../shared/components/ui/EmptyState';
-import { LoadingBlock } from '../../../shared/components/ui/Spinner';
 import { Pagination } from '../../../shared/components/ui/Pagination';
 import { FileUploadPreview } from '../../../shared/components/ui/FileUploadPreview';
-import { TableWrap, tableClass, theadClass, thClass, tbodyClass, tdClass, trHoverClass } from '../../../shared/components/ui/Table';
+import {
+  TableWrap,
+  tableClass,
+  theadClass,
+  thClass,
+  tbodyClass,
+  tdClass,
+  tdClassPremiere,
+  trHoverClass,
+  SkeletonRows,
+} from '../../../shared/components/ui/Table';
 import { TipTapEditor } from './TipTapEditor';
 import { Mail } from 'lucide-react';
 
@@ -247,8 +256,7 @@ export function DirectionCourrierWorkspace() {
 }
 
 function TableauCourriers({ courriers, chargement }) {
-  if (chargement) return <LoadingBlock />;
-  if (courriers.length === 0) {
+  if (!chargement && courriers.length === 0) {
     return (
       <div className="p-6">
         <EmptyState icon={<Mail size={32} />} title="Aucun courrier" description="Les courriers apparaîtront ici dès qu'il y en aura." />
@@ -269,32 +277,36 @@ function TableauCourriers({ courriers, chargement }) {
           </tr>
         </thead>
         <tbody className={tbodyClass}>
-          {courriers.map((c) => (
-            <tr key={c.id} className={trHoverClass}>
-              <td className={`${tdClass} whitespace-nowrap font-medium text-text`}>{c.numero_accuse_reception}</td>
-              <td className={`${tdClass} max-w-[14rem]`} title={c.objet}>
-                <div className="flex items-center gap-2">
-                  <span className="truncate">{c.objet}</span>
-                  {c.initie_par_dg && (
-                    <Badge tone="info" className="shrink-0">
-                      DG
-                    </Badge>
-                  )}
-                </div>
-              </td>
-              <td className={tdClass}>{TYPE_LABELS[c.type]}</td>
-              <td className={tdClass}>
-                <Badge tone="info">{STATUT_LABELS[c.statut]}</Badge>
-              </td>
-              <td className={tdClass}>
-                <Link to={`/courriers/${c.id}`}>
-                  <Button type="button" variant="secondary" size="sm">
-                    Suivre
-                  </Button>
-                </Link>
-              </td>
-            </tr>
-          ))}
+          {chargement ? (
+            <SkeletonRows colonnes={5} />
+          ) : (
+            courriers.map((c) => (
+              <tr key={c.id} className={trHoverClass}>
+                <td className={`${tdClassPremiere} whitespace-nowrap`}>{c.numero_accuse_reception}</td>
+                <td className={`${tdClass} max-w-[14rem]`} title={c.objet}>
+                  <div className="flex items-center gap-2">
+                    <span className="truncate">{c.objet}</span>
+                    {c.initie_par_dg && (
+                      <Badge tone="info" className="shrink-0">
+                        DG
+                      </Badge>
+                    )}
+                  </div>
+                </td>
+                <td className={tdClass}>{TYPE_LABELS[c.type]}</td>
+                <td className={tdClass}>
+                  <Badge tone="info">{STATUT_LABELS[c.statut]}</Badge>
+                </td>
+                <td className={tdClass}>
+                  <Link to={`/courriers/${c.id}`}>
+                    <Button type="button" variant="secondary" size="sm">
+                      Suivre
+                    </Button>
+                  </Link>
+                </td>
+              </tr>
+            ))
+          )}
         </tbody>
       </table>
     </TableWrap>

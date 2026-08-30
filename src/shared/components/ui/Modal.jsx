@@ -3,13 +3,24 @@ import { X } from 'lucide-react';
 import { Button } from './Button';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 
+const TAILLES = {
+  sm: 'max-w-md',
+  md: 'max-w-lg',
+  lg: 'max-w-2xl',
+  xl: 'max-w-4xl',
+};
+
 /**
  * Modale générique à contenu libre — même structure que ConfirmDialog.jsx
  * (overlay fixe, fermeture sur Échap et clic sur le fond) mais sans contenu
  * figé confirmer/annuler, pour héberger n'importe quel contenu (ex. la
  * prévisualisation de document, voir DocumentPreviewModal.jsx).
+ *
+ * En-tête et pied (si fourni) restent hors de la zone `overflow-auto` : ils
+ * ne défilent jamais avec un corps de modale long, contrairement au
+ * contenu qu'ils encadrent.
  */
-export function Modal({ open, onClose, title, wide = false, children }) {
+export function Modal({ open, onClose, title, size = 'md', footer, children }) {
   const conteneurRef = useFocusTrap(open);
 
   useEffect(() => {
@@ -25,10 +36,10 @@ export function Modal({ open, onClose, title, wide = false, children }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-8" role="dialog" aria-modal="true" aria-labelledby="modal-title">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div className="absolute inset-0 animate-entree-fondu bg-black/45" onClick={onClose} />
       <div
         ref={conteneurRef}
-        className={`relative flex max-h-full w-full flex-col rounded-modal border border-border-strong bg-surface-raised shadow-raised ${wide ? 'max-w-4xl' : 'max-w-lg'}`}
+        className={`relative flex max-h-full w-full animate-entree-modale flex-col rounded-modal border border-border-strong bg-surface-raised shadow-raised ${TAILLES[size]}`}
       >
         <div className="flex items-center justify-between border-b border-border px-5 py-3">
           <h3 id="modal-title" className="font-heading text-section-title font-semibold text-text">
@@ -39,6 +50,7 @@ export function Modal({ open, onClose, title, wide = false, children }) {
           </Button>
         </div>
         <div className="min-h-0 flex-1 overflow-auto p-5">{children}</div>
+        {footer && <div className="border-t border-border px-5 py-3">{footer}</div>}
       </div>
     </div>
   );

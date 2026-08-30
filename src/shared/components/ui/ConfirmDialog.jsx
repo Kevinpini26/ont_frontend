@@ -35,10 +35,10 @@ export function ConfirmDialog({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4" role="dialog" aria-modal="true" aria-labelledby="confirm-dialog-title">
-      <div className="absolute inset-0 bg-black/50" onClick={onCancel} />
+      <div className="absolute inset-0 animate-entree-fondu bg-black/45" onClick={onCancel} />
       <div
         ref={conteneurRef}
-        className="relative w-full max-w-sm rounded-modal border border-border-strong bg-surface-raised p-6 shadow-raised"
+        className="relative w-full max-w-sm animate-entree-modale rounded-modal border border-border-strong bg-surface-raised p-6 shadow-raised"
       >
         <div className="flex items-start gap-3">
           {tone === 'danger' && (

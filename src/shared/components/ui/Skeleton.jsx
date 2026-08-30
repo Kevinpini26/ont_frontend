@@ -41,3 +41,21 @@ export function SkeletonTable({ lignes = 5 }) {
     </div>
   );
 }
+
+/**
+ * Contenu texte court (quelques lignes) ou petite liste — pour un widget
+ * dont la forme réelle n'est ni un tableau ni des stat cards (ex.
+ * AnnotationsPanel, RetourExperienceCard) : des barres de largeur
+ * dégressive plutôt qu'un spineur centré qui masque tout repère de mise en
+ * page pendant le chargement.
+ */
+export function SkeletonLines({ lignes = 3 }) {
+  const largeurs = ['w-full', 'w-5/6', 'w-2/3', 'w-3/4', 'w-1/2'];
+  return (
+    <div className="space-y-3">
+      {Array.from({ length: lignes }).map((_, i) => (
+        <Barre key={i} className={`h-4 ${largeurs[i % largeurs.length]}`} />
+      ))}
+    </div>
+  );
+}

@@ -242,8 +242,59 @@ textarea {
   animation: entree-page 180ms ease-out;
 }
 
+/* Entrée de modale (voir Modal.jsx) — fondu + léger scale, 150 ms : assez
+   court pour ne pas retarder l'usage, assez long pour que l'apparition ne
+   soit pas un simple "pop" brutal. */
+@keyframes entree-modale {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-entree-modale {
+  animation: entree-modale 150ms ease-out;
+}
+
+@keyframes entree-fondu {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-entree-fondu {
+  animation: entree-fondu 150ms ease-out;
+}
+
+/* Entrée d'un toast (voir Toast.jsx) — glisse depuis la droite, d'où la pile
+   s'accumule visuellement. */
+@keyframes entree-toast {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-entree-toast {
+  animation: entree-toast 200ms ease-out;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .animate-entree-page {
+  .animate-entree-page,
+  .animate-entree-modale,
+  .animate-entree-fondu,
+  .animate-entree-toast {
     animation: none;
   }
 

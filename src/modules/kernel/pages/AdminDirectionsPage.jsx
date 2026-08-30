@@ -10,8 +10,19 @@ import { Alert } from '../../../shared/components/ui/Alert';
 import { Badge } from '../../../shared/components/ui/Badge';
 import { ConfirmDialog } from '../../../shared/components/ui/ConfirmDialog';
 import { EmptyState } from '../../../shared/components/ui/EmptyState';
-import { LoadingBlock } from '../../../shared/components/ui/Spinner';
-import { TableWrap, tableClass, theadClass, thClass, tbodyClass, tdClass, trHoverClass } from '../../../shared/components/ui/Table';
+import {
+  TableWrap,
+  tableClass,
+  theadClass,
+  thClass,
+  tbodyClass,
+  tdClass,
+  tdClassChiffre,
+  trHoverClass,
+  SkeletonRows,
+  ThSortable,
+  basculerTri,
+} from '../../../shared/components/ui/Table';
 import { Building2 } from 'lucide-react';
 import { useConfirm } from '../../../shared/hooks/useConfirm';
 
@@ -25,7 +36,12 @@ export function AdminDirectionsPage() {
   const [erreur, setErreur] = useState(null);
   const [chargement, setChargement] = useState(true);
   const [envoi, setEnvoi] = useState(false);
+  const [tri, setTri] = useState(null);
   const { confirm, dialogProps } = useConfirm();
+
+  function onTri(colonne) {
+    setTri((t) => basculerTri(t, colonne));
+  }
 
   async function charger() {
     setChargement(true);
@@ -42,11 +58,22 @@ export function AdminDirectionsPage() {
 
   const directionsFiltrees = useMemo(() => {
     const terme = recherche.trim().toLowerCase();
-    if (!terme) return directions;
-    return directions.filter(
-      (d) => d.code.toLowerCase().includes(terme) || d.nom.toLowerCase().includes(terme),
-    );
-  }, [directions, recherche]);
+    const resultat = terme
+      ? directions.filter((d) => d.code.toLowerCase().includes(terme) || d.nom.toLowerCase().includes(terme))
+      : directions;
+    if (!tri) return resultat;
+    const copie = [...resultat];
+    copie.sort((a, b) => {
+      let cmp;
+      if (tri.colonne === 'capacite_max') {
+        cmp = (a.capacite_max ?? Infinity) - (b.capacite_max ?? Infinity);
+      } else {
+        cmp = String(a[tri.colonne]).localeCompare(String(b[tri.colonne]), 'fr');
+      }
+      return tri.sens === 'asc' ? cmp : -cmp;
+    });
+    return copie;
+  }, [directions, recherche, tri]);
 
   async function soumettre(e) {
     e.preventDefault();
@@ -183,9 +210,7 @@ export function AdminDirectionsPage() {
           }
         />
         <CardBody className="p-0">
-          {chargement ? (
-            <LoadingBlock />
-          ) : directionsFiltrees.length === 0 ? (
+          {!chargement && directionsFiltrees.length === 0 ? (
             <div className="p-6">
               <EmptyState icon={<Building2 size={32} />} title="Aucune direction ne correspond" description="Essayez une autre recherche." />
             </div>
@@ -194,34 +219,38 @@ export function AdminDirectionsPage() {
               <table className={tableClass}>
                 <thead className={theadClass}>
                   <tr>
-                    <th className={thClass}>Code</th>
-                    <th className={thClass}>Nom</th>
+                    <ThSortable label="Code" sortKey="code" tri={tri} onTri={onTri} />
+                    <ThSortable label="Nom" sortKey="nom" tri={tri} onTri={onTri} />
                     <th className={thClass}>Statut</th>
-                    <th className={thClass}>Capacité</th>
+                    <ThSortable label="Capacité" sortKey="capacite_max" tri={tri} onTri={onTri} className="text-right" />
                     <th className={thClass}></th>
                   </tr>
                 </thead>
                 <tbody className={tbodyClass}>
-                  {directionsFiltrees.map((d) => (
-                    <tr key={d.id} className={trHoverClass}>
-                      <td className={`${tdClass} font-medium text-text`}>{d.code}</td>
-                      <td className={`${tdClass} max-w-[16rem] truncate`} title={d.nom}>{d.nom}</td>
-                      <td className={tdClass}>
-                        <Badge tone={d.actif ? 'success' : 'neutral'}>{d.actif ? 'Active' : 'Inactive'}</Badge>
-                      </td>
-                      <td className={tdClass}>{d.capacite_max ?? <span className="text-text-subtle">Illimitée</span>}</td>
-                      <td className={tdClass}>
-                        <div className="flex gap-2">
-                          <Button type="button" variant="secondary" size="sm" onClick={() => commencerEdition(d)}>
-                            Modifier
-                          </Button>
-                          <Button type="button" variant="danger" size="sm" onClick={() => supprimer(d)}>
-                            Supprimer
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                  {chargement ? (
+                    <SkeletonRows colonnes={5} />
+                  ) : (
+                    directionsFiltrees.map((d) => (
+                      <tr key={d.id} className={trHoverClass}>
+                        <td className="px-4 py-3 align-middle font-semibold text-text">{d.code}</td>
+                        <td className={`${tdClass} max-w-[16rem] truncate`} title={d.nom}>{d.nom}</td>
+                        <td className={tdClass}>
+                          <Badge tone={d.actif ? 'success' : 'neutral'}>{d.actif ? 'Active' : 'Inactive'}</Badge>
+                        </td>
+                        <td className={tdClassChiffre}>{d.capacite_max ?? <span className="text-text-subtle">Illimitée</span>}</td>
+                        <td className={tdClass}>
+                          <div className="flex gap-2">
+                            <Button type="button" variant="secondary" size="sm" onClick={() => commencerEdition(d)}>
+                              Modifier
+                            </Button>
+                            <Button type="button" variant="danger" size="sm" onClick={() => supprimer(d)}>
+                              Supprimer
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </TableWrap>

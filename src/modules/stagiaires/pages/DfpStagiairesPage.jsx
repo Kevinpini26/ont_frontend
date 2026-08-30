@@ -13,9 +13,20 @@ import { Button } from '../../../shared/components/ui/Button';
 import { Field, inputClass } from '../../../shared/components/ui/Field';
 import { Badge } from '../../../shared/components/ui/Badge';
 import { EmptyState } from '../../../shared/components/ui/EmptyState';
-import { LoadingBlock } from '../../../shared/components/ui/Spinner';
 import { Pagination } from '../../../shared/components/ui/Pagination';
-import { TableWrap, tableClass, theadClass, thClass, tbodyClass, tdClass, trHoverClass } from '../../../shared/components/ui/Table';
+import {
+  TableWrap,
+  tableClass,
+  theadClass,
+  thClass,
+  thClassChiffre,
+  tbodyClass,
+  tdClass,
+  tdClassPremiere,
+  tdClassChiffre,
+  trHoverClass,
+  SkeletonRows,
+} from '../../../shared/components/ui/Table';
 
 const ONGLETS = [
   { cle: 'en_cours', libelle: 'En cours' },
@@ -172,9 +183,7 @@ export function DfpStagiairesPage() {
             />
           </div>
 
-          {chargement ? (
-            <LoadingBlock />
-          ) : stagiaires.length === 0 ? (
+          {!chargement && stagiaires.length === 0 ? (
             <EmptyState
               icon={<GraduationCap size={32} />}
               title="Aucun stagiaire ne correspond"
@@ -190,40 +199,44 @@ export function DfpStagiairesPage() {
                     <th className={thClass}>Établissement</th>
                     <th className={thClass}>Direction</th>
                     <th className={thClass}>Statut</th>
-                    <th className={thClass}>Fin de stage</th>
-                    <th className={thClass}>Jours restants</th>
+                    <th className={thClassChiffre}>Fin de stage</th>
+                    <th className={thClassChiffre}>Jours restants</th>
                     <th className={thClass}></th>
                   </tr>
                 </thead>
                 <tbody className={tbodyClass}>
-                  {stagiaires.map((s) => (
-                    <tr key={s.id} className={trHoverClass}>
-                      <td className={`${tdClass} whitespace-nowrap font-medium text-text`}>{s.nom}</td>
-                      <td className={tdClass}>
-                        <Badge tone="neutral">{s.type_stage_label}</Badge>
-                      </td>
-                      <td className={`${tdClass} max-w-[14rem] truncate`} title={s.etablissement_origine}>{s.etablissement_origine}</td>
-                      <td className={tdClass}>{s.direction?.code ?? '—'}</td>
-                      <td className={tdClass}>
-                        <Badge tone="info">{s.statut_label}</Badge>
-                      </td>
-                      <td className={`${tdClass} whitespace-nowrap`}>{s.date_fin_stage ?? '—'}</td>
-                      <td className={tdClass}>
-                        {s.jours_restants !== null && s.jours_restants <= 10 ? (
-                          <Badge tone="warning">{s.jours_restants} j</Badge>
-                        ) : (
-                          (s.jours_restants ?? '—')
-                        )}
-                      </td>
-                      <td className={tdClass}>
-                        <Link to={`/stagiaires/${s.id}`}>
-                          <Button type="button" variant="secondary" size="sm">
-                            Ouvrir
-                          </Button>
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
+                  {chargement ? (
+                    <SkeletonRows colonnes={8} />
+                  ) : (
+                    stagiaires.map((s) => (
+                      <tr key={s.id} className={trHoverClass}>
+                        <td className={`${tdClassPremiere} whitespace-nowrap`}>{s.nom}</td>
+                        <td className={tdClass}>
+                          <Badge tone="neutral">{s.type_stage_label}</Badge>
+                        </td>
+                        <td className={`${tdClass} max-w-[14rem] truncate`} title={s.etablissement_origine}>{s.etablissement_origine}</td>
+                        <td className={tdClass}>{s.direction?.code ?? '—'}</td>
+                        <td className={tdClass}>
+                          <Badge tone="info">{s.statut_label}</Badge>
+                        </td>
+                        <td className={`${tdClassChiffre} whitespace-nowrap`}>{s.date_fin_stage ?? '—'}</td>
+                        <td className={tdClassChiffre}>
+                          {s.jours_restants !== null && s.jours_restants <= 10 ? (
+                            <Badge tone="warning">{s.jours_restants} j</Badge>
+                          ) : (
+                            (s.jours_restants ?? '—')
+                          )}
+                        </td>
+                        <td className={tdClass}>
+                          <Link to={`/stagiaires/${s.id}`}>
+                            <Button type="button" variant="secondary" size="sm">
+                              Ouvrir
+                            </Button>
+                          </Link>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </TableWrap>

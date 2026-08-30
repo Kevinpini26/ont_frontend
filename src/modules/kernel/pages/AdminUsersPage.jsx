@@ -13,8 +13,17 @@ import { PasswordInput } from '../../../shared/components/ui/PasswordInput';
 import { Alert } from '../../../shared/components/ui/Alert';
 import { Badge } from '../../../shared/components/ui/Badge';
 import { ConfirmDialog } from '../../../shared/components/ui/ConfirmDialog';
-import { LoadingBlock } from '../../../shared/components/ui/Spinner';
-import { TableWrap, tableClass, theadClass, thClass, tbodyClass, tdClass, trHoverClass } from '../../../shared/components/ui/Table';
+import {
+  TableWrap,
+  tableClass,
+  theadClass,
+  thClass,
+  tbodyClass,
+  tdClass,
+  tdClassPremiere,
+  trHoverClass,
+  SkeletonRows,
+} from '../../../shared/components/ui/Table';
 import { useConfirm } from '../../../shared/hooks/useConfirm';
 
 const FORMULAIRE_VIDE = {
@@ -283,25 +292,25 @@ export function AdminUsersPage() {
           }
         />
         <CardBody className="p-0">
-          {chargement ? (
-            <LoadingBlock />
-          ) : (
-            <TableWrap>
-              <table className={tableClass}>
-                <thead className={theadClass}>
-                  <tr>
-                    <th className={thClass}>Nom</th>
-                    <th className={thClass}>E-mail</th>
-                    <th className={thClass}>Rôle</th>
-                    <th className={thClass}>Poste</th>
-                    <th className={thClass}>Direction</th>
-                    <th className={thClass}></th>
-                  </tr>
-                </thead>
-                <tbody className={tbodyClass}>
-                  {usersFiltres.map((u) => (
+          <TableWrap>
+            <table className={tableClass}>
+              <thead className={theadClass}>
+                <tr>
+                  <th className={thClass}>Nom</th>
+                  <th className={thClass}>E-mail</th>
+                  <th className={thClass}>Rôle</th>
+                  <th className={thClass}>Poste</th>
+                  <th className={thClass}>Direction</th>
+                  <th className={thClass}></th>
+                </tr>
+              </thead>
+              <tbody className={tbodyClass}>
+                {chargement ? (
+                  <SkeletonRows colonnes={6} />
+                ) : (
+                  usersFiltres.map((u) => (
                     <tr key={u.id} className={trHoverClass}>
-                      <td className={`${tdClass} font-medium text-text`}>{u.name}</td>
+                      <td className={tdClassPremiere}>{u.name}</td>
                       <td className={tdClass}>{u.email}</td>
                       <td className={tdClass}>
                         <Badge tone="info">{u.role_label}</Badge>
@@ -327,11 +336,11 @@ export function AdminUsersPage() {
                         </div>
                       </td>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </TableWrap>
-          )}
+                  ))
+                )}
+              </tbody>
+            </table>
+          </TableWrap>
         </CardBody>
       </Card>
 

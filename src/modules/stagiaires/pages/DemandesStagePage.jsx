@@ -12,8 +12,17 @@ import { Field } from '../../../shared/components/ui/Field';
 import { Badge } from '../../../shared/components/ui/Badge';
 import { Pagination } from '../../../shared/components/ui/Pagination';
 import { EmptyState } from '../../../shared/components/ui/EmptyState';
-import { LoadingBlock } from '../../../shared/components/ui/Spinner';
-import { TableWrap, tableClass, theadClass, thClass, tbodyClass, tdClass, trHoverClass } from '../../../shared/components/ui/Table';
+import {
+  TableWrap,
+  tableClass,
+  theadClass,
+  thClass,
+  tbodyClass,
+  tdClass,
+  tdClassPremiere,
+  trHoverClass,
+  SkeletonRows,
+} from '../../../shared/components/ui/Table';
 
 /**
  * Dossiers pas encore affectés (dossier_recu, en_attente_affectation) : hors
@@ -60,9 +69,7 @@ export function DemandesStagePage() {
             {meta ? `${meta.total} résultat${meta.total > 1 ? 's' : ''}` : ''}
           </p>
 
-          {chargement ? (
-            <LoadingBlock />
-          ) : stagiaires.length === 0 ? (
+          {!chargement && stagiaires.length === 0 ? (
             <EmptyState icon={<FileClock size={32} />} title="Aucune demande en attente" description="Tous les dossiers reçus ont été traités." />
           ) : (
             <TableWrap>
@@ -78,26 +85,30 @@ export function DemandesStagePage() {
                   </tr>
                 </thead>
                 <tbody className={tbodyClass}>
-                  {stagiaires.map((s) => (
-                    <tr key={s.id} className={trHoverClass}>
-                      <td className={`${tdClass} whitespace-nowrap font-medium text-text`}>{s.nom}</td>
-                      <td className={tdClass}>
-                        <Badge tone="neutral">{s.type_stage_label}</Badge>
-                      </td>
-                      <td className={`${tdClass} max-w-[14rem] truncate`} title={s.etablissement_origine}>{s.etablissement_origine}</td>
-                      <td className={`${tdClass} whitespace-nowrap font-mono text-xs`}>{s.reference_courrier}</td>
-                      <td className={tdClass}>
-                        <Badge tone="warning">{s.statut_label}</Badge>
-                      </td>
-                      <td className={tdClass}>
-                        <Link to={`/stagiaires/${s.id}`}>
-                          <Button type="button" variant="secondary" size="sm">
-                            Ouvrir
-                          </Button>
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
+                  {chargement ? (
+                    <SkeletonRows colonnes={6} />
+                  ) : (
+                    stagiaires.map((s) => (
+                      <tr key={s.id} className={trHoverClass}>
+                        <td className={`${tdClassPremiere} whitespace-nowrap`}>{s.nom}</td>
+                        <td className={tdClass}>
+                          <Badge tone="neutral">{s.type_stage_label}</Badge>
+                        </td>
+                        <td className={`${tdClass} max-w-[14rem] truncate`} title={s.etablissement_origine}>{s.etablissement_origine}</td>
+                        <td className={`${tdClass} whitespace-nowrap font-mono text-xs`}>{s.reference_courrier}</td>
+                        <td className={tdClass}>
+                          <Badge tone="warning">{s.statut_label}</Badge>
+                        </td>
+                        <td className={tdClass}>
+                          <Link to={`/stagiaires/${s.id}`}>
+                            <Button type="button" variant="secondary" size="sm">
+                              Ouvrir
+                            </Button>
+                          </Link>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </TableWrap>

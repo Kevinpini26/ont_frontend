@@ -14,8 +14,17 @@ import { Field, inputClass } from '../../../shared/components/ui/Field';
 import { Alert } from '../../../shared/components/ui/Alert';
 import { Badge } from '../../../shared/components/ui/Badge';
 import { EmptyState } from '../../../shared/components/ui/EmptyState';
-import { LoadingBlock } from '../../../shared/components/ui/Spinner';
-import { TableWrap, tableClass, theadClass, thClass, tbodyClass, tdClass, trHoverClass } from '../../../shared/components/ui/Table';
+import {
+  TableWrap,
+  tableClass,
+  theadClass,
+  thClass,
+  tbodyClass,
+  tdClass,
+  tdClassPremiere,
+  trHoverClass,
+  SkeletonRows,
+} from '../../../shared/components/ui/Table';
 import { TipTapEditor } from '../components/TipTapEditor';
 import { Inbox } from 'lucide-react';
 
@@ -374,9 +383,7 @@ export function CircuitQueuePage() {
       <Card>
         <CardHeader title={`À traiter (${enAttente.length})`} action={<SearchBar value={recherche} onChange={setRecherche} />} />
         <CardBody className="p-0">
-          {chargement ? (
-            <LoadingBlock />
-          ) : enAttente.length === 0 ? (
+          {!chargement && enAttente.length === 0 ? (
             <div className="p-6">
               <EmptyState icon={<Inbox size={32} />} title="Rien à traiter pour le moment" description="Les nouveaux courriers apparaîtront ici dès qu'ils arrivent à votre poste." />
             </div>
@@ -393,44 +400,48 @@ export function CircuitQueuePage() {
                   </tr>
                 </thead>
                 <tbody className={tbodyClass}>
-                  {enAttente.map((c) => {
-                    // Cas particulier : la file "dg" affiche aussi les
-                    // dossiers en_relecture (pour la signature), mais le
-                    // destinataire du bordereau en_relecture est toujours le
-                    // relecteur désigné, jamais la DG — lui montrer "en
-                    // transit"/"Accuser réception" produirait un bouton que
-                    // la DG ne peut jamais actionner avec succès.
-                    const dechargeNonPertinentePourCePoste = poste === 'dg' && c.statut === 'en_relecture';
-                    const enTransitPourCePoste = c.en_transit && !dechargeNonPertinentePourCePoste;
+                  {chargement ? (
+                    <SkeletonRows colonnes={5} />
+                  ) : (
+                    enAttente.map((c) => {
+                      // Cas particulier : la file "dg" affiche aussi les
+                      // dossiers en_relecture (pour la signature), mais le
+                      // destinataire du bordereau en_relecture est toujours le
+                      // relecteur désigné, jamais la DG — lui montrer "en
+                      // transit"/"Accuser réception" produirait un bouton que
+                      // la DG ne peut jamais actionner avec succès.
+                      const dechargeNonPertinentePourCePoste = poste === 'dg' && c.statut === 'en_relecture';
+                      const enTransitPourCePoste = c.en_transit && !dechargeNonPertinentePourCePoste;
 
-                    return (
-                      <tr key={c.id} className={trHoverClass}>
-                        <td className={`${tdClass} whitespace-nowrap font-medium text-text`}>{c.numero_accuse_reception}</td>
-                        <td className={`${tdClass} max-w-[16rem] truncate`} title={c.objet}>{c.objet}</td>
-                        <td className={tdClass}>{TYPE_LABELS[c.type]}</td>
-                        <td className={tdClass}>
-                          {enTransitPourCePoste ? (
-                            <Badge tone="warning">En transit</Badge>
-                          ) : (
-                            <Badge tone="info">{STATUT_LABELS[c.statut]}</Badge>
-                          )}
-                        </td>
-                        <td className={tdClass}>
-                          {enTransitPourCePoste ? (
-                            <Button type="button" size="sm" variant="secondary" onClick={() => accuserReceptionEtRecharger(c.id)}>
-                              Accuser réception
-                            </Button>
-                          ) : (
-                            <Link to={`/courriers/${c.id}`}>
-                              <Button type="button" size="sm">
-                                Traiter
+                      return (
+                        <tr key={c.id} className={trHoverClass}>
+                          <td className={`${tdClassPremiere} whitespace-nowrap`}>{c.numero_accuse_reception}</td>
+                          <td className={`${tdClass} max-w-[16rem] truncate`} title={c.objet}>{c.objet}</td>
+                          <td className={tdClass}>{TYPE_LABELS[c.type]}</td>
+                          <td className={tdClass}>
+                            {enTransitPourCePoste ? (
+                              <Badge tone="warning">En transit</Badge>
+                            ) : (
+                              <Badge tone="info">{STATUT_LABELS[c.statut]}</Badge>
+                            )}
+                          </td>
+                          <td className={tdClass}>
+                            {enTransitPourCePoste ? (
+                              <Button type="button" size="sm" variant="secondary" onClick={() => accuserReceptionEtRecharger(c.id)}>
+                                Accuser réception
                               </Button>
-                            </Link>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
+                            ) : (
+                              <Link to={`/courriers/${c.id}`}>
+                                <Button type="button" size="sm">
+                                  Traiter
+                                </Button>
+                              </Link>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
                 </tbody>
               </table>
             </TableWrap>

@@ -4,6 +4,7 @@ import { AppLayout } from './shared/components/AppLayout';
 import { ErrorBoundary } from './shared/components/ErrorBoundary';
 import { ProtectedRoute } from './shared/components/ProtectedRoute';
 import { LoadingBlock } from './shared/components/ui/Spinner';
+import { ToastContainer } from './shared/components/ui/Toast';
 import { ROLES } from './modules/kernel/constants';
 import { useThemeSync } from './shared/hooks/useThemeSync';
 
@@ -188,6 +189,7 @@ export default function App() {
     <ErrorBoundary>
       <BrowserRouter>
         <AppRoutes />
+        <ToastContainer />
       </BrowserRouter>
     </ErrorBoundary>
   );

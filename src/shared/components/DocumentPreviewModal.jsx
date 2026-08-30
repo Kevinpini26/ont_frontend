@@ -61,7 +61,7 @@ export function DocumentPreviewModal({ open, onClose, title, url, downloadFilena
   const estPdf = mimeType === 'application/pdf';
 
   return (
-    <Modal open={open} onClose={onClose} title={title} wide>
+    <Modal open={open} onClose={onClose} title={title} size="xl">
       <div className="flex min-h-[60vh] flex-col gap-3">
         {chargement && <LoadingBlock />}
         {erreur && <Alert tone="error">{erreur}</Alert>}

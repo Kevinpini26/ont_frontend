@@ -4,7 +4,7 @@ import { PageHeader } from '../../../shared/components/ui/PageHeader';
 import { Card, CardBody, CardHeader } from '../../../shared/components/ui/Card';
 import { Badge } from '../../../shared/components/ui/Badge';
 import { Button } from '../../../shared/components/ui/Button';
-import { LoadingBlock } from '../../../shared/components/ui/Spinner';
+import { SkeletonLines } from '../../../shared/components/ui/Skeleton';
 
 const TYPES = [
   { cle: 'academique', libelle: 'Stage académique' },
@@ -45,7 +45,7 @@ export function DisponibiliteDemandesPage() {
         />
         <CardBody>
           {chargement || !disponibilite ? (
-            <LoadingBlock />
+            <SkeletonLines lignes={2} />
           ) : (
             <div className="space-y-4">
               {TYPES.map(({ cle, libelle }) => {
