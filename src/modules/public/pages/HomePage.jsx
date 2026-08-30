@@ -6,13 +6,22 @@ import { ROLES } from '../../kernel/constants';
 import { Button } from '../../../shared/components/ui/Button';
 import { ExchangeIllustration } from '../components/illustrations/ExchangeIllustration';
 import { useRevealOnScroll } from '../hooks/useRevealOnScroll';
-import { getDisponibiliteDemandesStage } from '../api/publicApi';
+import { getDisponibiliteDemandesStage, getStatistiquesPubliques } from '../api/publicApi';
 import { sontTousLesTypesFermes } from '../utils/disponibiliteDemandes';
 
 const DESTINATION_PAR_ROLE = {
   [ROLES.ADMINISTRATEUR]: '/admin/directions',
   [ROLES.AGENT_DFP]: '/stagiaires/dashboard',
   [ROLES.RESPONSABLE_DIRECTION]: '/direction/tableau-de-bord',
+};
+
+// Une couleur de marque par service (bleu = suivi, or = stage, vert =
+// courrier) — un accent fin (liseré supérieur + pastille d'icône), jamais
+// le fond entier de la carte, qui reste blanc pour les trois.
+const ACCENTS = {
+  bleu: { liseré: 'bg-ont-blue-600', icone: 'bg-ont-blue-700 text-white group-hover:bg-ont-blue-800' },
+  or: { liseré: 'bg-ont-gold-400', icone: 'bg-ont-gold-400 text-ont-blue-950 group-hover:bg-ont-gold-500' },
+  vert: { liseré: 'bg-ont-green-600', icone: 'bg-ont-green-600 text-white group-hover:bg-ont-green-700' },
 };
 
 const SERVICES = [
@@ -22,6 +31,7 @@ const SERVICES = [
     texte: "Déposez votre demande de stage en ligne, avec votre lettre de l'université, et suivez son avancement.",
     to: '/demande-de-stage',
     libelleBouton: 'Déposer ma demande',
+    accent: 'or',
   },
   {
     icone: Mail,
@@ -29,6 +39,7 @@ const SERVICES = [
     texte: "Partenaires et institutions : déposez un courrier à l'attention de l'ONT sans vous déplacer.",
     to: '/depot-courrier-externe',
     libelleBouton: 'Déposer un courrier',
+    accent: 'vert',
   },
   {
     icone: Search,
@@ -36,48 +47,90 @@ const SERVICES = [
     texte: "Retrouvez l'état d'avancement de votre dossier à tout moment grâce à votre numéro d'accusé de réception.",
     to: '/suivi-dossier',
     libelleBouton: 'Suivre mon dossier',
+    accent: 'bleu',
   },
 ];
 
+// Sigle + libellé officiel (voir DirectionSeeder.php côté backend) — pas de
+// phrase de mission inventée, l'organigramme se lit d'un coup d'œil.
 const DIRECTIONS = [
-  { sigle: 'DRHL', role: 'Ressources humaines et logistique de l’Office.' },
-  { sigle: 'DMFPT', role: 'Mobilisation du Fonds de Promotion du Tourisme.' },
-  { sigle: 'DF', role: 'Gestion financière et budgétaire.' },
-  { sigle: 'DMC', role: 'Marketing et communication institutionnelle.' },
-  { sigle: 'DEP', role: 'Études, planification et développement touristique.' },
-  { sigle: 'DIPP', role: 'Investissements, partenariats et patrimoine touristique.' },
-  { sigle: 'DFP', role: 'Formation et professionnalisation des acteurs du secteur.' },
-  { sigle: 'DAI', role: 'Audit interne des activités de l’Office.' },
+  { sigle: 'DRHL', nom: 'Direction des Ressources Humaines et de la Logistique' },
+  { sigle: 'DMFPT', nom: 'Direction de la Mobilisation du Fonds de Promotion du Tourisme' },
+  { sigle: 'DF', nom: 'Direction Financière' },
+  { sigle: 'DMC', nom: 'Direction Marketing et Communication' },
+  { sigle: 'DEP', nom: 'Direction des Études, de la Planification et du Développement Touristique' },
+  { sigle: 'DIPP', nom: 'Direction des Investissements, Partenariats et Patrimoine touristique' },
+  { sigle: 'DFP', nom: 'Direction de la Formation et de la Professionnalisation' },
+  { sigle: 'DAI', nom: "Direction de l'Audit Interne" },
 ];
 
 function ServiceCard({ service, indisponible }) {
   const { ref, className } = useRevealOnScroll();
   const Icone = service.icone;
+  const accent = ACCENTS[service.accent];
   return (
     <div
       ref={ref}
-      className={`group rounded-card border border-border bg-surface p-6 shadow-card transition-all duration-300 hover:-translate-y-1 hover:shadow-raised ${className}`}
+      className={`group overflow-hidden rounded-card border border-border bg-white shadow-card transition-all duration-300 hover:-translate-y-1 hover:shadow-raised ${className}`}
     >
-      <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-lg bg-ont-blue-700 text-white transition-colors group-hover:bg-ont-blue-800">
-        <Icone size={22} />
-      </div>
-      <h3 className="mb-2 font-heading text-base font-semibold text-text">{service.titre}</h3>
-      <p className="mb-5 text-sm text-text-subtle">
-        {indisponible ? 'Les demandes de stage ne sont pas ouvertes actuellement. Revenez plus tard.' : service.texte}
-      </p>
-      {indisponible ? (
-        <Button type="button" variant="secondary" size="sm" disabled className="gap-1.5">
-          {service.libelleBouton}
-          <ArrowRight size={14} />
-        </Button>
-      ) : (
-        <Link to={service.to}>
-          <Button type="button" variant="secondary" size="sm" className="gap-1.5">
+      <div className={`h-1 w-full ${accent.liseré}`} aria-hidden="true" />
+      <div className="p-6">
+        <div className={`mb-4 flex h-11 w-11 items-center justify-center rounded-lg transition-colors ${accent.icone}`}>
+          <Icone size={22} />
+        </div>
+        <h3 className="mb-2 font-heading text-base font-semibold text-text">{service.titre}</h3>
+        <p className="mb-5 text-sm text-text-subtle">
+          {indisponible ? 'Les demandes de stage ne sont pas ouvertes actuellement. Revenez plus tard.' : service.texte}
+        </p>
+        {indisponible ? (
+          <Button type="button" variant="secondary" size="sm" disabled className="gap-1.5">
             {service.libelleBouton}
             <ArrowRight size={14} />
           </Button>
-        </Link>
-      )}
+        ) : (
+          <Link to={service.to}>
+            <Button type="button" variant="secondary" size="sm" className="gap-1.5">
+              {service.libelleBouton}
+              <ArrowRight size={14} />
+            </Button>
+          </Link>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Bande de chiffres sous la bannière — trois agrégats publics (voir
+ * StatistiquesPubliquesController côté backend), sans donnée nominative.
+ * `null` tant que non chargée : aucun chiffre à zéro affiché par erreur
+ * avant la réponse de l'API.
+ */
+function BandeStatistiques() {
+  const [stats, setStats] = useState(null);
+
+  useEffect(() => {
+    getStatistiquesPubliques().then(setStats).catch(() => {});
+  }, []);
+
+  if (!stats) return null;
+
+  const items = [
+    { valeur: stats.dossiers_traites, label: 'Dossiers traités' },
+    { valeur: stats.delai_moyen_jours != null ? `${stats.delai_moyen_jours} j` : '—', label: 'Délai moyen de traitement' },
+    { valeur: stats.directions_actives, label: 'Directions actives' },
+  ];
+
+  return (
+    <div className="border-y border-ont-blue-100 bg-ont-blue-50">
+      <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-4 py-8 sm:grid-cols-3 sm:px-6 lg:px-8">
+        {items.map((item) => (
+          <div key={item.label} className="text-center">
+            <p className="font-heading text-3xl font-bold text-ont-blue-800">{item.valeur}</p>
+            <p className="mt-1 text-sm text-ont-blue-700">{item.label}</p>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -113,10 +166,10 @@ export function HomePage() {
             <p className="mb-3 text-sm font-semibold tracking-wide text-ont-gold-600 uppercase">
               République Démocratique du Congo
             </p>
-            <h1 className="mb-5 font-heading text-3xl font-bold text-text sm:text-4xl lg:text-5xl">
+            <h1 className="mb-5 font-heading text-3xl font-bold text-text sm:text-4xl lg:text-[2.75rem] lg:leading-[1.15]">
               L'Office National du Tourisme structure et promeut le tourisme congolais
             </h1>
-            <p className="mb-8 max-w-lg text-base text-text-muted">
+            <p className="mb-8 max-w-lg text-lg text-text-muted">
               Ce portail est votre point de contact administratif avec l'Office : déposez une demande de stage, transmettez un
               courrier, ou suivez l'état d'un dossier déjà déposé.
             </p>
@@ -144,7 +197,7 @@ export function HomePage() {
 
           <div className="hidden justify-center lg:flex">
             <div className="w-full max-w-md">
-              <div className="overflow-hidden rounded-modal border border-border shadow-raised">
+              <div className="relative overflow-hidden rounded-modal border border-border shadow-raised">
                 {/* Masquée sur mobile (hidden lg:flex sur le conteneur
                     parent) : loading="lazy" évite qu'un navigateur mobile
                     télécharge quand même une image jamais affichée. Largeur
@@ -162,12 +215,16 @@ export function HomePage() {
                     className="aspect-[4/3] w-full object-cover"
                   />
                 </picture>
+                {/* Masque bleu très léger, pour accorder la photo à la charte plutôt que de la laisser en couleurs brutes. */}
+                <div className="pointer-events-none absolute inset-0 bg-ont-blue-700/10" aria-hidden="true" />
               </div>
               <p className="mt-2 text-right text-xs text-text-subtle">Kinshasa, vue depuis le fleuve Congo — Photo : Valdhy Mbemba / Unsplash</p>
             </div>
           </div>
         </div>
       </section>
+
+      <BandeStatistiques />
 
       {/* Services numériques */}
       <section ref={services.ref} className={`mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8 ${services.className}`}>
@@ -204,9 +261,9 @@ export function HomePage() {
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {DIRECTIONS.map((d) => (
-              <div key={d.sigle} className="rounded-field border border-border bg-surface p-4">
-                <p className="mb-1 font-heading text-sm font-bold text-ont-blue-700">{d.sigle}</p>
-                <p className="text-xs text-text-subtle">{d.role}</p>
+              <div key={d.sigle} className="rounded-field border border-border bg-white p-5 text-center">
+                <p className="mb-1.5 font-heading text-3xl font-bold text-ont-blue-700">{d.sigle}</p>
+                <p className="text-xs text-text-subtle">{d.nom}</p>
               </div>
             ))}
           </div>

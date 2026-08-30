@@ -5,6 +5,7 @@ import { Field, inputClass } from '../../../shared/components/ui/Field';
 import { Alert } from '../../../shared/components/ui/Alert';
 import { FileUploadPreview } from '../../../shared/components/ui/FileUploadPreview';
 import { TipTapEditor } from '../../courrier/components/TipTapEditor';
+import { ConfirmationDepot } from '../components/ConfirmationDepot';
 
 const FORMULAIRE_VIDE = {
   expediteur_externe_nom: '',
@@ -15,8 +16,25 @@ const FORMULAIRE_VIDE = {
   piece_jointe: null,
 };
 
+const REGEX_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function validerChamp(champ, formulaire) {
+  switch (champ) {
+    case 'expediteur_externe_nom':
+      return formulaire.expediteur_externe_nom.trim() ? null : 'Le nom / raison sociale est obligatoire.';
+    case 'expediteur_externe_email':
+      if (!formulaire.expediteur_externe_email.trim()) return "L'adresse e-mail est obligatoire.";
+      return REGEX_EMAIL.test(formulaire.expediteur_externe_email) ? null : "Cette adresse e-mail n'est pas valide.";
+    case 'objet':
+      return formulaire.objet.trim() ? null : "L'objet du courrier est obligatoire.";
+    default:
+      return null;
+  }
+}
+
 export function CourrierExternePage() {
   const [formulaire, setFormulaire] = useState(FORMULAIRE_VIDE);
+  const [erreursChamps, setErreursChamps] = useState({});
   const [numeroObtenu, setNumeroObtenu] = useState(null);
   const [erreur, setErreur] = useState(null);
   const [envoi, setEnvoi] = useState(false);
@@ -25,9 +43,22 @@ export function CourrierExternePage() {
     return (e) => setFormulaire((f) => ({ ...f, [champ]: e.target.value }));
   }
 
+  function validerAuBlur(champ) {
+    return () => setErreursChamps((e) => ({ ...e, [champ]: validerChamp(champ, formulaire) }));
+  }
+
   async function soumettre(e) {
     e.preventDefault();
     setErreur(null);
+
+    const erreurs = {
+      expediteur_externe_nom: validerChamp('expediteur_externe_nom', formulaire),
+      expediteur_externe_email: validerChamp('expediteur_externe_email', formulaire),
+      objet: validerChamp('objet', formulaire),
+    };
+    setErreursChamps(erreurs);
+    if (Object.values(erreurs).some(Boolean)) return;
+
     setEnvoi(true);
     try {
       const { numero_accuse_reception } = await deposerCourrierExterne(formulaire);
@@ -45,26 +76,11 @@ export function CourrierExternePage() {
 
   if (numeroObtenu) {
     return (
-      <div className="mx-auto max-w-md px-4 py-16 sm:px-6 lg:px-8">
-        <div className="rounded-card border border-border bg-surface p-8 text-center shadow-sm">
-          <h1 className="font-heading text-lg font-semibold text-text">Courrier envoyé</h1>
-          <p className="mt-2 text-sm text-text-muted">
-            Votre courrier a bien été reçu. Un e-mail de confirmation vous a été envoyé avec votre numéro d'accusé de réception :
-          </p>
-          <p className="mt-3 rounded-md bg-ont-blue-50 px-3 py-2 font-mono text-sm font-semibold text-ont-blue-800">
-            {numeroObtenu}
-          </p>
-          <p className="mt-3 text-xs text-text-subtle">
-            Conservez ce numéro, il vous permettra de suivre l'état de traitement de votre courrier.
-          </p>
-          <a
-            href={`/suivi-dossier?numero=${encodeURIComponent(numeroObtenu)}`}
-            className="mt-5 block text-sm font-medium text-ont-blue-700 hover:underline"
-          >
-            Suivre l'état de mon dossier →
-          </a>
-        </div>
-      </div>
+      <ConfirmationDepot
+        numero={numeroObtenu}
+        description="Votre courrier a bien été reçu."
+        suivi="Conservez ce numéro, il vous permettra de suivre l'état de traitement de votre courrier."
+      />
     );
   }
 
@@ -81,12 +97,13 @@ export function CourrierExternePage() {
         {erreur && <Alert tone="error" className="mb-4">{erreur}</Alert>}
 
         <form onSubmit={soumettre} className="space-y-4">
-          <Field label="Nom / raison sociale" htmlFor="expediteur_externe_nom" required>
+          <Field label="Nom / raison sociale" htmlFor="expediteur_externe_nom" required error={erreursChamps.expediteur_externe_nom}>
             <input
               id="expediteur_externe_nom"
               className={inputClass}
               value={formulaire.expediteur_externe_nom}
               onChange={definir('expediteur_externe_nom')}
+              onBlur={validerAuBlur('expediteur_externe_nom')}
               required
             />
           </Field>
@@ -95,6 +112,7 @@ export function CourrierExternePage() {
             htmlFor="expediteur_externe_email"
             required
             hint="Votre accusé de réception vous sera envoyé à cette adresse."
+            error={erreursChamps.expediteur_externe_email}
           >
             <input
               id="expediteur_externe_email"
@@ -102,6 +120,7 @@ export function CourrierExternePage() {
               className={inputClass}
               value={formulaire.expediteur_externe_email}
               onChange={definir('expediteur_externe_email')}
+              onBlur={validerAuBlur('expediteur_externe_email')}
               required
             />
           </Field>
@@ -113,8 +132,15 @@ export function CourrierExternePage() {
               onChange={definir('expediteur_externe_telephone')}
             />
           </Field>
-          <Field label="Objet du courrier" htmlFor="objet" required>
-            <input id="objet" className={inputClass} value={formulaire.objet} onChange={definir('objet')} required />
+          <Field label="Objet du courrier" htmlFor="objet" required error={erreursChamps.objet}>
+            <input
+              id="objet"
+              className={inputClass}
+              value={formulaire.objet}
+              onChange={definir('objet')}
+              onBlur={validerAuBlur('objet')}
+              required
+            />
           </Field>
           <Field label="Contenu du courrier (facultatif)" htmlFor="contenu">
             <TipTapEditor content={formulaire.contenu} onChange={(contenu) => setFormulaire((f) => ({ ...f, contenu }))} />

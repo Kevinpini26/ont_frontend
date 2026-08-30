@@ -3,6 +3,15 @@ import { GraduationCap, Mail, Search, ArrowRight } from 'lucide-react';
 import { Button } from '../../../shared/components/ui/Button';
 import { useRevealOnScroll } from '../hooks/useRevealOnScroll';
 
+// Même code couleur que les cartes de la page d'accueil : bleu pour le
+// suivi, or pour le stage, vert pour le courrier — une identité de marque
+// cohérente sur tout le portail, pas seulement sur la page d'accueil.
+const ACCENTS = {
+  bleu: 'bg-ont-blue-700 text-white',
+  or: 'bg-ont-gold-400 text-ont-blue-950',
+  vert: 'bg-ont-green-600 text-white',
+};
+
 const SERVICES = [
   {
     icone: GraduationCap,
@@ -11,6 +20,7 @@ const SERVICES = [
     preparer: 'Vos coordonnées, l’établissement d’origine, la période souhaitée, et la lettre de votre université en format PDF ou image.',
     to: '/demande-de-stage',
     libelleBouton: 'Déposer ma demande',
+    accent: 'or',
   },
   {
     icone: Mail,
@@ -19,6 +29,7 @@ const SERVICES = [
     preparer: 'Vos coordonnées de contact, l’objet du courrier, et le document à transmettre en format PDF ou image.',
     to: '/depot-courrier-externe',
     libelleBouton: 'Déposer un courrier',
+    accent: 'vert',
   },
   {
     icone: Search,
@@ -27,6 +38,7 @@ const SERVICES = [
     preparer: 'Le numéro d’accusé de réception reçu au moment du dépôt.',
     to: '/suivi-dossier',
     libelleBouton: 'Suivre mon dossier',
+    accent: 'bleu',
   },
 ];
 
@@ -38,10 +50,10 @@ function ServiceRow({ service, index }) {
   return (
     <div
       ref={ref}
-      className={`grid grid-cols-1 items-center gap-8 rounded-card border border-border bg-surface p-6 shadow-card transition-shadow duration-300 hover:shadow-raised sm:p-8 md:grid-cols-[auto_1fr] ${className}`}
+      className={`grid grid-cols-1 items-center gap-8 rounded-card border border-border bg-white p-6 shadow-card transition-shadow duration-300 hover:shadow-raised sm:p-8 md:grid-cols-[auto_1fr] ${className}`}
     >
       <div
-        className={`flex h-14 w-14 items-center justify-center rounded-xl bg-ont-blue-700 text-white ${inverse ? 'md:order-2' : ''}`}
+        className={`flex h-14 w-14 items-center justify-center rounded-xl ${ACCENTS[service.accent]} ${inverse ? 'md:order-2' : ''}`}
       >
         <Icone size={26} />
       </div>

@@ -20,6 +20,11 @@ export async function getDisponibiliteDemandesStage() {
   return data;
 }
 
+export async function getStatistiquesPubliques() {
+  const { data } = await apiClient.get('/public/statistiques');
+  return data;
+}
+
 export async function deposerDemandeStage(payload) {
   const formData = new FormData();
   Object.entries(payload).forEach(([cle, valeur]) => {

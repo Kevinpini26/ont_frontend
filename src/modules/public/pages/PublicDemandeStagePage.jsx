@@ -4,11 +4,16 @@ import { estTypeFerme } from '../utils/disponibiliteDemandes';
 import { Button } from '../../../shared/components/ui/Button';
 import { Field, inputClass } from '../../../shared/components/ui/Field';
 import { Alert } from '../../../shared/components/ui/Alert';
+import { FileUploadPreview } from '../../../shared/components/ui/FileUploadPreview';
+import { Stepper } from '../../../shared/components/ui/Stepper';
+import { ConfirmationDepot } from '../components/ConfirmationDepot';
 
 const LIBELLE_TYPE = {
   academique: 'académique',
   professionnel: 'professionnel',
 };
+
+const ETAPES = ['Vos informations', 'Vos documents'];
 
 const FORMULAIRE_VIDE = {
   candidat_nom: '',
@@ -23,8 +28,31 @@ const FORMULAIRE_VIDE = {
   dernier_diplome: null,
 };
 
+const REGEX_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/** Validation d'un seul champ, pour un retour en direct (au blur) plutôt qu'uniquement à la soumission. */
+function validerChamp(champ, formulaire) {
+  switch (champ) {
+    case 'candidat_nom':
+      return formulaire.candidat_nom.trim() ? null : 'Le nom complet est obligatoire.';
+    case 'candidat_email':
+      if (!formulaire.candidat_email.trim()) return "L'adresse e-mail est obligatoire.";
+      return REGEX_EMAIL.test(formulaire.candidat_email) ? null : "Cette adresse e-mail n'est pas valide.";
+    case 'candidat_etablissement':
+      return formulaire.candidat_etablissement.trim() ? null : "L'établissement d'origine est obligatoire.";
+    case 'type_stage':
+      return formulaire.type_stage ? null : 'Choisissez un type de stage.';
+    default:
+      return null;
+  }
+}
+
+const CHAMPS_ETAPE_1 = ['candidat_nom', 'candidat_email', 'candidat_etablissement', 'type_stage'];
+
 export function PublicDemandeStagePage() {
+  const [etape, setEtape] = useState(0);
   const [formulaire, setFormulaire] = useState(FORMULAIRE_VIDE);
+  const [erreursChamps, setErreursChamps] = useState({});
   const [numeroObtenu, setNumeroObtenu] = useState(null);
   const [erreur, setErreur] = useState(null);
   const [envoi, setEnvoi] = useState(false);
@@ -38,6 +66,17 @@ export function PublicDemandeStagePage() {
 
   function definir(champ) {
     return (e) => setFormulaire((f) => ({ ...f, [champ]: e.target.value }));
+  }
+
+  function validerAuBlur(champ) {
+    return () => setErreursChamps((e) => ({ ...e, [champ]: validerChamp(champ, formulaire) }));
+  }
+
+  function passerALetapeDocuments() {
+    const erreurs = Object.fromEntries(CHAMPS_ETAPE_1.map((c) => [c, validerChamp(c, formulaire)]));
+    setErreursChamps(erreurs);
+    if (Object.values(erreurs).some(Boolean)) return;
+    setEtape(1);
   }
 
   async function soumettre(e) {
@@ -60,27 +99,11 @@ export function PublicDemandeStagePage() {
 
   if (numeroObtenu) {
     return (
-      <div className="mx-auto max-w-md px-4 py-16 sm:px-6 lg:px-8">
-        <div className="rounded-card border border-border bg-surface p-8 text-center shadow-sm">
-          <h1 className="font-heading text-lg font-semibold text-text">Demande envoyée</h1>
-          <p className="mt-2 text-sm text-text-muted">
-            Votre demande de stage a bien été reçue. Un e-mail de confirmation vous a été envoyé avec votre numéro
-            d'accusé de réception :
-          </p>
-          <p className="mt-3 rounded-md bg-ont-blue-50 px-3 py-2 font-mono text-sm font-semibold text-ont-blue-800">
-            {numeroObtenu}
-          </p>
-          <p className="mt-3 text-xs text-text-subtle">
-            Conservez ce numéro, il vous permettra de suivre l'état de votre dossier.
-          </p>
-          <a
-            href={`/suivi-dossier?numero=${encodeURIComponent(numeroObtenu)}`}
-            className="mt-5 block text-sm font-medium text-ont-blue-700 hover:underline"
-          >
-            Suivre l'état de mon dossier →
-          </a>
-        </div>
-      </div>
+      <ConfirmationDepot
+        numero={numeroObtenu}
+        description="Votre demande de stage a bien été reçue."
+        suivi="Conservez ce numéro, il vous permettra de suivre l'état de votre dossier."
+      />
     );
   }
 
@@ -94,140 +117,168 @@ export function PublicDemandeStagePage() {
           </p>
         </div>
 
+        <div className="mb-6">
+          <Stepper etapes={ETAPES} indexCourant={etape} />
+        </div>
+
         {erreur && <Alert tone="error" className="mb-4">{erreur}</Alert>}
 
-        <form onSubmit={soumettre} className="space-y-4">
-          <Field label="Nom complet" htmlFor="candidat_nom" required>
-            <input id="candidat_nom" className={inputClass} value={formulaire.candidat_nom} onChange={definir('candidat_nom')} required />
-          </Field>
-          <Field label="Adresse e-mail" htmlFor="candidat_email" required hint="Votre accusé de réception vous sera envoyé à cette adresse.">
-            <input
-              id="candidat_email"
-              type="email"
-              className={inputClass}
-              value={formulaire.candidat_email}
-              onChange={definir('candidat_email')}
-              required
-            />
-          </Field>
-          <Field label="Téléphone (facultatif)" htmlFor="candidat_contact">
-            <input id="candidat_contact" className={inputClass} value={formulaire.candidat_contact} onChange={definir('candidat_contact')} />
-          </Field>
-          <Field label="Établissement d'origine" htmlFor="candidat_etablissement" required>
-            <input
-              id="candidat_etablissement"
-              className={inputClass}
-              value={formulaire.candidat_etablissement}
-              onChange={definir('candidat_etablissement')}
-              required
-            />
-          </Field>
-          <Field label="Type de stage" htmlFor="type_stage" required>
-            <select
-              id="type_stage"
-              className={inputClass}
-              value={formulaire.type_stage}
-              onChange={(e) =>
-                setFormulaire((f) => ({
-                  ...f,
-                  type_stage: e.target.value,
-                  lettre_stage: null,
-                  lettre_demande: null,
-                  cv: null,
-                  diplome_etat: null,
-                  dernier_diplome: null,
-                }))
-              }
-              required
-            >
-              <option value="">Choisissez…</option>
-              <option value="academique">Stage académique</option>
-              <option value="professionnel">Stage professionnel</option>
-            </select>
-          </Field>
-
-          {typeFerme && (
-            <Alert tone="info">
-              Les demandes de stage {LIBELLE_TYPE[formulaire.type_stage]} ne sont pas ouvertes actuellement. Revenez
-              plus tard ou consultez nos disponibilités.
-            </Alert>
-          )}
-
-          {!typeFerme && formulaire.type_stage === 'academique' && (
-            <Field
-              label="Lettre de stage de l'université"
-              htmlFor="lettre_stage"
-              required
-              hint="Lettre officielle de votre établissement introduisant votre demande de stage (PDF ou image scannée, 5 Mo max)."
-            >
+        {etape === 0 ? (
+          <div className="space-y-4">
+            <Field label="Nom complet" htmlFor="candidat_nom" required error={erreursChamps.candidat_nom}>
               <input
-                id="lettre_stage"
-                type="file"
-                accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+                id="candidat_nom"
                 className={inputClass}
-                onChange={(e) => setFormulaire((f) => ({ ...f, lettre_stage: e.target.files?.[0] ?? null }))}
+                value={formulaire.candidat_nom}
+                onChange={definir('candidat_nom')}
+                onBlur={validerAuBlur('candidat_nom')}
                 required
               />
             </Field>
-          )}
-
-          {!typeFerme && formulaire.type_stage === 'professionnel' && (
-            <>
-              <Field
-                label="Lettre de demande de stage"
-                htmlFor="lettre_demande"
+            <Field
+              label="Adresse e-mail"
+              htmlFor="candidat_email"
+              required
+              hint="Votre accusé de réception vous sera envoyé à cette adresse."
+              error={erreursChamps.candidat_email}
+            >
+              <input
+                id="candidat_email"
+                type="email"
+                className={inputClass}
+                value={formulaire.candidat_email}
+                onChange={definir('candidat_email')}
+                onBlur={validerAuBlur('candidat_email')}
                 required
-                hint="Document principal de votre dossier (PDF ou image scannée, 5 Mo max)."
+              />
+            </Field>
+            <Field label="Téléphone (facultatif)" htmlFor="candidat_contact">
+              <input id="candidat_contact" className={inputClass} value={formulaire.candidat_contact} onChange={definir('candidat_contact')} />
+            </Field>
+            <Field label="Établissement d'origine" htmlFor="candidat_etablissement" required error={erreursChamps.candidat_etablissement}>
+              <input
+                id="candidat_etablissement"
+                className={inputClass}
+                value={formulaire.candidat_etablissement}
+                onChange={definir('candidat_etablissement')}
+                onBlur={validerAuBlur('candidat_etablissement')}
+                required
+              />
+            </Field>
+            <Field label="Type de stage" htmlFor="type_stage" required error={erreursChamps.type_stage}>
+              <select
+                id="type_stage"
+                className={inputClass}
+                value={formulaire.type_stage}
+                onChange={(e) => {
+                  setFormulaire((f) => ({
+                    ...f,
+                    type_stage: e.target.value,
+                    lettre_stage: null,
+                    lettre_demande: null,
+                    cv: null,
+                    diplome_etat: null,
+                    dernier_diplome: null,
+                  }));
+                  setErreursChamps((err) => ({ ...err, type_stage: null }));
+                }}
+                required
               >
-                <input
-                  id="lettre_demande"
-                  type="file"
-                  accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
-                  className={inputClass}
-                  onChange={(e) => setFormulaire((f) => ({ ...f, lettre_demande: e.target.files?.[0] ?? null }))}
-                  required
-                />
-              </Field>
-              <Field label="CV du candidat" htmlFor="cv" required hint="PDF ou image scannée, 5 Mo max.">
-                <input
-                  id="cv"
-                  type="file"
-                  accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
-                  className={inputClass}
-                  onChange={(e) => setFormulaire((f) => ({ ...f, cv: e.target.files?.[0] ?? null }))}
-                  required
-                />
-              </Field>
-              <Field label="Diplôme d'État" htmlFor="diplome_etat" required hint="PDF ou image scannée, 5 Mo max.">
-                <input
-                  id="diplome_etat"
-                  type="file"
-                  accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
-                  className={inputClass}
-                  onChange={(e) => setFormulaire((f) => ({ ...f, diplome_etat: e.target.files?.[0] ?? null }))}
-                  required
-                />
-              </Field>
-              <Field label="Dernier diplôme obtenu" htmlFor="dernier_diplome" required hint="PDF ou image scannée, 5 Mo max.">
-                <input
-                  id="dernier_diplome"
-                  type="file"
-                  accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
-                  className={inputClass}
-                  onChange={(e) => setFormulaire((f) => ({ ...f, dernier_diplome: e.target.files?.[0] ?? null }))}
-                  required
-                />
-              </Field>
-            </>
-          )}
+                <option value="">Choisissez…</option>
+                <option value="academique">Stage académique</option>
+                <option value="professionnel">Stage professionnel</option>
+              </select>
+            </Field>
 
-          <Button type="submit" disabled={envoi || !formulaire.type_stage || typeFerme} className="w-full">
-            {envoi ? 'Envoi…' : 'Envoyer ma demande'}
-          </Button>
-        </form>
+            {typeFerme && (
+              <Alert tone="info">
+                Les demandes de stage {LIBELLE_TYPE[formulaire.type_stage]} ne sont pas ouvertes actuellement. Revenez
+                plus tard ou consultez nos disponibilités.
+              </Alert>
+            )}
+
+            <Button type="button" onClick={passerALetapeDocuments} disabled={typeFerme} className="w-full">
+              Continuer
+            </Button>
+          </div>
+        ) : (
+          <form onSubmit={soumettre} className="space-y-4">
+            {formulaire.type_stage === 'academique' && (
+              <Field
+                label="Lettre de stage de l'université"
+                htmlFor="lettre_stage"
+                required
+                hint="Lettre officielle de votre établissement introduisant votre demande de stage (PDF ou image scannée, 5 Mo max)."
+              >
+                <FileUploadPreview
+                  id="lettre_stage"
+                  accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+                  value={formulaire.lettre_stage}
+                  onChange={(f) => setFormulaire((form) => ({ ...form, lettre_stage: f }))}
+                  required
+                />
+              </Field>
+            )}
+
+            {formulaire.type_stage === 'professionnel' && (
+              <>
+                <Field
+                  label="Lettre de demande de stage"
+                  htmlFor="lettre_demande"
+                  required
+                  hint="Document principal de votre dossier (PDF ou image scannée, 5 Mo max)."
+                >
+                  <FileUploadPreview
+                    id="lettre_demande"
+                    accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+                    value={formulaire.lettre_demande}
+                    onChange={(f) => setFormulaire((form) => ({ ...form, lettre_demande: f }))}
+                    required
+                  />
+                </Field>
+                <Field label="CV du candidat" htmlFor="cv" required hint="PDF ou image scannée, 5 Mo max.">
+                  <FileUploadPreview
+                    id="cv"
+                    accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+                    value={formulaire.cv}
+                    onChange={(f) => setFormulaire((form) => ({ ...form, cv: f }))}
+                    required
+                  />
+                </Field>
+                <Field label="Diplôme d'État" htmlFor="diplome_etat" required hint="PDF ou image scannée, 5 Mo max.">
+                  <FileUploadPreview
+                    id="diplome_etat"
+                    accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+                    value={formulaire.diplome_etat}
+                    onChange={(f) => setFormulaire((form) => ({ ...form, diplome_etat: f }))}
+                    required
+                  />
+                </Field>
+                <Field label="Dernier diplôme obtenu" htmlFor="dernier_diplome" required hint="PDF ou image scannée, 5 Mo max.">
+                  <FileUploadPreview
+                    id="dernier_diplome"
+                    accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+                    value={formulaire.dernier_diplome}
+                    onChange={(f) => setFormulaire((form) => ({ ...form, dernier_diplome: f }))}
+                    required
+                  />
+                </Field>
+              </>
+            )}
+
+            <div className="flex gap-3">
+              <Button type="button" variant="secondary" onClick={() => setEtape(0)} className="flex-1">
+                Précédent
+              </Button>
+              <Button type="submit" disabled={envoi} className="flex-1">
+                {envoi ? 'Envoi…' : 'Envoyer ma demande'}
+              </Button>
+            </div>
+          </form>
+        )}
 
         <p className="mt-6 text-center text-sm text-text-subtle">
-          <a href="/suivi-dossier" className="font-medium text-ont-blue-700 hover:underline">
+          <a href="/suivi-dossier" className="font-medium text-ont-blue-700 hover:underline dark:text-ont-blue-400">
             Suivre une demande déjà déposée →
           </a>
         </p>
