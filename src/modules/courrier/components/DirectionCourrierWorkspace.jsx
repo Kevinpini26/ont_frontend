@@ -15,6 +15,7 @@ import { Badge } from '../../../shared/components/ui/Badge';
 import { EmptyState } from '../../../shared/components/ui/EmptyState';
 import { Pagination } from '../../../shared/components/ui/Pagination';
 import { FileUploadPreview } from '../../../shared/components/ui/FileUploadPreview';
+import { AnnonceChargement } from '../../../shared/components/ui/AnnonceChargement';
 import {
   TableWrap,
   tableClass,
@@ -231,6 +232,7 @@ export function DirectionCourrierWorkspace() {
             action={<ExportButtons data={emis} columns={colonnesExport} filename="courriers-emis" />}
           />
           <CardBody className="p-0">
+            <AnnonceChargement chargement={chargement} count={emis.length} libelle="courrier(s) émis" />
             <TableauCourriers courriers={emis} chargement={chargement} />
             <div className="px-4 pb-4">
               <Pagination meta={metaEmis} onPageChange={setPageEmis} />
@@ -244,6 +246,7 @@ export function DirectionCourrierWorkspace() {
             action={<ExportButtons data={recus} columns={colonnesExport} filename="courriers-recus" />}
           />
           <CardBody className="p-0">
+            <AnnonceChargement chargement={chargement} count={recus.length} libelle="courrier(s) reçu(s)" />
             <TableauCourriers courriers={recus} chargement={chargement} />
             <div className="px-4 pb-4">
               <Pagination meta={metaRecus} onPageChange={setPageRecus} />

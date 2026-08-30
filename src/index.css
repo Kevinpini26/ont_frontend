@@ -203,6 +203,19 @@ textarea {
   @apply bg-transparent;
 }
 
+/* Filet de sécurité global : tout élément interactif reçoit un anneau de
+   focus visible par défaut au clavier, même sans classe focus-visible
+   explicite sur le composant — plusieurs boutons de la coque de
+   l'application (sélecteur de thème, cloche de notifications, menu de
+   compte, bascule de la sidebar) n'en définissaient aucun. Spécificité
+   volontairement basse (pseudo-classe seule) : un composant qui pose sa
+   propre teinte de focus (voir Button.jsx) la garde, cette règle ne sert
+   qu'à couvrir ce qui resterait sans anneau du tout. */
+:focus-visible {
+  outline: 2px solid var(--color-ont-blue-500);
+  outline-offset: 2px;
+}
+
 /* Pulsation subtile (opacité/échelle légères) des badges de compteur de la
    sidebar — seulement 3 battements, rejoués en remontant le composant sur un
    changement de "key" (voir Sidebar.jsx::BadgeCompteur), jamais en continu :

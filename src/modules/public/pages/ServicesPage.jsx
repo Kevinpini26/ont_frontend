@@ -9,7 +9,10 @@ import { useRevealOnScroll } from '../hooks/useRevealOnScroll';
 const ACCENTS = {
   bleu: 'bg-ont-blue-700 text-white',
   or: 'bg-ont-gold-400 text-ont-blue-950',
-  vert: 'bg-ont-green-600 text-white',
+  // green-700 (pas 600) : icône blanche sur ont-green-600 ne donne que
+  // 3,14 de contraste, marge trop fine sur les 3,0 requis pour un élément
+  // graphique — vérifié par calcul.
+  vert: 'bg-ont-green-700 text-white',
 };
 
 const SERVICES = [

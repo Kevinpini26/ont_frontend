@@ -8,6 +8,7 @@ import { Button } from '../../../shared/components/ui/Button';
 import { Field, inputClass } from '../../../shared/components/ui/Field';
 import { Badge } from '../../../shared/components/ui/Badge';
 import { EmptyState } from '../../../shared/components/ui/EmptyState';
+import { AnnonceChargement } from '../../../shared/components/ui/AnnonceChargement';
 import { ExportButtons } from '../../../shared/components/ExportButtons';
 import {
   TableWrap,
@@ -142,6 +143,7 @@ export function HistoriqueStagiairesPage() {
           }
         />
         <CardBody className="p-0">
+          <AnnonceChargement chargement={chargement} count={stagiaires.length} libelle="dossier(s) clôturé(s)" />
           {!chargement && stagiaires.length === 0 ? (
             <div className="p-6">
               <EmptyState icon={<GraduationCap size={32} />} title="Aucun dossier ne correspond à ces critères" />

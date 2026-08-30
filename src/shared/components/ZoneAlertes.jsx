@@ -5,9 +5,12 @@ import { Badge } from './ui/Badge';
 import { EmptyState } from './ui/EmptyState';
 import { LoadingBlock } from './ui/Spinner';
 
+// gold-700 (pas 500) : vérifié par calcul, ont-gold-500 ne donne que 1,65
+// de contraste sur fond clair — bien sous les 3,0 requis pour un élément
+// graphique porteur de sens.
 const COULEUR_PASTILLE = {
   info: 'bg-ont-blue-500',
-  warning: 'bg-ont-gold-500',
+  warning: 'bg-ont-gold-700 dark:bg-ont-gold-500',
   danger: 'bg-ont-red-500',
 };
 

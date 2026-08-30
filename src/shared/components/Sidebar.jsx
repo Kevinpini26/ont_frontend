@@ -127,6 +127,7 @@ export function Sidebar({ user, onLogout, mobileOpen, onCloseMobile }) {
                         to={item.to}
                         onClick={onCloseMobile}
                         title={plie ? item.label : undefined}
+                        aria-label={plie ? item.label : undefined}
                         className={`flex items-center gap-2.5 rounded-field px-3 py-2 text-sm font-medium transition-colors ${plie ? 'justify-center' : 'min-w-0'} ${
                           active ? 'bg-ont-blue-800 text-white' : 'text-ont-blue-100 hover:bg-ont-blue-900 hover:text-white'
                         }`}

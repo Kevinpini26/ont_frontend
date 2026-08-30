@@ -13,6 +13,7 @@ import { Button } from '../../../shared/components/ui/Button';
 import { Field, inputClass } from '../../../shared/components/ui/Field';
 import { Badge } from '../../../shared/components/ui/Badge';
 import { EmptyState } from '../../../shared/components/ui/EmptyState';
+import { AnnonceChargement } from '../../../shared/components/ui/AnnonceChargement';
 import { Pagination } from '../../../shared/components/ui/Pagination';
 import {
   TableWrap,
@@ -183,6 +184,7 @@ export function DfpStagiairesPage() {
             />
           </div>
 
+          <AnnonceChargement chargement={chargement} count={stagiaires.length} libelle="stagiaire(s)" />
           {!chargement && stagiaires.length === 0 ? (
             <EmptyState
               icon={<GraduationCap size={32} />}

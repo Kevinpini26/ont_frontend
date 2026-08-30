@@ -13,6 +13,7 @@ import { PasswordInput } from '../../../shared/components/ui/PasswordInput';
 import { Alert } from '../../../shared/components/ui/Alert';
 import { Badge } from '../../../shared/components/ui/Badge';
 import { ConfirmDialog } from '../../../shared/components/ui/ConfirmDialog';
+import { AnnonceChargement } from '../../../shared/components/ui/AnnonceChargement';
 import {
   TableWrap,
   tableClass,
@@ -292,6 +293,7 @@ export function AdminUsersPage() {
           }
         />
         <CardBody className="p-0">
+          <AnnonceChargement chargement={chargement} count={usersFiltres.length} libelle="utilisateur(s)" />
           <TableWrap>
             <table className={tableClass}>
               <thead className={theadClass}>

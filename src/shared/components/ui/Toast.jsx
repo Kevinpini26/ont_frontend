@@ -12,7 +12,13 @@ const TONES = {
     icone: AlertTriangle,
     classe: 'bg-ont-gold-100 text-ont-gold-900 ring-ont-gold-300 dark:bg-ont-gold-900/60 dark:text-ont-gold-200 dark:ring-ont-gold-800',
   },
-  error: { icone: XCircle, classe: 'bg-ont-red-50 text-ont-red-800 ring-ont-red-200 dark:bg-ont-red-950/80 dark:text-ont-red-200 dark:ring-ont-red-900' },
+  // ont-red n'a que les paliers 300/500/700 dans la charte (jamais un
+  // accent, réservé aux erreurs) — même convention que Badge/Alert, pas de
+  // palier 50/200/800/950 inexistant.
+  error: {
+    icone: XCircle,
+    classe: 'bg-ont-red-500/10 text-ont-red-700 ring-ont-red-500/20 dark:bg-ont-red-500/15 dark:text-ont-red-300 dark:ring-ont-red-500/25',
+  },
 };
 
 /**

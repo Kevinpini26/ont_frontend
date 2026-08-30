@@ -7,6 +7,7 @@ import { Card, CardBody } from '../../../shared/components/ui/Card';
 import { Button } from '../../../shared/components/ui/Button';
 import { Badge } from '../../../shared/components/ui/Badge';
 import { EmptyState } from '../../../shared/components/ui/EmptyState';
+import { AnnonceChargement } from '../../../shared/components/ui/AnnonceChargement';
 import { Pagination } from '../../../shared/components/ui/Pagination';
 import {
   TableWrap,
@@ -50,6 +51,7 @@ export function PresencesApercuPage() {
 
       <Card>
         <CardBody>
+          <AnnonceChargement chargement={chargement} count={stagiaires.length} libelle="stagiaire(s)" />
           {!chargement && stagiaires.length === 0 ? (
             <EmptyState icon={<CalendarCheck size={32} />} title="Aucun stagiaire en cours" />
           ) : (

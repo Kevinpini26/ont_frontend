@@ -11,6 +11,7 @@ import { Field, inputClass } from '../../../shared/components/ui/Field';
 import { Badge } from '../../../shared/components/ui/Badge';
 import { Pagination } from '../../../shared/components/ui/Pagination';
 import { EmptyState } from '../../../shared/components/ui/EmptyState';
+import { AnnonceChargement } from '../../../shared/components/ui/AnnonceChargement';
 import {
   TableWrap,
   tableClass,
@@ -119,6 +120,7 @@ export function DirectionStagiairesPage() {
             {meta ? `${meta.total} résultat${meta.total > 1 ? 's' : ''}` : ''}
           </p>
 
+          <AnnonceChargement chargement={chargement} count={stagiaires.length} libelle="stagiaire(s)" />
           {!chargement && stagiaires.length === 0 ? (
             <EmptyState icon={<GraduationCap size={32} />} title="Aucun stagiaire ne correspond" description="Ajustez les filtres ou la recherche ci-dessus." />
           ) : (

@@ -10,6 +10,7 @@ import { Alert } from '../../../shared/components/ui/Alert';
 import { Badge } from '../../../shared/components/ui/Badge';
 import { ConfirmDialog } from '../../../shared/components/ui/ConfirmDialog';
 import { EmptyState } from '../../../shared/components/ui/EmptyState';
+import { AnnonceChargement } from '../../../shared/components/ui/AnnonceChargement';
 import {
   TableWrap,
   tableClass,
@@ -210,6 +211,7 @@ export function AdminDirectionsPage() {
           }
         />
         <CardBody className="p-0">
+          <AnnonceChargement chargement={chargement} count={directionsFiltrees.length} libelle="direction(s)" />
           {!chargement && directionsFiltrees.length === 0 ? (
             <div className="p-6">
               <EmptyState icon={<Building2 size={32} />} title="Aucune direction ne correspond" description="Essayez une autre recherche." />

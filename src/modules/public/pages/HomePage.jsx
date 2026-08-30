@@ -21,7 +21,10 @@ const DESTINATION_PAR_ROLE = {
 const ACCENTS = {
   bleu: { liseré: 'bg-ont-blue-600', icone: 'bg-ont-blue-700 text-white group-hover:bg-ont-blue-800' },
   or: { liseré: 'bg-ont-gold-400', icone: 'bg-ont-gold-400 text-ont-blue-950 group-hover:bg-ont-gold-500' },
-  vert: { liseré: 'bg-ont-green-600', icone: 'bg-ont-green-600 text-white group-hover:bg-ont-green-700' },
+  // icone en green-700 (pas 600) : icône blanche sur ont-green-600 ne
+  // donne que 3,14 de contraste, une marge trop fine sur les 3,0 requis
+  // pour un élément graphique — vérifié par calcul.
+  vert: { liseré: 'bg-ont-green-600', icone: 'bg-ont-green-700 text-white group-hover:bg-ont-green-800' },
 };
 
 const SERVICES = [

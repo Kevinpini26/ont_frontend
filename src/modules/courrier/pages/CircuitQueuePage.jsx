@@ -14,6 +14,7 @@ import { Field, inputClass } from '../../../shared/components/ui/Field';
 import { Alert } from '../../../shared/components/ui/Alert';
 import { Badge } from '../../../shared/components/ui/Badge';
 import { EmptyState } from '../../../shared/components/ui/EmptyState';
+import { AnnonceChargement } from '../../../shared/components/ui/AnnonceChargement';
 import {
   TableWrap,
   tableClass,
@@ -383,6 +384,7 @@ export function CircuitQueuePage() {
       <Card>
         <CardHeader title={`À traiter (${enAttente.length})`} action={<SearchBar value={recherche} onChange={setRecherche} />} />
         <CardBody className="p-0">
+          <AnnonceChargement chargement={chargement} count={enAttente.length} libelle="courrier(s) à traiter" />
           {!chargement && enAttente.length === 0 ? (
             <div className="p-6">
               <EmptyState icon={<Inbox size={32} />} title="Rien à traiter pour le moment" description="Les nouveaux courriers apparaîtront ici dès qu'ils arrivent à votre poste." />

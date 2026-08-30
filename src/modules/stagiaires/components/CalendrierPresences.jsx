@@ -182,7 +182,8 @@ export function CalendrierPresences({ stagiaire, presences, onChange }) {
           const partiel = coche && !estALHeure(presence);
           const numeroJour = Number(jour.slice(8, 10));
 
-          let classes = 'flex h-10 items-center justify-center rounded-md text-sm transition-colors';
+          let classes =
+            'flex h-10 items-center justify-center rounded-md text-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ont-blue-500';
           if (weekend || horsPeriode || futur) {
             classes += ' bg-surface-sunken text-text-subtle';
           } else if (coche && !partiel) {
@@ -190,7 +191,11 @@ export function CalendrierPresences({ stagiaire, presences, onChange }) {
           } else if (partiel) {
             classes += ' cursor-pointer bg-ont-gold-300 font-semibold text-ont-gold-900 hover:brightness-95';
           } else if (absent) {
-            classes += ' cursor-pointer bg-ont-red-500/40 font-semibold text-ont-red-900 hover:bg-ont-red-500/55 dark:text-ont-red-100';
+            // /25 plutôt que /40 : au-delà, le rouge composite avec le fond
+            // clair descend sous 4,5 de contraste avec le texte le plus
+            // sombre disponible (ont-red-700, aucun ont-red-900 dans la
+            // charte) — vérifié par calcul, pas à l'œil.
+            classes += ' cursor-pointer bg-ont-red-500/25 font-semibold text-ont-red-700 hover:bg-ont-red-500/35 dark:text-ont-red-300';
           } else {
             classes += ' cursor-pointer bg-surface-sunken text-text-muted hover:bg-border';
           }

@@ -9,8 +9,11 @@ import { TrendingDown, TrendingUp } from 'lucide-react';
  * `neutral` et `success` n'affichent aucune pastille (rien à signaler),
  * `accent` affiche une pastille or, `danger` une pastille rouge.
  */
+// gold-700 (pas 500) : vérifié par calcul, ont-gold-500 ne donne que 1,65
+// de contraste sur fond clair — bien sous les 3,0 requis pour un élément
+// graphique porteur de sens.
 const COULEUR_PASTILLE = {
-  accent: 'bg-ont-gold-500',
+  accent: 'bg-ont-gold-700 dark:bg-ont-gold-500',
   danger: 'bg-ont-red-500',
 };
 

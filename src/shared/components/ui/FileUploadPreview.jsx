@@ -67,7 +67,7 @@ export function FileUploadPreview({ id, value, onChange, accept, required }) {
         <button
           type="button"
           onClick={() => onChange(null)}
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-field text-text-subtle hover:bg-border-strong hover:text-text-muted"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-field text-text-subtle hover:bg-border-strong hover:text-text-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ont-blue-500"
           aria-label="Retirer le fichier"
         >
           <X size={16} />
@@ -85,7 +85,7 @@ export function FileUploadPreview({ id, value, onChange, accept, required }) {
       }}
       onDragLeave={() => setSurvole(false)}
       onDrop={surDepot}
-      className={`flex cursor-pointer flex-col items-center gap-1.5 rounded-field border-2 border-dashed px-3 py-5 text-center transition-colors ${
+      className={`flex cursor-pointer flex-col items-center gap-1.5 rounded-field border-2 border-dashed px-3 py-5 text-center transition-colors focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-ont-blue-500 ${
         survole ? 'border-ont-blue-500 bg-ont-blue-50 dark:bg-ont-blue-950/40' : 'border-border-strong hover:border-border-strong/70 hover:bg-surface-sunken'
       }`}
     >

@@ -27,6 +27,7 @@ export function SearchBar({ value, onChange, placeholder = 'Rechercher par r√©f√
       </svg>
       <input
         type="search"
+        aria-label={placeholder}
         className={`${inputClass} pl-9`}
         placeholder={placeholder}
         value={texte}

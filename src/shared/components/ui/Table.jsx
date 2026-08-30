@@ -87,7 +87,7 @@ export function ThSortable({ label, sortKey, tri, onTri, className = '' }) {
       <button
         type="button"
         onClick={() => onTri(sortKey)}
-        className="inline-flex items-center gap-1 whitespace-nowrap hover:text-text"
+        className="inline-flex items-center gap-1 whitespace-nowrap rounded hover:text-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ont-blue-500"
       >
         {label}
         <span className={`text-[0.6rem] leading-none ${actif ? 'text-ont-blue-500' : 'text-text-subtle/60'}`} aria-hidden="true">

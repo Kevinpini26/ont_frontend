@@ -7,10 +7,15 @@ import { useId } from 'react';
  * paliers sont un choix de présentation, à ajuster si la DFP fixe un
  * barème précis un jour.
  */
+// Paliers 700/800 plutôt que 600 : sur le ruban, le texte du libellé de
+// mention reste blanc — vérifié par calcul, ont-gold-600 et ont-green-600
+// ne donnent que 2,35 et 3,14 de contraste avec du blanc (sous les 4,5
+// requis pour du texte), ont-gold-800/ont-blue-700/ont-green-800 donnent
+// respectivement 5,49 / 7,09 / 6,83.
 const SEUILS_MENTION = [
-  { seuil: 80, libelle: 'Excellent', teinte: '#d7a003' }, // ont-gold-600
-  { seuil: 65, libelle: 'Très bien', teinte: '#0e6cd5' }, // ont-blue-600
-  { seuil: 0, libelle: 'Satisfaisant', teinte: '#7b9d1e' }, // ont-green-600
+  { seuil: 80, libelle: 'Excellent', teinte: '#856406' }, // ont-gold-800
+  { seuil: 65, libelle: 'Très bien', teinte: '#0d57aa' }, // ont-blue-700
+  { seuil: 0, libelle: 'Satisfaisant', teinte: '#4d6215' }, // ont-green-800
 ];
 
 function mentionDe(note) {

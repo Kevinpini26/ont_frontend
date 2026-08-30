@@ -29,7 +29,7 @@ export function Stepper({ etapes, indexCourant }) {
                   courante
                     ? 'bg-ont-blue-700 text-white'
                     : franchie
-                      ? 'bg-ont-green-600 text-white'
+                      ? 'bg-ont-green-700 text-white'
                       : 'bg-surface-sunken text-text-subtle ring-1 ring-inset ring-border-strong'
                 }`}
               >

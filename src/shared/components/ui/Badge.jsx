@@ -8,12 +8,14 @@ const TONES = {
 
 // Pastille devant le texte, en plus de la teinte : un statut reste
 // distinguable sans dépendre uniquement de la couleur (daltonisme), même
-// principe que ZoneAlertes/StatCard.
+// principe que ZoneAlertes/StatCard. Paliers vérifiés par calcul contre un
+// fond clair ET sombre (3,0 minimum, seuil UI) : ont-gold-500 ne donnait
+// que 1,65 sur blanc, ont-green-600 que 2,97 sur son propre bg-ont-green-50.
 const PASTILLES = {
   neutral: 'bg-text-subtle',
   info: 'bg-ont-blue-500',
-  success: 'bg-ont-green-600',
-  warning: 'bg-ont-gold-500',
+  success: 'bg-ont-green-700',
+  warning: 'bg-ont-gold-700 dark:bg-ont-gold-500',
   danger: 'bg-ont-red-500',
 };
 

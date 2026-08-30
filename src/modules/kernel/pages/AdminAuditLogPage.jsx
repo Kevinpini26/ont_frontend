@@ -3,6 +3,7 @@ import { listAuditLogs } from '../api/auditLogsApi';
 import { PageHeader } from '../../../shared/components/ui/PageHeader';
 import { Card, CardBody } from '../../../shared/components/ui/Card';
 import { EmptyState } from '../../../shared/components/ui/EmptyState';
+import { AnnonceChargement } from '../../../shared/components/ui/AnnonceChargement';
 import { Badge } from '../../../shared/components/ui/Badge';
 import {
   TableWrap,
@@ -46,6 +47,7 @@ export function AdminAuditLogPage() {
 
       <Card>
         <CardBody className="p-0">
+          <AnnonceChargement chargement={chargement} count={logs.length} libelle="entrée(s) de journal" />
           {!chargement && logs.length === 0 ? (
             <div className="p-6">
               <EmptyState icon={<ScrollText size={32} />} title="Aucune action journalisée pour le moment" />
