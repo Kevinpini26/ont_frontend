@@ -9,8 +9,8 @@ import { SkeletonChart } from '../../../shared/components/ui/Skeleton';
 import { EmptyState } from '../../../shared/components/ui/EmptyState';
 import { CHART_COLORS } from '../../../shared/chartColors';
 
-const BAR_COLOR = CHART_COLORS.ontBlue600; // série unique de magnitude : une seule teinte, cf. skill dataviz
-const AXIS_TICK = { fill: CHART_COLORS.axisTick, fontSize: 12 };
+const BAR_COLOR = CHART_COLORS.ontBlue500; // série unique de magnitude : une seule teinte, cf. skill dataviz
+const AXIS_TICK = { fill: CHART_COLORS.axisTick, fontSize: 11 };
 
 function ChartTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
@@ -74,9 +74,9 @@ export function DfpStatistiquesPage() {
                   <ResponsiveContainer width="100%" height={220}>
                     <LineChart data={donneesEvolution} margin={{ left: -20, right: 16 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} vertical={false} />
-                      <XAxis dataKey="periode" tick={{ ...AXIS_TICK, fontSize: 10 }} axisLine={false} tickLine={false} />
+                      <XAxis dataKey="periode" tick={AXIS_TICK} axisLine={false} tickLine={false} />
                       <YAxis allowDecimals={false} tick={AXIS_TICK} axisLine={false} tickLine={false} />
-                      <Tooltip content={<ChartTooltip />} cursor={{ stroke: CHART_COLORS.ontBlue600, strokeWidth: 1 }} />
+                      <Tooltip content={<ChartTooltip />} cursor={{ stroke: CHART_COLORS.ontBlue500, strokeWidth: 1 }} />
                       <Line type="monotone" dataKey="total" stroke={BAR_COLOR} strokeWidth={2} dot={{ r: 3 }} />
                     </LineChart>
                   </ResponsiveContainer>

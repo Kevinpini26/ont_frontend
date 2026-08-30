@@ -4,11 +4,15 @@
  * `src/index.css` (@theme). Toute nouvelle teinte de graphique doit passer
  * par ce fichier plutôt que par un hex isolé dans une page, pour rester
  * alignée avec la charte graphique ONT en un seul endroit.
+ *
+ * Convention (Lot C2) : série principale en ontBlue500, série de
+ * comparaison en ontViolet500, série positive en ontGreen600, mise en garde
+ * en ontGold600 — jamais un hex isolé choisi au cas par cas dans une page.
  */
 export const CHART_COLORS = {
-  ontBlue600: '#0e6cd5',
-  ontGold500: '#fec012',
-  ontGreen500: '#96c024',
+  ontBlue500: '#2385f1',
+  ontGreen600: '#7b9d1e',
+  ontGold600: '#d7a003',
   ontViolet500: '#a254cd',
   ontRed500: '#e11821',
   axisTick: '#64748b',

@@ -1,38 +1,52 @@
+import { Link } from 'react-router-dom';
 import { TrendingDown, TrendingUp } from 'lucide-react';
 
 /*
- * TONES sera repris en Lot C1 (icône dans un rond ont-blue-50/ont-blue-700
- * plutôt qu'un carré de couleur pleine) — ici uniquement la correction des
- * jetons de couleur et des contrastes, pas la refonte de forme.
+ * L'icône est toujours un rond neutre bg-ont-blue-50/text-ont-blue-700 (Lot
+ * C1) — elle ne porte plus la gravité. La gravité (à surveiller / bloquant)
+ * passe désormais par une pastille de couleur devant le libellé, même
+ * convention que la zone d'alertes (voir ZoneAlertes.jsx) : `primary`,
+ * `neutral` et `success` n'affichent aucune pastille (rien à signaler),
+ * `accent` affiche une pastille or, `danger` une pastille rouge.
  */
-const TONES = {
-  primary: 'bg-ont-blue-700 text-white',
-  // Texte ont-blue-950, jamais blanc (2,03 de contraste seulement) — voir Button.
-  accent: 'bg-ont-gold-400 text-ont-blue-950',
-  neutral: 'bg-gray-700 text-white',
-  success: 'bg-ont-green-600 text-white',
-  danger: 'bg-ont-red-500 text-white',
+const COULEUR_PASTILLE = {
+  accent: 'bg-ont-gold-500',
+  danger: 'bg-ont-red-500',
 };
 
 /**
+ * `to` : rend la carte entière cliquable (vers la liste filtrée
+ * correspondante) — omis, la carte reste un simple encart d'information.
  * `variation` : pourcentage par rapport à la période précédente (null/undefined
  * = non applicable, ex. une jauge à l'instant présent sans équivalent
  * historique fiable — voir StagiaireStatistiqueController). `variationSens`
  * indique si une hausse est un signal positif (par défaut) ou négatif (ex.
  * "en attente depuis longtemps", où une hausse est un mauvais signe).
  */
-export function StatCard({ label, value, hint, icon, tone = 'primary', variation, variationSens = 'hausse-positive' }) {
+export function StatCard({ label, value, hint, icon, tone = 'primary', variation, variationSens = 'hausse-positive', to }) {
   const variationVisible = variation !== null && variation !== undefined;
   const variationEstPositive = variationVisible && (variationSens === 'hausse-positive' ? variation >= 0 : variation <= 0);
+  const pastille = COULEUR_PASTILLE[tone];
+  const Composant = to ? Link : 'div';
 
   return (
-    <div className="rounded-card border border-border bg-surface p-5">
+    <Composant
+      to={to}
+      className={`block rounded-card border border-border bg-surface p-5 transition-[transform,box-shadow] ${
+        to ? 'hover:-translate-y-0.5 hover:shadow-card' : ''
+      }`}
+    >
       <div className="flex items-start gap-4">
         {icon && (
-          <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-field ${TONES[tone]}`}>{icon}</div>
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-ont-blue-50 text-ont-blue-700 dark:bg-ont-blue-950/40 dark:text-ont-blue-300">
+            {icon}
+          </div>
         )}
         <div className="min-w-0 flex-1">
-          <p className="text-label font-medium uppercase tracking-wide text-text-subtle">{label}</p>
+          <p className="flex items-center gap-1.5 text-label font-medium uppercase tracking-wide text-text-subtle">
+            {pastille && <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${pastille}`} aria-hidden="true" />}
+            {label}
+          </p>
           <div className="mt-1 flex flex-wrap items-baseline gap-x-2">
             <p className="text-stat font-semibold tracking-tight text-text tabular-nums">{value}</p>
             {variationVisible && (
@@ -49,6 +63,6 @@ export function StatCard({ label, value, hint, icon, tone = 'primary', variation
           {hint && <p className="mt-0.5 text-label text-text-subtle">{hint}</p>}
         </div>
       </div>
-    </div>
+    </Composant>
   );
 }

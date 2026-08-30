@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { GraduationCap } from 'lucide-react';
 import { listStagiaires } from '../../stagiaires/api/stagiairesApi';
 import { STATUT_LABELS, TYPE_STAGE_LABELS } from '../../stagiaires/constants';
@@ -21,9 +21,10 @@ const ONGLETS = [
 ];
 
 export function DirectionStagiairesPage() {
-  const [onglet, setOnglet] = useState('en_cours');
+  const [searchParams] = useSearchParams();
+  const [onglet, setOnglet] = useState(() => searchParams.get('onglet') ?? 'en_cours');
   const [recherche, setRecherche] = useState('');
-  const [statut, setStatut] = useState('');
+  const [statut, setStatut] = useState(() => searchParams.get('statut') ?? '');
   const [typeStage, setTypeStage] = useState('');
   const [maitreStage, setMaitreStage] = useState('');
   const [page, setPage] = useState(1);

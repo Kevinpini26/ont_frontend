@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { GraduationCap } from 'lucide-react';
 import { listStagiaires } from '../api/stagiairesApi';
 import { listDirections } from '../../kernel/api/directionsApi';
@@ -24,10 +24,15 @@ const ONGLETS = [
 ];
 
 export function DfpStagiairesPage() {
-  const [onglet, setOnglet] = useState('en_cours');
+  // Lecture unique au montage (pas de synchronisation continue avec l'URL) :
+  // sert seulement à arriver depuis le tableau de bord sur un filtre déjà
+  // posé (voir StatCard "to" dans DfpDashboardPage), pas à piloter l'état
+  // du filtre depuis l'URL en continu.
+  const [searchParams] = useSearchParams();
+  const [onglet, setOnglet] = useState(() => searchParams.get('onglet') ?? 'en_cours');
   const [directions, setDirections] = useState([]);
   const [directionId, setDirectionId] = useState('');
-  const [statut, setStatut] = useState('');
+  const [statut, setStatut] = useState(() => searchParams.get('statut') ?? '');
   const [typeStage, setTypeStage] = useState('');
   const [maitreStage, setMaitreStage] = useState('');
   const [conseillerStage, setConseillerStage] = useState('');

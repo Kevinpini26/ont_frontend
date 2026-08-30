@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Bar, BarChart, CartesianGrid, Cell, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { AlertTriangle, ClipboardList, GraduationCap, Mail, MailCheck, Star, Users } from 'lucide-react';
+import { ClipboardList, GraduationCap, Mail, Users } from 'lucide-react';
 import { listStagiaires, getStagiairesStatistiques, getStagiairesAlertes } from '../api/stagiairesApi';
 import { getCourriersStatistiquesDirection, listCourriers } from '../../courrier/api/courrierApi';
 import { STATUT_LABELS } from '../constants';
@@ -13,11 +13,12 @@ import { LoadingBlock } from '../../../shared/components/ui/Spinner';
 import { StatCard } from '../../../shared/components/ui/StatCard';
 import { PeriodSelector } from '../../../shared/components/ui/PeriodSelector';
 import { SkeletonStatCards } from '../../../shared/components/ui/Skeleton';
+import { ZoneAlertes } from '../../../shared/components/ZoneAlertes';
 import { CHART_COLORS } from '../../../shared/chartColors';
 import { useRequete } from '../../../shared/hooks/useRequete';
 
 const LIEN_VOIR_TOUT = 'text-sm font-medium text-ont-blue-700 hover:underline dark:text-ont-blue-400';
-const AXIS_TICK = { fill: CHART_COLORS.axisTick, fontSize: 12 };
+const AXIS_TICK = { fill: CHART_COLORS.axisTick, fontSize: 11 };
 
 function ChartTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
@@ -64,37 +65,12 @@ function DerniersStagiaires({ stagiaires, chargement }) {
 }
 
 /**
- * Chaque alerte mène directement au dossier concerné — voir GET
- * /stagiaires/alertes. Convention de couleur : ont-gold (warning) pour "à
- * surveiller", rouge (danger) réservé aux cas vraiment critiques (voir la
- * carte "Demandes en attente" ci-dessous, qui bloque un dossier depuis
- * plusieurs jours sans aucun traitement).
- */
-function ListeAlertes({ items, chargement, vide, rendu }) {
-  if (chargement) return <LoadingBlock />;
-  if (items.length === 0) return <EmptyState title={vide} />;
-  return (
-    <ul className="divide-y divide-border">
-      {items.map((item) => (
-        <li key={item.id}>
-          <Link
-            to={`/stagiaires/${item.id}`}
-            className="flex items-center justify-between gap-3 py-2.5 text-sm text-text-muted hover:text-ont-blue-700"
-          >
-            {rendu(item)}
-          </Link>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-/**
  * Tableau de bord DFP : ce qu'un agent doit réellement savoir pour agir
- * (alertes cliquables en premier), puis les métriques et graphiques de
- * pilotage. Les listes complètes (courrier, stagiaires actifs, historique)
- * et les statistiques globales / export tutelle vivent sur leurs propres
- * pages, accessibles depuis la sidebar.
+ * (4 chiffres clés, puis une zone d'alertes unique), avant les graphiques
+ * de pilotage. Le taux moyen d'évaluation et les volumes bruts (dossiers
+ * reçus, stages clôturés, courriers émis) ne sont plus repris ici — un
+ * tableau de bord n'est pas l'endroit pour retenir six chiffres ou plus,
+ * ils restent consultables sur Statistiques et sur les listes complètes.
  */
 export function DfpDashboardPage() {
   const [periode, setPeriode] = useState('30j');
@@ -139,6 +115,46 @@ export function DfpDashboardPage() {
     return alertes.echeance_10_jours.filter((s) => idsAttenteOuverture.has(s.id));
   }, [alertes]);
 
+  /*
+   * Zone d'alertes unifiée (Lot C3) : quatre catégories jusqu'ici en cartes
+   * séparées, désormais une seule liste de lignes. "Demandes en attente"
+   * reste la seule vraiment bloquante (rouge) — les trois autres sont "à
+   * surveiller" (or), pas critiques.
+   */
+  const lignesAlertes = useMemo(() => {
+    if (!alertes) return [];
+    return [
+      ...alertes.demandes_en_attente.map((s) => ({
+        id: `demande-${s.id}`,
+        to: `/stagiaires/${s.id}`,
+        gravite: 'danger',
+        texte: s.nom,
+        detail: s.statut_label,
+      })),
+      ...stagesEcheanceSansPeriodeOuverte.map((s) => ({
+        id: `echeance-${s.id}`,
+        to: `/stagiaires/${s.id}`,
+        gravite: 'warning',
+        texte: s.nom,
+        detail: `${s.jours_restants} j`,
+      })),
+      ...alertes.evaluations_incompletes.map((s) => ({
+        id: `evaluation-${s.id}`,
+        to: `/stagiaires/${s.id}`,
+        gravite: 'warning',
+        texte: s.nom,
+        detail: s.manque === 'direction' ? 'Direction manquante' : 'DFP manquante',
+      })),
+      ...alertes.directions_proches_quota.map((d) => ({
+        id: `quota-${d.direction_id}`,
+        to: `/stagiaires/actifs?direction_id=${d.direction_id}`,
+        gravite: d.taux >= 1 ? 'danger' : 'warning',
+        texte: d.direction_nom,
+        detail: `${d.occupation} / ${d.capacite_max}`,
+      })),
+    ];
+  }, [alertes, stagesEcheanceSansPeriodeOuverte]);
+
   const directionsProchesQuotaParId = useMemo(() => {
     const map = new Map();
     (alertes?.directions_proches_quota ?? []).forEach((d) => map.set(d.direction_id, d));
@@ -157,145 +173,43 @@ export function DfpDashboardPage() {
       />
 
       {statsChargement ? (
-        <>
-          <SkeletonStatCards />
-          <SkeletonStatCards />
-        </>
+        <SkeletonStatCards />
       ) : (
-        <>
-          <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <StatCard
-              label="Stagiaires actifs"
-              value={stats?.stagiaires_affectes ?? '—'}
-              icon={<Users size={22} />}
-              tone="primary"
-              hint="Toutes directions confondues"
-            />
-            <StatCard
-              label="Dossiers en attente d'affectation"
-              value={stats?.en_attente_affectation ?? '—'}
-              icon={<ClipboardList size={22} />}
-              tone={stats?.en_attente_affectation > 0 ? 'accent' : 'neutral'}
-            />
-            <StatCard
-              label="Échéance ≤ 10 jours"
-              value={stats?.echeance_10_jours ?? '—'}
-              icon={<AlertTriangle size={22} />}
-              tone={stats?.echeance_10_jours > 0 ? 'accent' : 'success'}
-            />
-            <StatCard
-              label="Taux moyen d'évaluation"
-              value={stats?.note_moyenne !== null && stats?.note_moyenne !== undefined ? `${stats.note_moyenne} / 100` : '—'}
-              icon={<Star size={22} />}
-              tone="accent"
-            />
-          </div>
-
-          {/* Périmètre courrier propre de la DFP, en tant que direction : mêmes champs que le dashboard direction standard. */}
-          <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <StatCard
-              label="Courriers reçus non traités"
-              value={statsCourrier?.courriers_recus_non_traites ?? '—'}
-              icon={<Mail size={22} />}
-              tone="primary"
-            />
-            <StatCard
-              label="Courriers envoyés en cours"
-              value={statsCourrier?.courriers_emis_en_cours ?? '—'}
-              icon={<MailCheck size={22} />}
-              tone="neutral"
-            />
-            <StatCard
-              label="Dossiers reçus"
-              value={stats?.dossiers_recus_periode ?? '—'}
-              variation={stats?.dossiers_recus_variation}
-              icon={<ClipboardList size={22} />}
-              tone="neutral"
-            />
-            <StatCard
-              label="Stages clôturés"
-              value={stats?.stages_clotures_periode ?? '—'}
-              variation={stats?.stages_clotures_variation}
-              icon={<GraduationCap size={22} />}
-              tone="success"
-            />
-          </div>
-        </>
+        <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <StatCard
+            label="Stagiaires actifs"
+            value={stats?.stagiaires_affectes ?? '—'}
+            icon={<Users size={22} />}
+            tone="primary"
+            hint="Toutes directions confondues"
+            to="/stagiaires/actifs"
+          />
+          <StatCard
+            label="Dossiers en attente d'affectation"
+            value={stats?.en_attente_affectation ?? '—'}
+            icon={<ClipboardList size={22} />}
+            tone={stats?.en_attente_affectation > 0 ? 'accent' : 'primary'}
+            to="/stagiaires/actifs?statut=en_attente_affectation"
+          />
+          <StatCard
+            label="Échéance ≤ 10 jours"
+            value={stats?.echeance_10_jours ?? '—'}
+            icon={<ClipboardList size={22} />}
+            tone={stats?.echeance_10_jours > 0 ? 'accent' : 'primary'}
+            to="/stagiaires/actifs?onglet=echeance"
+          />
+          <StatCard
+            label="Courriers reçus non traités"
+            value={statsCourrier?.courriers_recus_non_traites ?? '—'}
+            icon={<Mail size={22} />}
+            tone={statsCourrier?.courriers_recus_non_traites > 0 ? 'accent' : 'primary'}
+            to="/stagiaires/courrier?statut=recu"
+          />
+        </div>
       )}
 
-      <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader title="Demandes en attente de traitement" description="Depuis plus de 3 jours" />
-          <CardBody>
-            <ListeAlertes
-              items={alertes?.demandes_en_attente ?? []}
-              chargement={chargementAlertes}
-              vide="Aucune demande en attente"
-              rendu={(s) => (
-                <>
-                  <span className="min-w-0 flex-1 truncate">{s.nom}</span>
-                  <Badge tone="danger">{s.statut_label}</Badge>
-                </>
-              )}
-            />
-          </CardBody>
-        </Card>
-
-        <Card>
-          <CardHeader title="Échéance proche sans période d'évaluation ouverte" />
-          <CardBody>
-            <ListeAlertes
-              items={stagesEcheanceSansPeriodeOuverte}
-              chargement={chargementAlertes}
-              vide="Aucun cas à signaler"
-              rendu={(s) => (
-                <>
-                  <span className="min-w-0 flex-1 truncate">{s.nom}</span>
-                  <Badge tone="warning">{s.jours_restants} j</Badge>
-                </>
-              )}
-            />
-          </CardBody>
-        </Card>
-
-        <Card>
-          <CardHeader title="Évaluations incomplètes" description="Un seul des deux évaluateurs a soumis sa grille" />
-          <CardBody>
-            <ListeAlertes
-              items={alertes?.evaluations_incompletes ?? []}
-              chargement={chargementAlertes}
-              vide="Aucune évaluation incomplète"
-              rendu={(s) => (
-                <>
-                  <span className="min-w-0 flex-1 truncate">{s.nom}</span>
-                  <Badge tone="warning">{s.manque === 'direction' ? 'Direction manquante' : 'DFP manquante'}</Badge>
-                </>
-              )}
-            />
-          </CardBody>
-        </Card>
-
-        <Card>
-          <CardHeader title="Directions proches de leur quota" description="≥ 80% de la capacité maximale" />
-          <CardBody>
-            {chargementAlertes ? (
-              <LoadingBlock />
-            ) : (alertes?.directions_proches_quota ?? []).length === 0 ? (
-              <EmptyState title="Aucune direction proche de son quota" />
-            ) : (
-              <ul className="divide-y divide-border">
-                {alertes.directions_proches_quota.map((d) => (
-                  <li key={d.direction_id} className="flex items-center justify-between gap-3 py-2.5 text-sm text-text-muted">
-                    <span className="min-w-0 flex-1 truncate">{d.direction_nom}</span>
-                    <Badge tone={d.taux >= 1 ? 'danger' : 'warning'}>
-                      {d.occupation} / {d.capacite_max}
-                    </Badge>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CardBody>
-        </Card>
+      <div className="mb-6">
+        <ZoneAlertes items={lignesAlertes} chargement={chargementAlertes} videTitre="Aucun dossier ne nécessite votre attention" />
       </div>
 
       <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -308,12 +222,12 @@ export function DfpDashboardPage() {
               <ResponsiveContainer width="100%" height={220}>
                 <BarChart data={parDirection} margin={{ left: -20, right: 16 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} vertical={false} />
-                  <XAxis dataKey="direction_nom" tick={{ ...AXIS_TICK, fontSize: 10 }} axisLine={false} tickLine={false} interval={0} angle={-20} textAnchor="end" height={60} />
+                  <XAxis dataKey="direction_nom" tick={{ ...AXIS_TICK }} axisLine={false} tickLine={false} interval={0} angle={-20} textAnchor="end" height={60} />
                   <YAxis allowDecimals={false} tick={AXIS_TICK} axisLine={false} tickLine={false} />
-                  <Tooltip content={<ChartTooltip />} cursor={{ fill: 'rgba(30,95,168,0.08)' }} />
+                  <Tooltip content={<ChartTooltip />} cursor={{ fill: 'rgba(35,133,241,0.08)' }} />
                   <Bar dataKey="total" radius={[4, 4, 0, 0]} maxBarSize={40}>
                     {parDirection.map((d) => (
-                      <Cell key={d.direction_id} fill={directionsProchesQuotaParId.has(d.direction_id) ? CHART_COLORS.ontRed500 : CHART_COLORS.ontBlue600} />
+                      <Cell key={d.direction_id} fill={directionsProchesQuotaParId.has(d.direction_id) ? CHART_COLORS.ontRed500 : CHART_COLORS.ontBlue500} />
                     ))}
                   </Bar>
                 </BarChart>
@@ -331,10 +245,10 @@ export function DfpDashboardPage() {
               <ResponsiveContainer width="100%" height={220}>
                 <LineChart data={tendanceCandidatures} margin={{ left: -20, right: 16 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} vertical={false} />
-                  <XAxis dataKey="mois" tick={{ ...AXIS_TICK, fontSize: 10 }} axisLine={false} tickLine={false} />
+                  <XAxis dataKey="mois" tick={AXIS_TICK} axisLine={false} tickLine={false} />
                   <YAxis allowDecimals={false} tick={AXIS_TICK} axisLine={false} tickLine={false} />
-                  <Tooltip content={<ChartTooltip />} cursor={{ stroke: CHART_COLORS.ontGold500, strokeWidth: 1 }} />
-                  <Line type="monotone" dataKey="total" stroke={CHART_COLORS.ontGold500} strokeWidth={2} dot={{ r: 3 }} />
+                  <Tooltip content={<ChartTooltip />} cursor={{ stroke: CHART_COLORS.ontGold600, strokeWidth: 1 }} />
+                  <Line type="monotone" dataKey="total" stroke={CHART_COLORS.ontGold600} strokeWidth={2} dot={{ r: 3 }} />
                 </LineChart>
               </ResponsiveContainer>
             )}

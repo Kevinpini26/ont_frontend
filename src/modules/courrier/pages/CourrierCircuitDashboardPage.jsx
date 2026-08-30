@@ -1,16 +1,17 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { Clock, FileSearch, Mail } from 'lucide-react';
-import { getCourriersStatistiques } from '../api/courrierApi';
+import { getCourriersStatistiques, listCourriers } from '../api/courrierApi';
+import { STATUT_LABELS } from '../constants';
 import { PageHeader } from '../../../shared/components/ui/PageHeader';
 import { Card, CardBody, CardHeader } from '../../../shared/components/ui/Card';
+import { Badge } from '../../../shared/components/ui/Badge';
 import { StatCard } from '../../../shared/components/ui/StatCard';
 import { EmptyState } from '../../../shared/components/ui/EmptyState';
 import { LoadingBlock } from '../../../shared/components/ui/Spinner';
 import { CHART_COLORS } from '../../../shared/chartColors';
 
-const BAR_COLOR = CHART_COLORS.ontBlue600; // série unique de magnitude, une seule teinte
-const ACCENT_BAR_COLOR = CHART_COLORS.ontGold500; // deuxième métrique (temps), pour la distinguer visuellement
 const AXIS_TICK = { fill: CHART_COLORS.axisTick, fontSize: 11 };
 
 function VolumeTooltip({ active, payload, label }) {
@@ -33,14 +34,55 @@ function DureeTooltip({ active, payload, label }) {
   );
 }
 
+function ListeCourriers({ courriers, chargement }) {
+  if (chargement) return <LoadingBlock />;
+  if (courriers.length === 0) return <EmptyState icon={<Mail size={28} />} title="Aucun courrier pour le moment" />;
+  return (
+    <ul className="divide-y divide-border">
+      {courriers.map((c) => (
+        <li key={c.id} className="flex items-center justify-between gap-3 py-2.5 text-sm">
+          <Link to={`/courriers/${c.id}`} className="min-w-0 flex-1 truncate text-text-muted hover:text-ont-blue-700">
+            {c.objet}
+          </Link>
+          <Badge tone="info">{STATUT_LABELS[c.statut]}</Badge>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/**
+ * Vue d'ensemble transverse du circuit courrier (pas de sélecteur de
+ * période : "en cours"/"en attente de relecture" sont un état présent, pas
+ * une tendance sur une plage de dates — voir aussi CourrierDgDashboardPage
+ * pour un vrai tableau de bord périodique). Pas de zone d'alertes ici non
+ * plus : les statuts agrégés de `stats.par_statut` n'identifient pas de
+ * dossier précis à faire remonter sans une requête supplémentaire par
+ * poste, hors de portée de ce lot — la file d'un poste précis (avec ses
+ * dossiers "en transit") reste sur CircuitQueuePage.
+ */
 export function CourrierCircuitDashboardPage() {
   const [stats, setStats] = useState(null);
   const [chargement, setChargement] = useState(true);
+  const [enregistres, setEnregistres] = useState([]);
+  const [chargementEnregistres, setChargementEnregistres] = useState(true);
+  const [recents, setRecents] = useState([]);
+  const [chargementRecents, setChargementRecents] = useState(true);
 
   useEffect(() => {
     getCourriersStatistiques()
       .then(setStats)
       .finally(() => setChargement(false));
+
+    setChargementEnregistres(true);
+    listCourriers({ statut: 'enregistre' })
+      .then(({ data }) => setEnregistres([...data].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 5)))
+      .finally(() => setChargementEnregistres(false));
+
+    setChargementRecents(true);
+    listCourriers()
+      .then(({ data }) => setRecents([...data].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 5)))
+      .finally(() => setChargementRecents(false));
   }, []);
 
   if (chargement) return <LoadingBlock />;
@@ -49,24 +91,24 @@ export function CourrierCircuitDashboardPage() {
     <div>
       <PageHeader title="Tableau de bord du circuit courrier" description="Volumétrie et délais de traitement, toutes directions confondues." />
 
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Courriers en cours" value={stats.en_cours_total} icon={<Mail size={22} />} tone="primary" hint="Non encore enregistrés" />
         <StatCard
           label="En attente de relecture"
           value={stats.en_attente_relecture}
           icon={<FileSearch size={22} />}
-          tone={stats.en_attente_relecture > 0 ? 'danger' : 'success'}
+          tone={stats.en_attente_relecture > 0 ? 'danger' : 'primary'}
         />
         <StatCard
           label="Étapes suivies"
           value={stats.temps_moyen_par_etape.length}
           icon={<Clock size={22} />}
-          tone="accent"
+          tone="primary"
           hint="Avec un délai moyen mesurable"
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader title="Courriers en cours par étape" description="Répartition actuelle des dossiers dans le circuit" />
           <CardBody>
@@ -78,8 +120,8 @@ export function CourrierCircuitDashboardPage() {
                   <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} horizontal={false} />
                   <XAxis type="number" allowDecimals={false} tick={AXIS_TICK} axisLine={false} tickLine={false} />
                   <YAxis type="category" dataKey="label" width={170} tick={AXIS_TICK} axisLine={false} tickLine={false} />
-                  <Tooltip content={<VolumeTooltip />} cursor={{ fill: 'rgba(30,95,168,0.08)' }} />
-                  <Bar dataKey="total" fill={BAR_COLOR} radius={[0, 4, 4, 0]} maxBarSize={20} />
+                  <Tooltip content={<VolumeTooltip />} cursor={{ fill: 'rgba(35,133,241,0.08)' }} />
+                  <Bar dataKey="total" fill={CHART_COLORS.ontBlue500} radius={[0, 4, 4, 0]} maxBarSize={20} />
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -100,11 +142,27 @@ export function CourrierCircuitDashboardPage() {
                   <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} horizontal={false} />
                   <XAxis type="number" unit="h" tick={AXIS_TICK} axisLine={false} tickLine={false} />
                   <YAxis type="category" dataKey="label" width={170} tick={AXIS_TICK} axisLine={false} tickLine={false} />
-                  <Tooltip content={<DureeTooltip />} cursor={{ fill: 'rgba(245,166,35,0.12)' }} />
-                  <Bar dataKey="moyenne_heures" fill={ACCENT_BAR_COLOR} radius={[0, 4, 4, 0]} maxBarSize={20} />
+                  <Tooltip content={<DureeTooltip />} cursor={{ fill: 'rgba(215,160,3,0.12)' }} />
+                  <Bar dataKey="moyenne_heures" fill={CHART_COLORS.ontGold600} radius={[0, 4, 4, 0]} maxBarSize={20} />
                 </BarChart>
               </ResponsiveContainer>
             )}
+          </CardBody>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <Card>
+          <CardHeader title="Derniers courriers enregistrés" />
+          <CardBody>
+            <ListeCourriers courriers={enregistres} chargement={chargementEnregistres} />
+          </CardBody>
+        </Card>
+
+        <Card>
+          <CardHeader title="Courriers récemment reçus" />
+          <CardBody>
+            <ListeCourriers courriers={recents} chargement={chargementRecents} />
           </CardBody>
         </Card>
       </div>

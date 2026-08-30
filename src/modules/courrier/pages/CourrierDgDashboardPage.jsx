@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { AlertTriangle, Clock, FileSignature, Send, Users } from 'lucide-react';
+import { Clock, FileSignature, Send, Users } from 'lucide-react';
 import { getCourriersStatistiquesDg, listCourriers } from '../api/courrierApi';
 import { getDgDisponibilite, updateDgDisponibilite } from '../../kernel/api/dgDisponibiliteApi';
-import { getStagiairesStatistiques } from '../../stagiaires/api/stagiairesApi';
+import { getStagiairesAlertes, getStagiairesStatistiques } from '../../stagiaires/api/stagiairesApi';
 import { PageHeader } from '../../../shared/components/ui/PageHeader';
 import { Card, CardBody, CardHeader } from '../../../shared/components/ui/Card';
 import { Button } from '../../../shared/components/ui/Button';
@@ -17,11 +17,12 @@ import { Pagination } from '../../../shared/components/ui/Pagination';
 import { EmptyState } from '../../../shared/components/ui/EmptyState';
 import { LoadingBlock } from '../../../shared/components/ui/Spinner';
 import { TableWrap, tableClass, theadClass, thClass, tbodyClass, tdClass, trHoverClass } from '../../../shared/components/ui/Table';
+import { ZoneAlertes } from '../../../shared/components/ZoneAlertes';
 import { CHART_COLORS } from '../../../shared/chartColors';
 import { STATUT_LABELS, TYPE_LABELS } from '../constants';
 
 const SEUIL_JOURS = 5;
-const AXIS_TICK = { fill: CHART_COLORS.axisTick, fontSize: 12 };
+const AXIS_TICK = { fill: CHART_COLORS.axisTick, fontSize: 11 };
 
 function VolumeTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
@@ -37,7 +38,9 @@ function VolumeTooltip({ active, payload, label }) {
  * Espace consolidé de la Direction Générale : distinct de sa file de
  * traitement (CircuitQueuePage) — une vue d'ensemble transverse, pas une
  * liste d'actions à accomplir. Le tableau ci-dessous est volontairement
- * une vue de suivi (tous statuts, filtrable), pas une file d'actions.
+ * une vue de suivi (tous statuts, filtrable), pas une file d'actions — il
+ * complète, plutôt qu'il ne remplace, la zone d'alertes au-dessus (qui ne
+ * porte que sur ce qui attend réellement une décision de la DG).
  */
 export function CourrierDgDashboardPage() {
   const [periode, setPeriode] = useState('30j');
@@ -53,6 +56,11 @@ export function CourrierDgDashboardPage() {
 
   const [disponible, setDisponible] = useState(true);
   const [envoiDisponibilite, setEnvoiDisponibilite] = useState(false);
+
+  const [alertesStagiaires, setAlertesStagiaires] = useState(null);
+  const [attenteAvisDg, setAttenteAvisDg] = useState([]);
+  const [attenteRelecture, setAttenteRelecture] = useState([]);
+  const [chargementAlertes, setChargementAlertes] = useState(true);
 
   useEffect(() => {
     getDgDisponibilite().then(setDisponible);
@@ -93,6 +101,39 @@ export function CourrierDgDashboardPage() {
     setPage(1);
   }, [statutFiltre]);
 
+  // Zone d'alertes (Lot C3) : exactement la définition serveur de
+  // "en_attente_decision" (statut en_attente_avis_dg OU en_relecture, voir
+  // CourrierStatistiqueController::dg()), plus les stagiaires à échéance —
+  // jamais une agrégation approximative refaite côté client.
+  useEffect(() => {
+    setChargementAlertes(true);
+    Promise.all([
+      listCourriers({ statut: 'en_attente_avis_dg' }),
+      listCourriers({ statut: 'en_relecture' }),
+      getStagiairesAlertes(),
+    ])
+      .then(([avisDg, relecture, alertesStag]) => {
+        setAttenteAvisDg(avisDg.data);
+        setAttenteRelecture(relecture.data);
+        setAlertesStagiaires(alertesStag);
+      })
+      .finally(() => setChargementAlertes(false));
+  }, []);
+
+  const lignesAlertes = useMemo(() => {
+    return [
+      ...attenteAvisDg.map((c) => ({ id: `avis-${c.id}`, to: `/courriers/${c.id}`, gravite: 'warning', texte: c.objet, detail: 'Avis à rendre' })),
+      ...attenteRelecture.map((c) => ({ id: `signature-${c.id}`, to: `/courriers/${c.id}`, gravite: 'warning', texte: c.objet, detail: 'Signature à donner' })),
+      ...(alertesStagiaires?.echeance_10_jours ?? []).map((s) => ({
+        id: `echeance-${s.id}`,
+        to: `/stagiaires/${s.id}`,
+        gravite: 'info',
+        texte: s.nom,
+        detail: `${s.jours_restants} j`,
+      })),
+    ];
+  }, [attenteAvisDg, attenteRelecture, alertesStagiaires]);
+
   const parDirection = useMemo(
     () => (statsStagiaires?.par_direction ?? []).map((d) => ({ nom: d.direction_nom, total: d.total })),
     [statsStagiaires],
@@ -123,14 +164,14 @@ export function CourrierDgDashboardPage() {
             label="En attente de ma décision"
             value={statsCourrier.en_attente_decision}
             icon={<FileSignature size={22} />}
-            tone={statsCourrier.en_attente_decision > 0 ? 'accent' : 'success'}
+            tone={statsCourrier.en_attente_decision > 0 ? 'accent' : 'primary'}
             hint="Avis à rendre ou signature"
           />
           <StatCard
             label={`En attente depuis > ${statsCourrier.seuil_jours} j`}
             value={statsCourrier.en_attente_depuis_longtemps}
             icon={<Clock size={22} />}
-            tone={statsCourrier.en_attente_depuis_longtemps > 0 ? 'danger' : 'success'}
+            tone={statsCourrier.en_attente_depuis_longtemps > 0 ? 'danger' : 'primary'}
             hint="Toutes étapes, toutes directions"
           />
           <StatCard
@@ -138,7 +179,7 @@ export function CourrierDgDashboardPage() {
             value={statsCourrier.courriers_initie_par_dg_periode}
             variation={statsCourrier.courriers_initie_par_dg_variation}
             icon={<Send size={22} />}
-            tone="neutral"
+            tone="primary"
             hint="Distinct des courriers reçus traités"
           />
           <StatCard
@@ -148,14 +189,12 @@ export function CourrierDgDashboardPage() {
             icon={<Users size={22} />}
             tone="primary"
           />
-          <StatCard
-            label="Échéance ≤ 10 jours"
-            value={statsStagiaires.echeance_10_jours}
-            icon={<AlertTriangle size={22} />}
-            tone="neutral"
-          />
         </div>
       )}
+
+      <div className="mb-6">
+        <ZoneAlertes items={lignesAlertes} chargement={chargementAlertes} videTitre="Rien n'attend votre décision" />
+      </div>
 
       <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
         {statsChargement ? (
@@ -174,10 +213,10 @@ export function CourrierDgDashboardPage() {
                   <ResponsiveContainer width="100%" height={220}>
                     <LineChart data={evolution} margin={{ left: -20, right: 16 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} vertical={false} />
-                      <XAxis dataKey="periode" tick={{ ...AXIS_TICK, fontSize: 10 }} axisLine={false} tickLine={false} />
+                      <XAxis dataKey="periode" tick={AXIS_TICK} axisLine={false} tickLine={false} />
                       <YAxis allowDecimals={false} tick={AXIS_TICK} axisLine={false} tickLine={false} />
-                      <Tooltip content={<VolumeTooltip />} cursor={{ stroke: CHART_COLORS.ontBlue600, strokeWidth: 1 }} />
-                      <Line type="monotone" dataKey="total" stroke={CHART_COLORS.ontBlue600} strokeWidth={2} dot={{ r: 3 }} />
+                      <Tooltip content={<VolumeTooltip />} cursor={{ stroke: CHART_COLORS.ontBlue500, strokeWidth: 1 }} />
+                      <Line type="monotone" dataKey="total" stroke={CHART_COLORS.ontBlue500} strokeWidth={2} dot={{ r: 3 }} />
                     </LineChart>
                   </ResponsiveContainer>
                 )}
@@ -195,8 +234,8 @@ export function CourrierDgDashboardPage() {
                       <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} horizontal={false} />
                       <XAxis type="number" allowDecimals={false} tick={AXIS_TICK} axisLine={false} tickLine={false} />
                       <YAxis type="category" dataKey="nom" width={180} tick={AXIS_TICK} axisLine={false} tickLine={false} />
-                      <Tooltip content={<VolumeTooltip />} cursor={{ fill: 'rgba(31,98,140,0.06)' }} />
-                      <Bar dataKey="total" fill={CHART_COLORS.ontBlue600} radius={[0, 4, 4, 0]} maxBarSize={22} />
+                      <Tooltip content={<VolumeTooltip />} cursor={{ fill: 'rgba(35,133,241,0.08)' }} />
+                      <Bar dataKey="total" fill={CHART_COLORS.ontViolet500} radius={[0, 4, 4, 0]} maxBarSize={22} />
                     </BarChart>
                   </ResponsiveContainer>
                 )}

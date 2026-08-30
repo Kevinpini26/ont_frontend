@@ -13,9 +13,10 @@ import { PeriodSelector } from '../../../shared/components/ui/PeriodSelector';
 import { SkeletonChart, SkeletonStatCards } from '../../../shared/components/ui/Skeleton';
 import { EmptyState } from '../../../shared/components/ui/EmptyState';
 import { LoadingBlock } from '../../../shared/components/ui/Spinner';
+import { ZoneAlertes } from '../../../shared/components/ZoneAlertes';
 import { CHART_COLORS } from '../../../shared/chartColors';
 
-const AXIS_TICK = { fill: CHART_COLORS.axisTick, fontSize: 12 };
+const AXIS_TICK = { fill: CHART_COLORS.axisTick, fontSize: 11 };
 const LIEN_VOIR_TOUT = 'text-sm font-medium text-ont-blue-700 hover:underline dark:text-ont-blue-400';
 
 function ChartTooltip({ active, payload, label }) {
@@ -63,36 +64,9 @@ function DerniersStagiaires({ stagiaires, chargement }) {
 }
 
 /**
- * Chaque alerte mène directement au dossier concerné (pas juste
- * informative) — voir GET /stagiaires/alertes. Convention de couleur : le
- * rouge (danger) reste réservé aux cas vraiment critiques (voir la carte
- * "Courriers non traités > 48h" ci-dessous) ; ces alertes-ci sont "à
- * surveiller", donc en ont-gold (warning).
- */
-function ListeAlertes({ items, chargement, vide, rendu }) {
-  if (chargement) return <LoadingBlock />;
-  if (items.length === 0) return <EmptyState title={vide} />;
-  return (
-    <ul className="divide-y divide-border">
-      {items.map((item) => (
-        <li key={item.id}>
-          <Link
-            to={`/stagiaires/${item.id}`}
-            className="flex items-center justify-between gap-3 py-2.5 text-sm text-text-muted hover:text-ont-blue-700"
-          >
-            {rendu(item)}
-          </Link>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-/**
- * Tableau de bord d'une direction d'accueil : ce qu'un agent doit
- * réellement savoir pour agir (alertes cliquables en premier), puis les
- * graphiques et un aperçu condensé — les listes complètes vivent sur leurs
- * propres pages, accessibles depuis la sidebar et les liens "Voir tout".
+ * Tableau de bord d'une direction d'accueil : 4 chiffres clés, une zone
+ * d'alertes unique (avant : deux cartes séparées), puis les graphiques et
+ * un aperçu condensé — les listes complètes vivent sur leurs propres pages.
  */
 export function DirectionDashboardPage() {
   const [periode, setPeriode] = useState('30j');
@@ -141,6 +115,26 @@ export function DirectionDashboardPage() {
   // en détail sur l'historique dédié, voir HistoriqueStagiairesPage.jsx).
   const parStatut = useMemo(() => (statsStagiaires?.par_statut ?? []).filter((s) => s.statut !== 'cloture'), [statsStagiaires]);
 
+  const lignesAlertes = useMemo(() => {
+    if (!alertes) return [];
+    return [
+      ...alertes.evaluation_attente_ouverture.map((s) => ({
+        id: `ouverture-${s.id}`,
+        to: `/stagiaires/${s.id}`,
+        gravite: 'warning',
+        texte: s.nom,
+        detail: s.statut_label,
+      })),
+      ...alertes.echeance_10_jours.map((s) => ({
+        id: `echeance-${s.id}`,
+        to: `/stagiaires/${s.id}`,
+        gravite: 'warning',
+        texte: s.nom,
+        detail: `${s.jours_restants} j`,
+      })),
+    ];
+  }, [alertes]);
+
   return (
     <div>
       <PageHeader
@@ -157,63 +151,35 @@ export function DirectionDashboardPage() {
             label="Courriers non traités > 48h"
             value={statsCourrier?.courriers_recus_non_traites_48h ?? '—'}
             icon={<Clock size={22} />}
-            tone={statsCourrier?.courriers_recus_non_traites_48h > 0 ? 'danger' : 'success'}
+            tone={statsCourrier?.courriers_recus_non_traites_48h > 0 ? 'danger' : 'primary'}
+            to="/direction/courrier?statut=recu"
           />
           <StatCard
             label="Courriers envoyés en cours"
             value={statsCourrier?.courriers_emis_en_cours ?? '—'}
             icon={<MailCheck size={22} />}
-            tone="neutral"
+            tone="primary"
+            to="/direction/courrier"
           />
           <StatCard
             label="Stagiaires affectés"
             value={statsStagiaires?.stagiaires_affectes ?? '—'}
             icon={<Users size={22} />}
             tone="primary"
+            to="/direction/stagiaires"
           />
           <StatCard
             label="Stages échéance ≤ 10 j"
             value={statsStagiaires?.echeance_10_jours ?? '—'}
             icon={<AlertTriangle size={22} />}
-            tone={statsStagiaires?.echeance_10_jours > 0 ? 'accent' : 'success'}
+            tone={statsStagiaires?.echeance_10_jours > 0 ? 'accent' : 'primary'}
+            to="/direction/stagiaires"
           />
         </div>
       )}
 
-      <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader title="Évaluations en attente d'ouverture par la DFP" />
-          <CardBody>
-            <ListeAlertes
-              items={alertes?.evaluation_attente_ouverture ?? []}
-              chargement={chargementAlertes}
-              vide="Aucune évaluation en attente"
-              rendu={(s) => (
-                <>
-                  <span className="min-w-0 flex-1 truncate">{s.nom}</span>
-                  <Badge tone="warning">{s.statut_label}</Badge>
-                </>
-              )}
-            />
-          </CardBody>
-        </Card>
-
-        <Card>
-          <CardHeader title="Stages se terminant dans les 10 jours" />
-          <CardBody>
-            <ListeAlertes
-              items={alertes?.echeance_10_jours ?? []}
-              chargement={chargementAlertes}
-              vide="Aucune échéance proche"
-              rendu={(s) => (
-                <>
-                  <span className="min-w-0 flex-1 truncate">{s.nom}</span>
-                  <Badge tone="warning">{s.jours_restants} j</Badge>
-                </>
-              )}
-            />
-          </CardBody>
-        </Card>
+      <div className="mb-6">
+        <ZoneAlertes items={lignesAlertes} chargement={chargementAlertes} videTitre="Aucune alerte pour le moment" />
       </div>
 
       <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -233,10 +199,10 @@ export function DirectionDashboardPage() {
                   <ResponsiveContainer width="100%" height={220}>
                     <LineChart data={evolution} margin={{ left: -20, right: 16 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} vertical={false} />
-                      <XAxis dataKey="periode" tick={{ ...AXIS_TICK, fontSize: 10 }} axisLine={false} tickLine={false} />
+                      <XAxis dataKey="periode" tick={AXIS_TICK} axisLine={false} tickLine={false} />
                       <YAxis allowDecimals={false} tick={AXIS_TICK} axisLine={false} tickLine={false} />
-                      <Tooltip content={<ChartTooltip />} cursor={{ stroke: CHART_COLORS.ontBlue600, strokeWidth: 1 }} />
-                      <Line type="monotone" dataKey="total" stroke={CHART_COLORS.ontBlue600} strokeWidth={2} dot={{ r: 3 }} />
+                      <Tooltip content={<ChartTooltip />} cursor={{ stroke: CHART_COLORS.ontBlue500, strokeWidth: 1 }} />
+                      <Line type="monotone" dataKey="total" stroke={CHART_COLORS.ontBlue500} strokeWidth={2} dot={{ r: 3 }} />
                     </LineChart>
                   </ResponsiveContainer>
                 )}
@@ -252,10 +218,10 @@ export function DirectionDashboardPage() {
                   <ResponsiveContainer width="100%" height={220}>
                     <BarChart data={parStatut} margin={{ left: -20, right: 16 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} vertical={false} />
-                      <XAxis dataKey="label" tick={{ ...AXIS_TICK, fontSize: 10 }} axisLine={false} tickLine={false} interval={0} angle={-20} textAnchor="end" height={60} />
+                      <XAxis dataKey="label" tick={AXIS_TICK} axisLine={false} tickLine={false} interval={0} angle={-20} textAnchor="end" height={60} />
                       <YAxis allowDecimals={false} tick={AXIS_TICK} axisLine={false} tickLine={false} />
-                      <Tooltip content={<ChartTooltip />} cursor={{ fill: 'rgba(30,95,168,0.08)' }} />
-                      <Bar dataKey="total" fill={CHART_COLORS.ontGold500} radius={[4, 4, 0, 0]} maxBarSize={40} />
+                      <Tooltip content={<ChartTooltip />} cursor={{ fill: 'rgba(35,133,241,0.08)' }} />
+                      <Bar dataKey="total" fill={CHART_COLORS.ontViolet500} radius={[4, 4, 0, 0]} maxBarSize={40} />
                     </BarChart>
                   </ResponsiveContainer>
                 )}

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { createCourrier, listCourriers } from '../api/courrierApi';
 import { listDirections } from '../../kernel/api/directionsApi';
 import { marquerConsulte } from '../../kernel/api/notificationsApi';
@@ -44,7 +44,11 @@ export function DirectionCourrierWorkspace() {
   const user = useAuthStore((s) => s.user);
   const [directions, setDirections] = useState([]);
   const [recherche, setRecherche] = useState('');
-  const [statut, setStatut] = useState('');
+  // Lecture unique au montage : arriver depuis une carte de tableau de bord
+  // (voir StatCard "to") avec un statut déjà posé, pas une synchronisation
+  // continue avec l'URL.
+  const [searchParams] = useSearchParams();
+  const [statut, setStatut] = useState(() => searchParams.get('statut') ?? '');
 
   const [emis, setEmis] = useState([]);
   const [metaEmis, setMetaEmis] = useState(null);
