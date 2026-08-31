@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, ArrowRight } from 'lucide-react';
 import { OntLogo } from '../../../shared/components/ui/OntLogo';
+import { Button } from '../../../shared/components/ui/Button';
 import { useScrolled } from '../hooks/useScrolled';
 
 const LIENS = [
   { label: 'Accueil', to: '/' },
   { label: 'À propos', to: '/a-propos' },
   { label: 'Services', to: '/services' },
-  { label: 'Suivre mon dossier', to: '/suivi-dossier' },
 ];
 
 const lienClass = ({ isActive }) =>
@@ -17,12 +17,14 @@ const lienClass = ({ isActive }) =>
   }`;
 
 /**
- * Navbar du site public : fixe au scroll, se compacte légèrement (hauteur
- * réduite, fond plus opaque) après un petit défilement — voir useScrolled.
- * Le portail public reste toujours en thème clair (charte graphique) : ce
- * composant n'utilise donc volontairement aucune variante dark:.
- * Le bouton "Espace personnel" est le seul lien vers /connexion : réservé
- * au personnel, jamais un point d'entrée principal du site.
+ * Navbar du site public : TOUJOURS sur fond `surface` opaque, jamais
+ * transparente — la section d'accueil est elle-même sur fond clair (voir
+ * HomePage.jsx), un texte de navigation transparent y deviendrait
+ * invisible. `useScrolled` pilote uniquement l'apparition de la bordure
+ * basse et d'une ombre légère au premier défilement, jamais l'opacité du
+ * fond. Le portail public reste toujours en thème clair (charte
+ * graphique) : ce composant n'utilise donc volontairement aucune variante
+ * dark:.
  */
 export function PublicNavbar() {
   const scrolled = useScrolled();
@@ -30,10 +32,8 @@ export function PublicNavbar() {
 
   return (
     <header
-      className={`fixed inset-x-0 top-0 z-50 border-b transition-all duration-300 ${
-        scrolled
-          ? 'border-border bg-surface/95 shadow-sm backdrop-blur'
-          : 'border-transparent bg-surface/70 backdrop-blur-sm'
+      className={`fixed inset-x-0 top-0 z-50 border-b bg-surface transition-shadow duration-300 ${
+        scrolled ? 'border-border shadow-sm' : 'border-transparent'
       }`}
     >
       <div
@@ -59,9 +59,21 @@ export function PublicNavbar() {
         </nav>
 
         <div className="flex items-center gap-2">
+          <Link to="/suivi-dossier" className="hidden lg:inline-flex">
+            <Button type="button" variant="secondary" size="sm">
+              Suivre mon dossier
+            </Button>
+          </Link>
+          <Link to="/demande-de-stage" className="hidden lg:inline-flex">
+            <Button type="button" size="sm" className="gap-1.5">
+              Déposer une demande
+              <ArrowRight size={14} />
+            </Button>
+          </Link>
+          {/* Discret, jamais une action principale de ce portail (réservé au personnel) — voir Lot 1 du prompt de refonte. */}
           <Link
             to="/connexion"
-            className="hidden rounded-md bg-ont-blue-700 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-ont-blue-800 sm:inline-flex"
+            className="hidden px-2 text-sm font-medium text-text-subtle hover:text-ont-blue-700 sm:inline-flex"
           >
             Espace personnel
           </Link>
@@ -85,10 +97,21 @@ export function PublicNavbar() {
                 {lien.label}
               </NavLink>
             ))}
+            <Link to="/suivi-dossier" onClick={() => setMobileOpen(false)} className="mt-2">
+              <Button type="button" variant="secondary" className="w-full">
+                Suivre mon dossier
+              </Button>
+            </Link>
+            <Link to="/demande-de-stage" onClick={() => setMobileOpen(false)}>
+              <Button type="button" className="w-full gap-1.5">
+                Déposer une demande
+                <ArrowRight size={14} />
+              </Button>
+            </Link>
             <Link
               to="/connexion"
               onClick={() => setMobileOpen(false)}
-              className="mt-2 rounded-md bg-ont-blue-700 px-3 py-2.5 text-center text-sm font-medium text-white"
+              className="mt-1 px-3 py-2 text-center text-sm font-medium text-text-subtle hover:text-ont-blue-700"
             >
               Espace personnel
             </Link>

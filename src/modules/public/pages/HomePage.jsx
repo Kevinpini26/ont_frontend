@@ -1,13 +1,17 @@
 import { useEffect, useState } from 'react';
 import { Navigate, Link } from 'react-router-dom';
-import { GraduationCap, Mail, Search, ArrowRight } from 'lucide-react';
+import { GraduationCap, Mail, Search, ArrowRight, ShieldCheck, MapPin, Clock, Phone } from 'lucide-react';
 import { useAuthStore } from '../../kernel/store/authStore';
 import { ROLES } from '../../kernel/constants';
 import { Button } from '../../../shared/components/ui/Button';
-import { ExchangeIllustration } from '../components/illustrations/ExchangeIllustration';
+import { BandeauAnnonce } from '../components/BandeauAnnonce';
+import { DemarcheFrise } from '../components/DemarcheFrise';
+import { FaqAccordion } from '../components/FaqAccordion';
 import { useRevealOnScroll } from '../hooks/useRevealOnScroll';
+import { useCompteur } from '../hooks/useCompteur';
 import { getDisponibiliteDemandesStage, getStatistiquesPubliques } from '../api/publicApi';
 import { sontTousLesTypesFermes } from '../utils/disponibiliteDemandes';
+import { ADRESSE_PORTAIL, TELEPHONE_PORTAIL, HORAIRES_PORTAIL } from '../constants';
 
 const DESTINATION_PAR_ROLE = {
   [ROLES.ADMINISTRATEUR]: '/admin/directions',
@@ -35,6 +39,8 @@ const SERVICES = [
     to: '/demande-de-stage',
     libelleBouton: 'Déposer ma demande',
     accent: 'or',
+    etapes: ['Choisissez le type de stage', 'Joignez vos pièces', 'Recevez votre accusé de réception'],
+    delai: 'Réponse sous quelques jours ouvrés',
   },
   {
     icone: Mail,
@@ -43,6 +49,8 @@ const SERVICES = [
     to: '/depot-courrier-externe',
     libelleBouton: 'Déposer un courrier',
     accent: 'vert',
+    etapes: ['Décrivez l’objet du courrier', 'Joignez le document', 'Recevez votre accusé de réception'],
+    delai: 'Pris en charge par le Protocole sous 48h',
   },
   {
     icone: Search,
@@ -51,6 +59,8 @@ const SERVICES = [
     to: '/suivi-dossier',
     libelleBouton: 'Suivre mon dossier',
     accent: 'bleu',
+    etapes: ['Munissez-vous de votre numéro', 'Indiquez votre nom', 'Consultez l’état du dossier'],
+    delai: 'Disponible à tout moment',
   },
 ];
 
@@ -67,24 +77,36 @@ const DIRECTIONS = [
   { sigle: 'DAI', nom: "Direction de l'Audit Interne" },
 ];
 
-function ServiceCard({ service, indisponible }) {
-  const { ref, className } = useRevealOnScroll();
+function ServiceCard({ service, indisponible, index }) {
+  const { ref, className, style } = useRevealOnScroll(index);
   const Icone = service.icone;
   const accent = ACCENTS[service.accent];
   return (
     <div
       ref={ref}
+      style={style}
       className={`group overflow-hidden rounded-card border border-border bg-white shadow-card transition-all duration-300 hover:-translate-y-1 hover:shadow-raised ${className}`}
     >
-      <div className={`h-1 w-full ${accent.liseré}`} aria-hidden="true" />
+      <div className={`h-[3px] w-full ${accent.liseré}`} aria-hidden="true" />
       <div className="p-6">
         <div className={`mb-4 flex h-11 w-11 items-center justify-center rounded-lg transition-colors ${accent.icone}`}>
           <Icone size={22} />
         </div>
         <h3 className="mb-2 font-heading text-base font-semibold text-text">{service.titre}</h3>
-        <p className="mb-5 text-sm text-text-subtle">
+        <p className="mb-4 text-sm text-text-subtle">
           {indisponible ? 'Les demandes de stage ne sont pas ouvertes actuellement. Revenez plus tard.' : service.texte}
         </p>
+        <ol className="mb-4 space-y-1.5">
+          {service.etapes.map((etape, i) => (
+            <li key={etape} className="flex items-start gap-2 text-xs text-text-subtle">
+              <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-surface-sunken font-semibold text-text-muted">
+                {i + 1}
+              </span>
+              {etape}
+            </li>
+          ))}
+        </ol>
+        <p className="mb-5 text-xs font-medium text-text-subtle">{service.delai}</p>
         {indisponible ? (
           <Button type="button" variant="secondary" size="sm" disabled className="gap-1.5">
             {service.libelleBouton}
@@ -104,11 +126,24 @@ function ServiceCard({ service, indisponible }) {
 }
 
 /**
- * Bande de chiffres sous la bannière — trois agrégats publics (voir
- * StatistiquesPubliquesController côté backend), sans donnée nominative.
- * `null` tant que non chargée : aucun chiffre à zéro affiché par erreur
- * avant la réponse de l'API.
+ * Bande de chiffres, pleine largeur, seule section à hauteur volontairement
+ * fixe (voir le prompt de refonte) — fond ont-blue-950 pour casser
+ * l'empilement de sections claires. `null` tant que non chargée : aucun
+ * chiffre à zéro affiché par erreur avant la réponse de l'API, jamais de
+ * tiret pour une métrique manquante (voir stagiaires_accueillis).
  */
+function Statistique({ valeur, label, suffixe = '' }) {
+  const { ref, valeur: valeurAnimee } = useCompteur(valeur);
+  return (
+    <div ref={ref} className="text-center">
+      <p className="font-heading font-bold text-white text-stat">
+        {valeur == null ? '—' : `${valeurAnimee}${suffixe}`}
+      </p>
+      <p className="mt-1.5 text-sm text-ont-blue-200">{label}</p>
+    </div>
+  );
+}
+
 function BandeStatistiques() {
   const [stats, setStats] = useState(null);
 
@@ -118,30 +153,38 @@ function BandeStatistiques() {
 
   if (!stats) return null;
 
-  const items = [
-    { valeur: stats.dossiers_traites, label: 'Dossiers traités' },
-    { valeur: stats.delai_moyen_jours != null ? `${stats.delai_moyen_jours} j` : '—', label: 'Délai moyen de traitement' },
-    { valeur: stats.directions_actives, label: 'Directions actives' },
-  ];
-
   return (
-    <div className="border-y border-ont-blue-100 bg-ont-blue-50">
-      <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-4 py-8 sm:grid-cols-3 sm:px-6 lg:px-8">
-        {items.map((item) => (
-          <div key={item.label} className="text-center">
-            <p className="font-heading text-3xl font-bold text-ont-blue-800">{item.valeur}</p>
-            <p className="mt-1 text-sm text-ont-blue-700">{item.label}</p>
-          </div>
-        ))}
+    <div className="bg-ont-blue-950 py-14">
+      <div className="mx-auto grid max-w-7xl grid-cols-2 gap-8 px-4 sm:px-6 lg:grid-cols-4 lg:px-8">
+        <Statistique valeur={stats.dossiers_traites} label="Dossiers traités" />
+        <Statistique
+          valeur={stats.delai_moyen_jours}
+          label="Délai moyen de traitement"
+          suffixe={stats.delai_moyen_jours != null ? ' j' : ''}
+        />
+        <Statistique valeur={stats.directions_actives} label="Directions actives" />
+        <Statistique valeur={stats.stagiaires_accueillis} label="Stagiaires accueillis cette année" />
       </div>
+    </div>
+  );
+}
+
+function CarteExempleDossier() {
+  return (
+    <div className="rounded-card border border-border bg-surface-raised p-4 shadow-raised lg:w-64">
+      <p className="mb-2 text-2xs font-semibold tracking-wide text-text-subtle uppercase">Exemple</p>
+      <p className="font-heading text-sm font-semibold text-text">AR-2026-000842</p>
+      <div className="mt-2 flex items-center gap-1.5">
+        <span className="h-2 w-2 rounded-full bg-ont-green-500" aria-hidden="true" />
+        <span className="text-xs font-medium text-text-muted">Enregistré</span>
+      </div>
+      <p className="mt-1 text-xs text-text-subtle">Mis à jour le 12 mars 2026</p>
     </div>
   );
 }
 
 export function HomePage() {
   const user = useAuthStore((s) => s.user);
-  const services = useRevealOnScroll();
-  const directions = useRevealOnScroll();
   const [disponibilite, setDisponibilite] = useState(null);
 
   useEffect(() => {
@@ -149,6 +192,10 @@ export function HomePage() {
   }, []);
 
   const demandesStageFermees = sontTousLesTypesFermes(disponibilite);
+  const preparer = useRevealOnScroll();
+  const faq = useRevealOnScroll();
+  const directions = useRevealOnScroll();
+  const contact = useRevealOnScroll();
 
   if (user) {
     if (user.role === ROLES.AGENT_CIRCUIT_COURRIER) {
@@ -157,20 +204,25 @@ export function HomePage() {
     return <Navigate to={DESTINATION_PAR_ROLE[user.role] ?? '/connexion'} replace />;
   }
 
+  const urlItineraire = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ADRESSE_PORTAIL)}`;
+
   return (
     <div>
-      {/* Bannière : visible sans défiler (hauteur de viewport moins la navbar déjà réservée par PublicLayout).
-          Fond clair avec un dégradé très subtil ont-blue vers blanc — jamais de bloc bleu marine plein. */}
-      <section className="relative flex min-h-[calc(100svh-5rem)] items-center overflow-hidden bg-gradient-to-b from-ont-blue-50 via-white to-white">
-        <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-ont-gold-100 opacity-60 blur-3xl" />
+      <BandeauAnnonce disponibilite={disponibilite} />
 
-        <div className="mx-auto grid w-full max-w-7xl grid-cols-1 items-center gap-10 px-4 py-12 sm:px-6 lg:grid-cols-2 lg:px-8">
-          <div>
-            <p className="mb-3 text-sm font-semibold tracking-wide text-ont-gold-600 uppercase">
-              République Démocratique du Congo
+      {/* Section d'accueil : fond blanc uni (jamais de bloc bleu marine ici,
+          réservé à la bande de chiffres et au pied de page pour casser
+          l'empilement). Hauteur pilotée par le padding, pas une valeur fixe
+          — un titre qui passe sur trois lignes en 360px de large ne doit
+          jamais être coupé. Grille asymétrique 7/5, jamais 6/6. */}
+      <section className="bg-white">
+        <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-10 px-4 py-20 sm:px-6 lg:grid-cols-12 lg:gap-12 lg:px-8 lg:py-28">
+          <div className="lg:col-span-7">
+            <p className="mb-4 inline-block rounded-full bg-ont-blue-950/5 px-3 py-1 text-xs font-semibold tracking-wide text-ont-gold-800 uppercase">
+              République Démocratique du Congo — Office National du Tourisme
             </p>
-            <h1 className="mb-5 font-heading text-3xl font-bold text-text sm:text-4xl lg:text-[2.75rem] lg:leading-[1.15]">
-              L'Office National du Tourisme structure et promeut le tourisme congolais
+            <h1 className="mb-5 font-heading font-bold text-text text-hero">
+              L'Office National du Tourisme structure et promeut le <span className="text-ont-blue-600">tourisme congolais</span>
             </h1>
             <p className="mb-8 max-w-lg text-lg text-text-muted">
               Ce portail est votre point de contact administratif avec l'Office : déposez une demande de stage, transmettez un
@@ -196,16 +248,15 @@ export function HomePage() {
                 </Button>
               </Link>
             </div>
+            <p className="mt-6 flex items-center gap-2 text-sm text-text-subtle">
+              <ShieldCheck size={16} className="shrink-0 text-ont-green-600" />
+              Service officiel de l'Office — accusé de réception immédiat
+            </p>
           </div>
 
-          <div className="hidden justify-center lg:flex">
-            <div className="w-full max-w-md">
-              <div className="relative overflow-hidden rounded-modal border border-border shadow-raised">
-                {/* Masquée sur mobile (hidden lg:flex sur le conteneur
-                    parent) : loading="lazy" évite qu'un navigateur mobile
-                    télécharge quand même une image jamais affichée. Largeur
-                    et hauteur explicites pour réserver l'espace avant
-                    chargement et ne pas décaler la mise en page. */}
+          <div className="lg:col-span-5">
+            <div className="lg:relative">
+              <div className="overflow-hidden rounded-[24px] border border-border shadow-raised">
                 <picture>
                   <source srcSet="/kinshasa-fleuve-congo.webp" type="image/webp" />
                   <img
@@ -213,62 +264,158 @@ export function HomePage() {
                     alt="Vue de Kinshasa depuis le fleuve Congo"
                     width={1200}
                     height={900}
-                    loading="lazy"
+                    loading="eager"
                     decoding="async"
-                    className="aspect-[4/3] w-full object-cover"
+                    className="aspect-4/3 w-full object-cover lg:aspect-3/4"
                   />
                 </picture>
-                {/* Masque bleu très léger, pour accorder la photo à la charte plutôt que de la laisser en couleurs brutes. */}
                 <div className="pointer-events-none absolute inset-0 bg-ont-blue-700/10" aria-hidden="true" />
               </div>
-              <p className="mt-2 text-right text-xs text-text-subtle">Kinshasa, vue depuis le fleuve Congo — Photo : Valdhy Mbemba / Unsplash</p>
+              {/* Chevauchement en desktop (position absolue) : c'est ce qui
+                  crée la profondeur. En mobile, en flux normal sous la photo
+                  — jamais en position absolue, elle sortirait du cadre à
+                  360px de large. */}
+              <div className="relative mt-4 flex justify-center lg:absolute lg:-bottom-6 lg:-left-6 lg:mt-0 lg:block lg:justify-start">
+                <CarteExempleDossier />
+              </div>
             </div>
+            <p className="mt-2 text-right text-xs text-text-subtle">
+              Kinshasa, vue depuis le fleuve Congo — Photo : Valdhy Mbemba / Unsplash
+            </p>
           </div>
         </div>
       </section>
 
       <BandeStatistiques />
 
-      {/* Services numériques */}
-      <section ref={services.ref} className={`mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8 ${services.className}`}>
-        <div className="mb-10 max-w-2xl">
-          <h2 className="mb-3 font-heading text-2xl font-bold text-text">Nos services numériques</h2>
-          <p className="text-text-subtle">
-            Trois démarches disponibles en ligne, sans avoir à vous déplacer au siège de l'Office.
-          </p>
-        </div>
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-          {SERVICES.map((service) => (
-            <ServiceCard
-              key={service.to}
-              service={service}
-              indisponible={service.to === '/demande-de-stage' && demandesStageFermees}
-            />
-          ))}
+      {/* Le bloc "je fais ma démarche" se tient d'un seul morceau : services,
+          comment ça marche, pièces à préparer, questions fréquentes — tout
+          en fond blanc ou surface-sunken, avant le contenu institutionnel. */}
+      <section className="bg-white py-16 lg:py-22">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-10 max-w-2xl">
+            <h2 className="mb-3 font-heading text-2xl font-bold text-text">Nos services numériques</h2>
+            <p className="text-text-subtle">
+              Trois démarches disponibles en ligne, sans avoir à vous déplacer au siège de l'Office.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+            {SERVICES.map((service, index) => (
+              <ServiceCard
+                key={service.to}
+                service={service}
+                index={index}
+                indisponible={service.to === '/demande-de-stage' && demandesStageFermees}
+              />
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* Les huit directions — informatif uniquement */}
-      <section className="bg-surface-sunken">
-        <div ref={directions.ref} className={`mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8 ${directions.className}`}>
-          <div className="mb-10 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-            <div className="max-w-2xl">
-              <h2 className="mb-3 font-heading text-2xl font-bold text-text">Les huit directions de l'ONT</h2>
-              <p className="text-text-subtle">
-                L'Office est organisé en huit directions centrales, chacune responsable d'un volet de sa mission.
-              </p>
+      <section className="bg-surface-sunken py-16 lg:py-22">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-12 max-w-2xl">
+            <h2 className="mb-3 font-heading text-2xl font-bold text-text">Comment ça marche</h2>
+            <p className="text-text-subtle">De la demande à la décision, votre dossier reste suivi à chaque étape.</p>
+          </div>
+          <DemarcheFrise />
+        </div>
+      </section>
+
+      <section ref={preparer.ref} style={preparer.style} className={`bg-white py-16 lg:py-22 ${preparer.className}`}>
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-10 max-w-2xl">
+            <h2 className="mb-3 font-heading text-2xl font-bold text-text">Ce que vous devez préparer</h2>
+            <p className="text-text-subtle">Un dossier complet dès le premier dépôt évite les allers-retours.</p>
+          </div>
+          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
+            <div className="rounded-card border border-border bg-white p-6">
+              <p className="mb-1 text-xs font-semibold tracking-wide text-ont-gold-700 uppercase">Stage académique</p>
+              <h3 className="mb-4 font-heading text-lg font-semibold text-text">Une seule pièce requise</h3>
+              <ul className="space-y-2 text-sm text-text-muted">
+                <li>• Lettre de stage de votre université, introduisant votre demande</li>
+              </ul>
+              <p className="mt-4 text-xs text-text-subtle">Format accepté : PDF ou image scannée, 5 Mo maximum.</p>
             </div>
-            <div className="hidden w-40 shrink-0 lg:block">
-              <ExchangeIllustration />
+            <div className="rounded-card border border-border bg-white p-6">
+              <p className="mb-1 text-xs font-semibold tracking-wide text-ont-green-700 uppercase">Stage professionnel</p>
+              <h3 className="mb-4 font-heading text-lg font-semibold text-text">Quatre pièces requises</h3>
+              <ul className="space-y-2 text-sm text-text-muted">
+                <li>• Lettre de demande de stage</li>
+                <li>• CV du candidat</li>
+                <li>• Diplôme d'État</li>
+                <li>• Dernier diplôme obtenu</li>
+              </ul>
+              <p className="mt-4 text-xs text-text-subtle">Format accepté pour chaque pièce : PDF ou image scannée, 5 Mo maximum.</p>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section ref={faq.ref} style={faq.style} className={`bg-surface-sunken py-16 lg:py-22 ${faq.className}`}>
+        <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-10 text-center">
+            <h2 className="mb-3 font-heading text-2xl font-bold text-text">Questions fréquentes</h2>
+          </div>
+          <div className="rounded-card border border-border bg-white px-6">
+            <FaqAccordion />
+          </div>
+        </div>
+      </section>
+
+      {/* Contenu institutionnel : directions et contact, après le bloc démarche. */}
+      <section className="bg-white">
+        <div ref={directions.ref} style={directions.style} className={`mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-22 ${directions.className}`}>
+          <div className="mb-10 max-w-2xl">
+            <h2 className="mb-3 font-heading text-2xl font-bold text-text">Les huit directions de l'ONT</h2>
+            <p className="text-text-subtle">
+              L'Office est organisé en huit directions centrales, chacune responsable d'un volet de sa mission.
+            </p>
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {DIRECTIONS.map((d) => (
-              <div key={d.sigle} className="rounded-field border border-border bg-white p-5 text-center">
+              <div key={d.sigle} className="rounded-field border border-border bg-white p-5 text-center transition-colors hover:bg-ont-blue-50">
                 <p className="mb-1.5 font-heading text-3xl font-bold text-ont-blue-700">{d.sigle}</p>
                 <p className="text-xs text-text-subtle">{d.nom}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-surface-sunken">
+        <div
+          ref={contact.ref}
+          style={contact.style}
+          className={`mx-auto grid max-w-7xl grid-cols-1 gap-10 px-4 py-16 sm:px-6 lg:grid-cols-12 lg:px-8 lg:py-22 ${contact.className}`}
+        >
+          <div className="lg:col-span-7">
+            <h2 className="mb-3 font-heading text-2xl font-bold text-text">Contact et accès</h2>
+            <p className="mb-6 text-text-subtle">Nos équipes vous reçoivent aux horaires et à l'adresse ci-dessous.</p>
+            <ul className="space-y-3 text-sm text-text-muted">
+              <li className="flex items-start gap-2.5">
+                <MapPin size={18} className="mt-0.5 shrink-0 text-ont-blue-700" />
+                {ADRESSE_PORTAIL}
+              </li>
+              <li className="flex items-center gap-2.5">
+                <Clock size={18} className="shrink-0 text-ont-blue-700" />
+                {HORAIRES_PORTAIL} (dépôt de dossiers)
+              </li>
+              <li className="flex items-center gap-2.5">
+                <Phone size={18} className="shrink-0 text-ont-blue-700" />
+                <a href={`tel:${TELEPHONE_PORTAIL.replace(/\s+/g, '')}`} className="hover:text-ont-blue-700">
+                  {TELEPHONE_PORTAIL}
+                </a>
+              </li>
+            </ul>
+          </div>
+          <div className="flex items-start lg:col-span-5 lg:justify-end">
+            <a href={urlItineraire} target="_blank" rel="noopener noreferrer">
+              <Button type="button" variant="secondary" className="gap-2">
+                <MapPin size={16} />
+                Itinéraire
+              </Button>
+            </a>
           </div>
         </div>
       </section>
