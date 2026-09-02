@@ -85,15 +85,17 @@ export function CourrierExternePage() {
   }
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-16 sm:px-6 lg:px-8">
-      <div className="rounded-card border border-border bg-surface p-8 shadow-sm">
+    <div className="bg-surface-sunken py-16 lg:py-22">
+      <div className="mx-auto max-w-lg px-4 sm:px-6 lg:px-8">
         <div className="mb-6 text-center">
-          <h1 className="font-heading text-lg font-semibold text-text">Dépôt de courrier</h1>
+          <p className="mb-2 text-sm font-semibold tracking-wide text-ont-gold-600 uppercase">Courrier</p>
+          <h1 className="font-heading text-2xl font-bold text-text">Dépôt de courrier</h1>
           <p className="mt-1 text-sm text-text-subtle">
             Transmettez un courrier à l'Office National du Tourisme en tant que partenaire ou institution externe.
           </p>
         </div>
 
+        <div className="rounded-card border border-border bg-white p-8 shadow-card">
         {erreur && <Alert tone="error" className="mb-4">{erreur}</Alert>}
 
         <form onSubmit={soumettre} className="space-y-4">
@@ -170,6 +172,7 @@ export function CourrierExternePage() {
             Suivre un courrier déjà déposé →
           </a>
         </p>
+        </div>
       </div>
     </div>
   );

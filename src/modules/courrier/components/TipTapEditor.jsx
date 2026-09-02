@@ -25,7 +25,12 @@ export function TipTapEditor({ content, onChange, editable = true }) {
   });
 
   useEffect(() => {
-    if (editor && content !== undefined) {
+    // `editor.isDestroyed` : un remontage d'effets (Suspense/StrictMode)
+    // peut réexécuter cet effet avec une référence d'éditeur déjà détruite
+    // par le nettoyage interne de useEditor avant que React ne re-rende
+    // avec la nouvelle instance — sans cette garde, `editor.commands`
+    // lève une TypeError sur l'état interne nul de l'instance détruite.
+    if (editor && !editor.isDestroyed && content !== undefined) {
       const current = JSON.stringify(editor.getJSON());
       const next = JSON.stringify(content);
       if (current !== next) {
@@ -35,7 +40,7 @@ export function TipTapEditor({ content, onChange, editable = true }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editor]);
 
-  if (!editor) return null;
+  if (!editor || editor.isDestroyed) return null;
 
   return (
     <div className="overflow-hidden rounded-lg border border-border-strong">

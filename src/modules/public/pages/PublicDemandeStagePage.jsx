@@ -108,15 +108,17 @@ export function PublicDemandeStagePage() {
   }
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-16 sm:px-6 lg:px-8">
-      <div className="rounded-card border border-border bg-surface p-8 shadow-sm">
+    <div className="bg-surface-sunken py-16 lg:py-22">
+      <div className="mx-auto max-w-lg px-4 sm:px-6 lg:px-8">
         <div className="mb-6 text-center">
-          <h1 className="font-heading text-lg font-semibold text-text">Demande de stage</h1>
+          <p className="mb-2 text-sm font-semibold tracking-wide text-ont-gold-600 uppercase">Stage</p>
+          <h1 className="font-heading text-2xl font-bold text-text">Demande de stage</h1>
           <p className="mt-1 text-sm text-text-subtle">
             Déposez votre demande de stage à l'Office National du Tourisme.
           </p>
         </div>
 
+        <div className="rounded-card border border-border bg-white p-8 shadow-card">
         <div className="mb-6">
           <Stepper etapes={ETAPES} indexCourant={etape} />
         </div>
@@ -278,10 +280,11 @@ export function PublicDemandeStagePage() {
         )}
 
         <p className="mt-6 text-center text-sm text-text-subtle">
-          <a href="/suivi-dossier" className="font-medium text-ont-blue-700 hover:underline dark:text-ont-blue-400">
+          <a href="/suivi-dossier" className="font-medium text-ont-blue-700 hover:underline">
             Suivre une demande déjà déposée →
           </a>
         </p>
+        </div>
       </div>
     </div>
   );
