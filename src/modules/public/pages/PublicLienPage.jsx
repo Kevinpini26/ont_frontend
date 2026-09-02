@@ -22,7 +22,7 @@ export function PublicLienPage() {
 
   return (
     <div className="flex min-h-svh items-center justify-center bg-surface-sunken px-4 py-10">
-      <div className="w-full max-w-lg rounded-card border border-border bg-surface p-8 shadow-sm">
+      <div className="w-full max-w-lg rounded-card border border-border bg-surface p-8">
         <div className="mb-6 flex flex-col items-center text-center">
           <OntLogo className="mb-3 h-12 w-12" />
           <h1 className="font-heading text-lg font-semibold text-text">Office National du Tourisme</h1>
