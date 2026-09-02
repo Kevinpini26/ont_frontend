@@ -316,7 +316,9 @@ export function HomePage() {
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
           <div className="mb-12 max-w-2xl">
             <h2 className="mb-3 font-heading text-2xl font-bold text-text">Comment ça marche</h2>
-            <p className="text-text-subtle">De la demande à la décision, votre dossier reste suivi à chaque étape.</p>
+            {/* text-muted, pas text-subtle : directement sur bg-surface-sunken,
+                où text-subtle tombe à 4,34 de contraste — sous les 4,5 requis. */}
+            <p className="text-text-muted">De la demande à la décision, votre dossier reste suivi à chaque étape.</p>
           </div>
           <DemarcheFrise />
         </div>

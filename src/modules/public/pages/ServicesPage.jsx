@@ -92,7 +92,7 @@ export function ServicesPage() {
       <section className="bg-white">
         <div ref={intro.ref} style={intro.style} className={`mx-auto max-w-5xl px-4 pt-16 pb-4 sm:px-6 lg:px-8 lg:pt-22 ${intro.className}`}>
           <div className="max-w-2xl">
-            <p className="mb-3 text-sm font-semibold tracking-wide text-ont-gold-600 uppercase">Services</p>
+            <p className="mb-3 text-sm font-semibold tracking-wide text-ont-gold-800 uppercase">Services</p>
             <h1 className="mb-4 font-heading text-3xl font-bold text-text sm:text-4xl">Nos services numériques</h1>
             <p className="text-text-subtle">
               Trois démarches disponibles directement en ligne, sans compte ni déplacement au siège de l'Office.

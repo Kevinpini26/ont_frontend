@@ -37,10 +37,13 @@ export function DemarcheFrise() {
             </div>
             <div>
               <p className="mb-1 font-heading text-sm font-semibold text-text">
-                <span className="mr-1.5 text-ont-blue-400">{index + 1}.</span>
+                <span className="mr-1.5 text-ont-blue-700">{index + 1}.</span>
                 {etape.titre}
               </p>
-              <p className="text-sm text-text-subtle">{etape.texte}</p>
+              {/* text-muted (pas text-subtle) : cette frise vit directement sur
+                  bg-surface-sunken (voir HomePage), où text-subtle ne donne que
+                  4,34 de contraste — sous les 4,5 requis, vérifié par calcul. */}
+              <p className="text-sm text-text-muted">{etape.texte}</p>
             </div>
           </div>
         );

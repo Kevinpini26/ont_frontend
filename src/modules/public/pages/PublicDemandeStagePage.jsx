@@ -111,9 +111,9 @@ export function PublicDemandeStagePage() {
     <div className="bg-surface-sunken py-16 lg:py-22">
       <div className="mx-auto max-w-lg px-4 sm:px-6 lg:px-8">
         <div className="mb-6 text-center">
-          <p className="mb-2 text-sm font-semibold tracking-wide text-ont-gold-600 uppercase">Stage</p>
+          <p className="mb-2 text-sm font-semibold tracking-wide text-ont-gold-800 uppercase">Stage</p>
           <h1 className="font-heading text-2xl font-bold text-text">Demande de stage</h1>
-          <p className="mt-1 text-sm text-text-subtle">
+          <p className="mt-1 text-sm text-text-muted">
             Déposez votre demande de stage à l'Office National du Tourisme.
           </p>
         </div>

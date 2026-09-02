@@ -35,7 +35,7 @@ export function PublicFooter() {
         </div>
 
         <div>
-          <h3 className="mb-3 font-heading text-sm font-semibold text-white">Navigation</h3>
+          <h2 className="mb-3 font-heading text-sm font-semibold text-white">Navigation</h2>
           <ul className="space-y-2 text-sm">
             {LIENS_NAVIGATION.map((lien) => (
               <li key={lien.to}>
@@ -48,7 +48,7 @@ export function PublicFooter() {
         </div>
 
         <div>
-          <h3 className="mb-3 font-heading text-sm font-semibold text-white">Contact</h3>
+          <h2 className="mb-3 font-heading text-sm font-semibold text-white">Contact</h2>
           <ul className="space-y-2 text-sm text-ont-blue-200">
             <li className="flex items-start gap-2">
               <MapPin size={16} className="mt-0.5 shrink-0 text-ont-gold-400" />
@@ -74,7 +74,7 @@ export function PublicFooter() {
         </div>
 
         <div>
-          <h3 className="mb-3 font-heading text-sm font-semibold text-white">Informations touristiques</h3>
+          <h2 className="mb-3 font-heading text-sm font-semibold text-white">Informations touristiques</h2>
           <p className="mb-3 text-sm text-ont-blue-200">
             Ce portail sert la gestion administrative interne de l'ONT. Pour découvrir les destinations et l'offre touristique de la
             RDC, consultez le site institutionnel officiel.

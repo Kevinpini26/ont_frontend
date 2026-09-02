@@ -88,9 +88,9 @@ export function CourrierExternePage() {
     <div className="bg-surface-sunken py-16 lg:py-22">
       <div className="mx-auto max-w-lg px-4 sm:px-6 lg:px-8">
         <div className="mb-6 text-center">
-          <p className="mb-2 text-sm font-semibold tracking-wide text-ont-gold-600 uppercase">Courrier</p>
+          <p className="mb-2 text-sm font-semibold tracking-wide text-ont-gold-800 uppercase">Courrier</p>
           <h1 className="font-heading text-2xl font-bold text-text">Dépôt de courrier</h1>
-          <p className="mt-1 text-sm text-text-subtle">
+          <p className="mt-1 text-sm text-text-muted">
             Transmettez un courrier à l'Office National du Tourisme en tant que partenaire ou institution externe.
           </p>
         </div>
@@ -145,7 +145,11 @@ export function CourrierExternePage() {
             />
           </Field>
           <Field label="Contenu du courrier (facultatif)" htmlFor="contenu">
-            <TipTapEditor content={formulaire.contenu} onChange={(contenu) => setFormulaire((f) => ({ ...f, contenu }))} />
+            <TipTapEditor
+              id="contenu"
+              content={formulaire.contenu}
+              onChange={(contenu) => setFormulaire((f) => ({ ...f, contenu }))}
+            />
           </Field>
           <Field
             label="Pièce jointe"

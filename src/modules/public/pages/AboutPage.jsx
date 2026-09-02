@@ -52,7 +52,7 @@ function Pilier({ pilier, index }) {
         <div className={`mb-4 flex h-11 w-11 items-center justify-center rounded-lg transition-colors ${pilier.accent.icone}`}>
           <Icone size={22} />
         </div>
-        <h3 className="mb-2 font-heading text-base font-semibold text-text">{pilier.titre}</h3>
+        <h2 className="mb-2 font-heading text-base font-semibold text-text">{pilier.titre}</h2>
         <p className="text-sm leading-relaxed text-text-subtle">{pilier.texte}</p>
       </div>
     </div>
@@ -68,7 +68,7 @@ export function AboutPage() {
     <div>
       <section className="bg-white">
         <div className="mx-auto max-w-3xl px-4 py-16 text-center sm:px-6 lg:px-8 lg:py-22">
-          <p className="mb-3 text-sm font-semibold tracking-wide text-ont-gold-600 uppercase">À propos</p>
+          <p className="mb-3 text-sm font-semibold tracking-wide text-ont-gold-800 uppercase">À propos</p>
           <h1 className="mb-5 font-heading text-3xl font-bold text-text sm:text-4xl">
             L'Office National du Tourisme de la RDC
           </h1>

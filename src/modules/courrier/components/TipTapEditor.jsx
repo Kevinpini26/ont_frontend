@@ -1,6 +1,21 @@
 import { useEditor, EditorContent } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
+import { Document } from '@tiptap/extension-document';
+import { Paragraph } from '@tiptap/extension-paragraph';
+import { Text } from '@tiptap/extension-text';
+import { Bold } from '@tiptap/extension-bold';
+import { Italic } from '@tiptap/extension-italic';
+import { Heading } from '@tiptap/extension-heading';
+import { BulletList } from '@tiptap/extension-bullet-list';
+import { ListItem } from '@tiptap/extension-list-item';
+import { UndoRedo } from '@tiptap/extensions';
 import { useEffect } from 'react';
+
+// Jeu d'extensions minimal (pas @tiptap/starter-kit) : la barre d'outils
+// n'expose que Gras/Italique/Liste/Titre — StarterKit embarque en plus
+// Blockquote, Code(Block), HorizontalRule, Link, Underline, Strike...
+// jamais utilisés ici, pour ~123 Ko de JS non exécuté (mesuré via l'audit
+// Lighthouse "unused-javascript" sur /depot-courrier-externe).
+const EXTENSIONS = [Document, Paragraph, Text, Bold, Italic, Heading.configure({ levels: [2] }), BulletList, ListItem, UndoRedo];
 
 const toolbarBtn = (active) =>
   `rounded-field px-2.5 py-1.5 text-sm font-medium transition-colors ${
@@ -16,12 +31,17 @@ const toolbarBtn = (active) =>
  * serveur, et l'affichage passe toujours par ce même éditeur (schema
  * ProseMirror), jamais par une injection HTML brute : pas de vecteur XSS.
  */
-export function TipTapEditor({ content, onChange, editable = true }) {
+export function TipTapEditor({ content, onChange, editable = true, id }) {
   const editor = useEditor({
-    extensions: [StarterKit],
+    extensions: EXTENSIONS,
     content: content ?? '',
     editable,
     onUpdate: ({ editor }) => onChange?.(editor.getJSON()),
+    // `id` posé ici (et non sur EditorContent) : ProseMirror monte son
+    // propre <div contenteditable> comme enfant du wrapper d'EditorContent
+    // — un <label htmlFor> ne donne un nom accessible qu'en ciblant cet
+    // élément-là, celui qui porte réellement le rôle textbox.
+    editorProps: id ? { attributes: { id } } : undefined,
   });
 
   useEffect(() => {

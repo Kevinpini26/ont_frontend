@@ -41,7 +41,7 @@ export function PublicDossierLookupPage() {
     <div className="bg-surface-sunken py-16 lg:py-22">
       <div className="mx-auto max-w-md px-4 sm:px-6 lg:px-8">
         <div className="mb-6 text-center">
-          <p className="mb-2 text-sm font-semibold tracking-wide text-ont-gold-600 uppercase">Suivi</p>
+          <p className="mb-2 text-sm font-semibold tracking-wide text-ont-gold-800 uppercase">Suivi</p>
           <h1 className="font-heading text-2xl font-bold text-text">Suivi de dossier</h1>
         </div>
         <div className="rounded-card border border-border bg-white p-8 shadow-card">
@@ -80,7 +80,7 @@ export function PublicDossierLookupPage() {
 
         {dossier && (
           <div className="mt-6 rounded-field border border-border p-4">
-            <h3 className="font-heading text-sm font-semibold text-text">{dossier.objet}</h3>
+            <h2 className="font-heading text-sm font-semibold text-text">{dossier.objet}</h2>
             <div className="mt-2">
               <Badge tone={TONE_STATUT_SIMPLIFIE[dossier.statut_simplifie] ?? 'info'}>{dossier.statut_simplifie}</Badge>
             </div>
