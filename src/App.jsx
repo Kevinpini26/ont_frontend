@@ -79,6 +79,12 @@ const PresencesApercuPage = lazy(() =>
 const StagiaireDetailPage = lazy(() =>
   import('./modules/stagiaires/pages/StagiaireDetailPage').then((m) => ({ default: m.StagiaireDetailPage })),
 );
+const TableauxRepartitionPage = lazy(() =>
+  import('./modules/stagiaires/pages/TableauxRepartitionPage').then((m) => ({ default: m.TableauxRepartitionPage })),
+);
+const TableauRepartitionDetailPage = lazy(() =>
+  import('./modules/stagiaires/pages/TableauRepartitionDetailPage').then((m) => ({ default: m.TableauRepartitionDetailPage })),
+);
 const HistoriqueStagiairesPage = lazy(() =>
   import('./modules/stagiaires/pages/HistoriqueStagiairesPage').then((m) => ({ default: m.HistoriqueStagiairesPage })),
 );
@@ -179,6 +185,15 @@ function AppRoutes() {
             <Route path="/stagiaires/demandes" element={<DemandesStagePage />} />
             <Route path="/stagiaires/presences" element={<PresencesApercuPage />} />
             <Route path="/stagiaires/parametres" element={<DisponibiliteDemandesPage />} />
+          </Route>
+
+          {/* Lot 4 : DFP (créatrice), Réception et DG/DGA (circuit du
+              tableau), administrateur — la précision (qui peut vraiment
+              agir) reste dans TableauRepartitionDetailPage, même principe
+              que les fiches courrier/stagiaire ci-dessous. */}
+          <Route element={<ProtectedRoute roles={[ROLES.AGENT_DFP, ROLES.AGENT_CIRCUIT_COURRIER, ROLES.ADMINISTRATEUR]} />}>
+            <Route path="/tableaux-repartition" element={<TableauxRepartitionPage />} />
+            <Route path="/tableaux-repartition/:id" element={<TableauRepartitionDetailPage />} />
           </Route>
 
           <Route element={<ProtectedRoute />}>

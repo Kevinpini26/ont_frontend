@@ -31,3 +31,11 @@ export const TYPE_STAGE_LABELS = {
   academique: 'Stage académique',
   professionnel: 'Stage professionnel',
 };
+
+/** Lot 4 — tableau de répartition. */
+export const TABLEAU_REPARTITION_STATUT_LABELS = {
+  brouillon: 'Brouillon',
+  chez_reception: 'Chez la Réception',
+  en_attente_avis_dg: "En attente d'avis DG",
+  approuve: 'Approuvé',
+};

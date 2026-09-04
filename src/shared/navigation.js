@@ -1,4 +1,4 @@
-import { BarChart3, Building2, CalendarCheck, FileClock, History, Inbox, LayoutDashboard, Mail, ScrollText, Settings, Users } from 'lucide-react';
+import { BarChart3, Building2, CalendarCheck, ClipboardList, FileClock, History, Inbox, LayoutDashboard, Mail, ScrollText, Settings, Users } from 'lucide-react';
 import { ROLES } from '../modules/kernel/constants';
 
 /**
@@ -36,6 +36,7 @@ export function navigationForUser(user) {
         items: [
           { label: 'Stagiaires', to: '/stagiaires/actifs', icon: Users },
           { label: 'Demandes de stage', to: '/stagiaires/demandes', icon: FileClock, countKey: 'demandes_stage' },
+          { label: 'Tableaux de répartition', to: '/tableaux-repartition', icon: ClipboardList },
           { label: 'Présences', to: '/stagiaires/presences', icon: CalendarCheck },
           { label: 'Historique', to: '/stagiaires/historique', icon: History },
         ],
@@ -86,6 +87,14 @@ export function navigationForUser(user) {
     // sa simple file de traitement.
     if (user.poste === 'dg') {
       items.push({ label: 'Espace Direction Générale', to: '/circuit/espace-dg', icon: Building2 });
+    }
+
+    // Lot 4 : seuls la Réception (présente à la DG) et la DG/DGA (rendent
+    // l'avis) ont une action réelle sur un tableau — les autres postes
+    // centraux ne le voient pas dans la navigation (accès direct par lien
+    // toujours possible, backend-gated).
+    if (['reception', 'dg', 'dga'].includes(user.poste)) {
+      items.push({ label: 'Tableaux de répartition', to: '/tableaux-repartition', icon: ClipboardList });
     }
 
     return [{ title: 'Circuit courrier', items }];
