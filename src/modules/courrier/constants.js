@@ -47,6 +47,8 @@ export const STATUT_LABELS = {
   retour_reception: 'Retour à la Réception',
   en_attente_avis_dg: "En attente d'avis DG",
   projet_reponse_en_cours: 'Projet de réponse en cours',
+  en_dispatch: 'En dispatch vers la direction',
+  chez_direction: 'Chez le secrétariat de la direction',
   en_attente_validation_dg: 'En attente de validation DG',
   en_relecture: 'En relecture',
   signe: 'Signé',
@@ -61,6 +63,15 @@ export const TYPE_LABELS = {
 export const CLASSIFICATION_LABELS = {
   interne: 'Interne',
   externe: 'Externe',
+};
+
+/** Mentions d'imputation normalisées (Lot 3) — voir MentionImputation côté backend. */
+export const MENTION_IMPUTATION_LABELS = {
+  pour_attribution: 'Pour attribution',
+  pour_avis: 'Pour avis',
+  pour_suite_utile: 'Pour suite utile',
+  pour_information: 'Pour information',
+  pour_classement: 'Pour classement',
 };
 
 /**
@@ -130,5 +141,8 @@ export const ACTION_PAR_POSTE = {
   secretariat_2: [
     { statutDepart: 'signe', endpoint: 'enregistrer', libelle: 'Enregistrer' },
     { statutDepart: 'recu', necessiteAvisDg: false, endpoint: 'enregistrer', libelle: 'Enregistrer (circuit court)' },
+    // Lot 3 : un avis DG favorable sur un courrier déjà imputé arrive ici
+    // plutôt qu'en projet_reponse_en_cours (voir "dg" ci-dessus).
+    { statutDepart: 'en_dispatch', endpoint: 'dispatcher-direction', libelle: 'Transmettre au secrétariat de la direction' },
   ],
 };

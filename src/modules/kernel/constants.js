@@ -2,6 +2,7 @@ export const ROLES = {
   ADMINISTRATEUR: 'administrateur',
   AGENT_DFP: 'agent_dfp',
   RESPONSABLE_DIRECTION: 'responsable_direction',
+  SECRETARIAT_DIRECTION: 'secretariat_direction',
   AGENT_CIRCUIT_COURRIER: 'agent_circuit_courrier',
 };
 
@@ -9,6 +10,7 @@ export const ROLE_LABELS = {
   [ROLES.ADMINISTRATEUR]: 'Administrateur',
   [ROLES.AGENT_DFP]: 'Agent DFP',
   [ROLES.RESPONSABLE_DIRECTION]: 'Responsable de direction',
+  [ROLES.SECRETARIAT_DIRECTION]: 'Secrétariat de direction',
   [ROLES.AGENT_CIRCUIT_COURRIER]: 'Agent de circuit courrier',
 };
 

@@ -3,8 +3,10 @@ import { useParams } from 'react-router-dom';
 import { Eye } from 'lucide-react';
 import {
   accuserReception,
+  dispatcherDirection,
   enregistrer,
   getCourrier,
+  imputer,
   representerDg,
   requalifierUrgence,
   rendreAvis,
@@ -24,7 +26,8 @@ import { StatutTimeline } from '../components/StatutTimeline';
 import { BordereauxTimeline } from '../components/BordereauxTimeline';
 import { AnnotationsPanel } from '../components/AnnotationsPanel';
 import { TipTapEditor } from '../components/TipTapEditor';
-import { ACTION_PAR_POSTE, TYPE_LABELS, CLASSIFICATION_LABELS, DEGRE_URGENCE_LABELS, TONE_URGENCE } from '../constants';
+import { ACTION_PAR_POSTE, TYPE_LABELS, CLASSIFICATION_LABELS, DEGRE_URGENCE_LABELS, TONE_URGENCE, MENTION_IMPUTATION_LABELS } from '../constants';
+import { listDirections } from '../../kernel/api/directionsApi';
 import { PageHeader } from '../../../shared/components/ui/PageHeader';
 import { Card, CardBody, CardHeader } from '../../../shared/components/ui/Card';
 import { Button } from '../../../shared/components/ui/Button';
@@ -120,6 +123,7 @@ export function CourrierDetailPage() {
               </Alert>
             )}
             <PanneauUrgence courrier={courrier} user={user} executer={executer} />
+            <PanneauImputation courrier={courrier} user={user} executer={executer} />
             {courrier.avis_dg && (
               <p className="text-text-muted">
                 <span className="font-medium text-text">Avis DG : </span>
@@ -364,6 +368,81 @@ function PanneauUrgence({ courrier, user, executer }) {
   );
 }
 
+/**
+ * Lot 3 : l'imputation (direction principale + mention) route le courrier
+ * sans jamais clore le circuit — voir CourrierPolicy::imputer(), ouverte à
+ * tout poste du circuit central, pas seulement la DG (question ouverte,
+ * voir docs/questions-ont.md). Toujours visible, pas seulement à
+ * en_attente_avis_dg : imputer() n'est pas gardé par statut côté backend.
+ * Une seule direction principale ici (pas de copies) : suffit à déclencher
+ * le dispatch (Lot 3), une gestion complète des copies reste à ajouter si
+ * le besoin se confirme.
+ */
+function PanneauImputation({ courrier, user, executer }) {
+  const [directions, setDirections] = useState([]);
+  const [directionId, setDirectionId] = useState('');
+  const [mention, setMention] = useState('pour_attribution');
+  const [envoiEnCours, setEnvoiEnCours] = useState(false);
+
+  const peutImputer = user.role === 'agent_circuit_courrier' || user.role === 'administrateur';
+
+  useEffect(() => {
+    if (peutImputer) {
+      listDirections().then(setDirections);
+    }
+  }, [peutImputer]);
+
+  if (!peutImputer) return null;
+
+  const principale = courrier.imputations?.find((i) => i.est_principale);
+
+  async function soumettre(e) {
+    e.preventDefault();
+    setEnvoiEnCours(true);
+    try {
+      await executer(() => imputer(courrier.id, directionId, mention));
+      setDirectionId('');
+    } finally {
+      setEnvoiEnCours(false);
+    }
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-3">
+      <span className="font-medium text-text">Imputation : </span>
+      {principale ? (
+        <Badge tone="info">
+          {principale.direction?.nom} — {principale.mention_label}
+        </Badge>
+      ) : (
+        <span className="text-text-subtle">Aucune</span>
+      )}
+      <form onSubmit={soumettre} className="flex flex-wrap items-center gap-2">
+        <select className={`${inputClass} w-auto`} value={directionId} onChange={(e) => setDirectionId(e.target.value)}>
+          <option value="" disabled>
+            Direction…
+          </option>
+          {directions.map((d) => (
+            <option key={d.id} value={d.id}>
+              {d.code} — {d.nom}
+            </option>
+          ))}
+        </select>
+        <select className={`${inputClass} w-auto`} value={mention} onChange={(e) => setMention(e.target.value)}>
+          {Object.entries(MENTION_IMPUTATION_LABELS).map(([valeur, libelle]) => (
+            <option key={valeur} value={valeur}>
+              {libelle}
+            </option>
+          ))}
+        </select>
+        <Button type="submit" size="sm" variant="secondary" disabled={!directionId || envoiEnCours}>
+          {principale ? 'Remplacer' : 'Imputer'}
+        </Button>
+      </form>
+    </div>
+  );
+}
+
 function ActionsCourrier({ courrier, user, executer }) {
   const [agents, setAgents] = useState([]);
   const [relecteurId, setRelecteurId] = useState('');
@@ -513,6 +592,22 @@ function ActionsCourrier({ courrier, user, executer }) {
         <CardBody>
           <Button disabled={envoiEnCours} onClick={() => executerEtSuivre(() => representerDg(courrier.id))}>
             Représenter à la DG
+          </Button>
+        </CardBody>
+      </Card>
+    );
+  }
+
+  if (courrier.statut === 'en_dispatch' && user.poste === 'secretariat_2') {
+    return (
+      <Card>
+        <CardHeader
+          title="Transmettre au secrétariat de la direction"
+          description="Avis DG favorable sur un courrier imputé — transmettez-le au secrétariat de la direction destinataire principale."
+        />
+        <CardBody>
+          <Button disabled={envoiEnCours} onClick={() => executerEtSuivre(() => dispatcherDirection(courrier.id))}>
+            Transmettre à la direction
           </Button>
         </CardBody>
       </Card>

@@ -17,6 +17,7 @@ const DESTINATION_PAR_ROLE = {
   [ROLES.ADMINISTRATEUR]: '/admin/directions',
   [ROLES.AGENT_DFP]: '/stagiaires/dashboard',
   [ROLES.RESPONSABLE_DIRECTION]: '/direction/tableau-de-bord',
+  [ROLES.SECRETARIAT_DIRECTION]: '/direction/courrier',
 };
 
 // Une couleur de marque par service (bleu = suivi, or = stage, vert =

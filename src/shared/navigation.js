@@ -67,6 +67,15 @@ export function navigationForUser(user) {
     ];
   }
 
+  if (user.role === ROLES.SECRETARIAT_DIRECTION) {
+    return [
+      {
+        title: 'Ma direction',
+        items: [{ label: 'Courrier', to: '/direction/courrier', icon: Mail, countKey: 'courriers_recus' }],
+      },
+    ];
+  }
+
   if (user.role === ROLES.AGENT_CIRCUIT_COURRIER) {
     const items = [
       { label: 'Ma file de traitement', to: `/circuit/${user.poste}`, icon: Inbox },

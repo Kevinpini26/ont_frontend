@@ -118,6 +118,28 @@ export async function representerDg(id) {
 }
 
 /**
+ * Lot 3 : le Secrétariat 02 transmet un courrier imputé (avis DG favorable)
+ * au secrétariat de la direction imputée à titre principal.
+ */
+export async function dispatcherDirection(id) {
+  const { data } = await apiClient.post(`/courriers/${id}/dispatcher-direction`);
+  return data.data;
+}
+
+/**
+ * Remplace l'ensemble des imputations du courrier (pas un ajout
+ * incrémental, voir CourrierController::imputer()) — une seule direction
+ * principale ici, sans copie, l'écran ne couvrant pour l'instant que le
+ * geste d'orientation qui déclenche le dispatch (Lot 3).
+ */
+export async function imputer(id, directionId, mention) {
+  const { data } = await apiClient.post(`/courriers/${id}/imputer`, {
+    imputations: [{ direction_id: directionId, mention, est_principale: true }],
+  });
+  return data.data;
+}
+
+/**
  * Réservé à la DG (jamais la DGA, même en intérim) : correction du degré
  * d'urgence après le tri, à tout moment, quel que soit le statut courant.
  */

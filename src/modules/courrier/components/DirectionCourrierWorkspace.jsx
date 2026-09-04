@@ -4,6 +4,7 @@ import { createCourrier, listCourriers } from '../api/courrierApi';
 import { listDirections } from '../../kernel/api/directionsApi';
 import { marquerConsulte } from '../../kernel/api/notificationsApi';
 import { useAuthStore } from '../../kernel/store/authStore';
+import { ROLES } from '../../kernel/constants';
 import { STATUT_LABELS, TYPE_LABELS } from '../constants';
 import { SearchBar } from '../../../shared/components/SearchBar';
 import { ExportButtons } from '../../../shared/components/ExportButtons';
@@ -145,8 +146,15 @@ export function DirectionCourrierWorkspace() {
     { label: 'Date', value: (c) => new Date(c.created_at).toLocaleDateString('fr-FR') },
   ];
 
+  // Le secrétariat de direction (Lot 3) reçoit et consulte le courrier
+  // imputé à sa direction, mais n'a pas le droit d'en initier — voir
+  // CourrierPolicy::create(), volontairement laissée au seul responsable
+  // de direction.
+  const peutEnvoyer = user?.role === ROLES.RESPONSABLE_DIRECTION;
+
   return (
     <>
+      {peutEnvoyer && (
       <Card className="mb-6">
         <CardHeader title="Envoyer un courrier" description="Vers une autre direction, ou vers la Direction Générale (laisser le champ vide)." />
         <CardBody>
@@ -204,6 +212,7 @@ export function DirectionCourrierWorkspace() {
           </form>
         </CardBody>
       </Card>
+      )}
 
       <Card className="mb-6">
         <CardBody>

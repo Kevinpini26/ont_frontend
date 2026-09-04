@@ -149,8 +149,16 @@ function AppRoutes() {
 
           <Route element={<ProtectedRoute roles={[ROLES.RESPONSABLE_DIRECTION]} />}>
             <Route path="/direction/tableau-de-bord" element={<DirectionDashboardPage />} />
-            <Route path="/direction/courrier" element={<DirectionCourrierPage />} />
             <Route path="/direction/stagiaires" element={<DirectionStagiairesPage />} />
+          </Route>
+
+          {/* Le secrétariat de direction (Lot 3) reçoit et consulte le
+              courrier imputé à sa direction, comme le responsable — mais
+              n'a ni tableau de bord stagiaires ni droit d'initier un
+              courrier (voir la garde peutEnvoyer dans
+              DirectionCourrierWorkspace). */}
+          <Route element={<ProtectedRoute roles={[ROLES.RESPONSABLE_DIRECTION, ROLES.SECRETARIAT_DIRECTION]} />}>
+            <Route path="/direction/courrier" element={<DirectionCourrierPage />} />
           </Route>
 
           <Route element={<ProtectedRoute roles={[ROLES.AGENT_CIRCUIT_COURRIER]} />}>
