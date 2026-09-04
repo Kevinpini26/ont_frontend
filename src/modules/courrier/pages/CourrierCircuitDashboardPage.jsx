@@ -114,6 +114,13 @@ export function CourrierCircuitDashboardPage() {
               tone="primary"
               hint="Avec un délai moyen mesurable"
             />
+            <StatCard
+              label="Non triés en alerte"
+              value={stats.courriers_non_tries_en_alerte.length}
+              icon={<Clock size={22} />}
+              tone={stats.courriers_non_tries_en_alerte.length > 0 ? 'danger' : 'primary'}
+              hint={`En attente de tri depuis plus de ${stats.delai_alerte_tri_heures} h`}
+            />
           </div>
 
           <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2">

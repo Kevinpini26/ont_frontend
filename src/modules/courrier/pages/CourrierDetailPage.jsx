@@ -5,11 +5,15 @@ import {
   accuserReception,
   enregistrer,
   getCourrier,
+  representerDg,
+  requalifierUrgence,
   rendreAvis,
   signer,
   soumettreProjetReponse,
+  transmettreAuTriDepuisProtocole,
   transmettreAvisDg,
   transmettreProtocole,
+  transmettreTri,
   validerAvantDiffusion,
   validerRelecture,
 } from '../api/courrierApi';
@@ -20,7 +24,7 @@ import { StatutTimeline } from '../components/StatutTimeline';
 import { BordereauxTimeline } from '../components/BordereauxTimeline';
 import { AnnotationsPanel } from '../components/AnnotationsPanel';
 import { TipTapEditor } from '../components/TipTapEditor';
-import { ACTION_PAR_POSTE, TYPE_LABELS, CLASSIFICATION_LABELS } from '../constants';
+import { ACTION_PAR_POSTE, TYPE_LABELS, CLASSIFICATION_LABELS, DEGRE_URGENCE_LABELS, TONE_URGENCE } from '../constants';
 import { PageHeader } from '../../../shared/components/ui/PageHeader';
 import { Card, CardBody, CardHeader } from '../../../shared/components/ui/Card';
 import { Button } from '../../../shared/components/ui/Button';
@@ -110,6 +114,12 @@ export function CourrierDetailPage() {
               <span className="font-medium text-text">Destination : </span>
               {courrier.direction_destination?.nom ?? 'Direction Générale'}
             </p>
+            {courrier.tour > 1 && (
+              <Alert tone="warning">
+                Ce dossier boucle : {courrier.tour}ᵉ passage devant la Direction Générale.
+              </Alert>
+            )}
+            <PanneauUrgence courrier={courrier} user={user} executer={executer} />
             {courrier.avis_dg && (
               <p className="text-text-muted">
                 <span className="font-medium text-text">Avis DG : </span>
@@ -296,12 +306,71 @@ export function CourrierDetailPage() {
   );
 }
 
+/**
+ * Toujours visible dans les Informations (pas seulement dans ActionsCourrier,
+ * qui ne montre qu'une action à la fois selon le statut) : le degré
+ * d'urgence et la correction DG doivent rester accessibles quel que soit le
+ * statut courant, une fois le tri effectué — voir
+ * CourrierCircuitService::requalifierUrgence().
+ */
+function PanneauUrgence({ courrier, user, executer }) {
+  const [nouveauDegre, setNouveauDegre] = useState('');
+  const [envoiEnCours, setEnvoiEnCours] = useState(false);
+
+  // urgence_triee_at fait foi, pas degre_urgence seul : un degré pré-rempli
+  // à la création (Réception) ne vaut pas tri officiel — voir
+  // Courrier::urgenceTriee() côté backend.
+  if (!courrier.urgence_triee_at) return null;
+
+  async function requalifier(e) {
+    e.preventDefault();
+    setEnvoiEnCours(true);
+    try {
+      await executer(() => requalifierUrgence(courrier.id, nouveauDegre));
+      setNouveauDegre('');
+    } finally {
+      setEnvoiEnCours(false);
+    }
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-3">
+      <span className="font-medium text-text">Degré d'urgence : </span>
+      <Badge tone={TONE_URGENCE[courrier.degre_urgence]}>{DEGRE_URGENCE_LABELS[courrier.degre_urgence]}</Badge>
+      {user.poste === 'dg' && (
+        <form onSubmit={requalifier} className="flex items-center gap-2">
+          <select
+            className={`${inputClass} w-auto`}
+            value={nouveauDegre}
+            onChange={(e) => setNouveauDegre(e.target.value)}
+          >
+            <option value="" disabled>
+              Corriger…
+            </option>
+            {Object.entries(DEGRE_URGENCE_LABELS)
+              .filter(([valeur]) => valeur !== courrier.degre_urgence)
+              .map(([valeur, libelle]) => (
+                <option key={valeur} value={valeur}>
+                  {libelle}
+                </option>
+              ))}
+          </select>
+          <Button type="submit" size="sm" variant="secondary" disabled={!nouveauDegre || envoiEnCours}>
+            Corriger
+          </Button>
+        </form>
+      )}
+    </div>
+  );
+}
+
 function ActionsCourrier({ courrier, user, executer }) {
   const [agents, setAgents] = useState([]);
   const [relecteurId, setRelecteurId] = useState('');
   const [projetContenu, setProjetContenu] = useState(courrier.projet_reponse_contenu ?? '');
   const [avisDg, setAvisDg] = useState('favorable');
   const [avisCommentaire, setAvisCommentaire] = useState('');
+  const [degreUrgenceTri, setDegreUrgenceTri] = useState('normal');
   const [relectureCommentaire, setRelectureCommentaire] = useState('');
   const [noteTechnique, setNoteTechnique] = useState('');
   const [accuseReceptionPartenaire, setAccuseReceptionPartenaire] = useState('');
@@ -376,6 +445,11 @@ function ActionsCourrier({ courrier, user, executer }) {
     );
   }
 
+  {
+    /* Chemin par défaut : la Réception transmet directement au tri, sans
+       Protocole — inatteignable en pratique tant qu'aucune catégorie
+       n'exige le Protocole (config('courrier.categories_protocole') vide). */
+  }
   if (courrier.statut === 'recu' && courrier.necessite_avis_dg && user.poste === 'protocole') {
     return (
       <Card>
@@ -388,12 +462,57 @@ function ActionsCourrier({ courrier, user, executer }) {
     );
   }
 
+  if (courrier.statut === 'recu' && courrier.necessite_avis_dg && user.poste === 'secretariat_1') {
+    return (
+      <Card>
+        <CardBody>
+          <Button disabled={envoiEnCours} onClick={() => executerEtSuivre(() => transmettreTri(courrier.id))}>
+            Transmettre au tri
+          </Button>
+        </CardBody>
+      </Card>
+    );
+  }
+
   if (courrier.statut === 'au_protocole' && user.poste === 'protocole') {
     return (
       <Card>
         <CardBody>
-          <Button disabled={envoiEnCours} onClick={() => executerEtSuivre(() => transmettreAvisDg(courrier.id))}>
+          <Button disabled={envoiEnCours} onClick={() => executerEtSuivre(() => transmettreAuTriDepuisProtocole(courrier.id))}>
+            Transmettre au tri
+          </Button>
+        </CardBody>
+      </Card>
+    );
+  }
+
+  if (courrier.statut === 'en_attente_tri' && user.poste === 'secretariat_1') {
+    return (
+      <Card>
+        <CardHeader title="Trier par degré d'urgence" description="Choisissez un degré avant de transmettre ce dossier à la Direction Générale." />
+        <CardBody className="space-y-4">
+          <Field label="Degré d'urgence" htmlFor="degreUrgenceTri">
+            <select id="degreUrgenceTri" className={inputClass} value={degreUrgenceTri} onChange={(e) => setDegreUrgenceTri(e.target.value)}>
+              <option value="normal">Normal</option>
+              <option value="urgent">Urgent</option>
+              <option value="tres_urgent">Très urgent</option>
+            </select>
+          </Field>
+          <Button disabled={envoiEnCours} onClick={() => executerEtSuivre(() => transmettreAvisDg(courrier.id, degreUrgenceTri))}>
             Transmettre à la DG pour avis
+          </Button>
+        </CardBody>
+      </Card>
+    );
+  }
+
+  if (courrier.statut === 'retour_reception' && user.poste === 'reception') {
+    return (
+      <Card>
+        <CardHeader title="Représenter à la DG" description="Ce dossier revient d'un avis réservé — représentez-le à la Direction Générale une fois le complément obtenu." />
+        <CardBody>
+          <Button disabled={envoiEnCours} onClick={() => executerEtSuivre(() => representerDg(courrier.id))}>
+            Représenter à la DG
           </Button>
         </CardBody>
       </Card>
@@ -418,10 +537,18 @@ function ActionsCourrier({ courrier, user, executer }) {
               <option value="reserve">Réservé</option>
             </select>
           </Field>
-          <Field label="Commentaire" htmlFor="avisCommentaire">
+          <Field
+            label="Commentaire"
+            htmlFor="avisCommentaire"
+            required={avisDg === 'reserve'}
+            hint={avisDg === 'reserve' ? "Un avis réservé doit préciser ce qui est attendu pour que le dossier puisse revenir complet." : undefined}
+          >
             <textarea id="avisCommentaire" rows={3} className={inputClass} value={avisCommentaire} onChange={(e) => setAvisCommentaire(e.target.value)} />
           </Field>
-          <Button disabled={envoiEnCours} onClick={() => executerEtSuivre(() => rendreAvis(courrier.id, avisDg, avisCommentaire))}>
+          <Button
+            disabled={envoiEnCours || (avisDg === 'reserve' && !avisCommentaire.trim())}
+            onClick={() => executerEtSuivre(() => rendreAvis(courrier.id, avisDg, avisCommentaire))}
+          >
             Valider l'avis
           </Button>
         </CardBody>

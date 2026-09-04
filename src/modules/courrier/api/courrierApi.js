@@ -85,8 +85,44 @@ export async function transmettreProtocole(id) {
   return data.data;
 }
 
-export async function transmettreAvisDg(id) {
-  const { data } = await apiClient.post(`/courriers/${id}/transmettre-avis-dg`);
+/**
+ * Chemin par défaut depuis "recu" (voir transmettreProtocole, inatteignable
+ * en pratique tant qu'aucune catégorie n'exige le Protocole) : la Réception
+ * transmet directement au tri du Secrétariat 01.
+ */
+export async function transmettreTri(id) {
+  const { data } = await apiClient.post(`/courriers/${id}/transmettre-tri`);
+  return data.data;
+}
+
+/** Si le Protocole a malgré tout été emprunté, il transmet aussi au tri. */
+export async function transmettreAuTriDepuisProtocole(id) {
+  const { data } = await apiClient.post(`/courriers/${id}/transmettre-au-tri-depuis-protocole`);
+  return data.data;
+}
+
+/**
+ * C'est ici que le tri par degré d'urgence du Secrétariat 01 est réellement
+ * effectué (voir CourrierCircuitService::transmettreEnAttenteAvisDg()) —
+ * degreUrgence est obligatoire côté serveur.
+ */
+export async function transmettreAvisDg(id, degreUrgence) {
+  const { data } = await apiClient.post(`/courriers/${id}/transmettre-avis-dg`, { degre_urgence: degreUrgence });
+  return data.data;
+}
+
+/** La Réception représente à la DG un dossier revenu "réservé" (tour+1). */
+export async function representerDg(id) {
+  const { data } = await apiClient.post(`/courriers/${id}/representer-dg`);
+  return data.data;
+}
+
+/**
+ * Réservé à la DG (jamais la DGA, même en intérim) : correction du degré
+ * d'urgence après le tri, à tout moment, quel que soit le statut courant.
+ */
+export async function requalifierUrgence(id, degreUrgence) {
+  const { data } = await apiClient.post(`/courriers/${id}/requalifier-urgence`, { degre_urgence: degreUrgence });
   return data.data;
 }
 

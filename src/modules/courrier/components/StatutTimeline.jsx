@@ -24,7 +24,12 @@ export function StatutTimeline({ statut, necessiteAvisDg = true, initieParDg = f
   const etapes = initieParDg
     ? (validationDgRequise ? STATUTS_INITIE_PAR_DG_AVEC_VALIDATION : STATUTS_INITIE_PAR_DG_SANS_VALIDATION)
     : (necessiteAvisDg ? STATUTS : STATUTS_CIRCUIT_COURT);
-  const indexCourant = etapes.indexOf(statut);
+  // "retour_reception" (bouclage sur avis réservé) n'a pas de position fixe
+  // dans une frise à sens unique : affiché comme un retour temporaire vers
+  // "en_attente_avis_dg", l'étape à laquelle le dossier va revenir — voir
+  // constants.js.
+  const enBouclage = statut === 'retour_reception';
+  const indexCourant = etapes.indexOf(enBouclage ? 'en_attente_avis_dg' : statut);
 
   return (
     <ol className="mb-6 flex flex-col gap-0 rounded-card border border-border bg-surface p-4 sm:flex-row sm:gap-0 sm:p-5">
@@ -65,6 +70,11 @@ export function StatutTimeline({ statut, necessiteAvisDg = true, initieParDg = f
               <p className={`text-xs font-medium ${courante ? 'text-text' : franchie ? 'text-text-muted' : 'text-text-subtle'}`}>
                 {STATUT_LABELS[s]}
               </p>
+              {courante && enBouclage && (
+                <p className="mt-0.5 text-xs font-medium text-ont-gold-700 dark:text-ont-gold-400">
+                  Retour depuis un avis réservé — {STATUT_LABELS.retour_reception}
+                </p>
+              )}
               {(franchie || courante) && transition && (
                 <p className="mt-0.5 text-xs text-text-subtle">
                   {transition.emetteur ?? 'Guichet public'}

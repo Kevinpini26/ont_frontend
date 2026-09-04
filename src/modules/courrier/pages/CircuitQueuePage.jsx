@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Navigate, useParams, Link } from 'react-router-dom';
 import { accuserReception, createCourrier, initierCourrierDg, listCourriers } from '../api/courrierApi';
 import { useRequete } from '../../../shared/hooks/useRequete';
-import { ACTION_PAR_POSTE, STATUT_LABELS, TYPE_LABELS } from '../constants';
+import { ACTION_PAR_POSTE, DEGRE_URGENCE_LABELS, ORDRE_URGENCE, STATUT_LABELS, TONE_URGENCE, TYPE_LABELS } from '../constants';
 import { SearchBar } from '../../../shared/components/SearchBar';
 import { useAuthStore } from '../../kernel/store/authStore';
 import { listAgentsCircuitCourrier } from '../../kernel/api/agentsApi';
@@ -99,7 +99,11 @@ export function CircuitQueuePage() {
     const terme = recherche.trim().toLowerCase();
     return courriers
       .filter(estActionnable)
-      .filter((c) => !terme || c.objet.toLowerCase().includes(terme) || c.numero_accuse_reception.toLowerCase().includes(terme));
+      .filter((c) => !terme || c.objet.toLowerCase().includes(terme) || c.numero_accuse_reception.toLowerCase().includes(terme))
+      // Le degré d'urgence pilote l'ordre d'affichage : très urgent en
+      // tête, puis urgent, puis normal, puis non encore trié en dernier
+      // (voir ORDRE_URGENCE) — jamais un blocage, juste une priorité.
+      .sort((a, b) => (ORDRE_URGENCE[a.degre_urgence] ?? 3) - (ORDRE_URGENCE[b.degre_urgence] ?? 3));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [courriers, recherche, poste]);
 
@@ -397,13 +401,14 @@ export function CircuitQueuePage() {
                     <th className={thClass}>Référence</th>
                     <th className={thClass}>Objet</th>
                     <th className={thClass}>Type</th>
+                    <th className={thClass}>Urgence</th>
                     <th className={thClass}>Statut</th>
                     <th className={thClass}></th>
                   </tr>
                 </thead>
                 <tbody className={tbodyClass}>
                   {chargement ? (
-                    <SkeletonRows colonnes={5} />
+                    <SkeletonRows colonnes={6} />
                   ) : (
                     enAttente.map((c) => {
                       // Cas particulier : la file "dg" affiche aussi les
@@ -420,6 +425,13 @@ export function CircuitQueuePage() {
                           <td className={`${tdClassPremiere} whitespace-nowrap`}>{c.numero_accuse_reception}</td>
                           <td className={`${tdClass} max-w-[16rem] truncate`} title={c.objet}>{c.objet}</td>
                           <td className={tdClass}>{TYPE_LABELS[c.type]}</td>
+                          <td className={tdClass}>
+                            {c.degre_urgence ? (
+                              <Badge tone={TONE_URGENCE[c.degre_urgence]}>{DEGRE_URGENCE_LABELS[c.degre_urgence]}</Badge>
+                            ) : (
+                              <span className="text-text-subtle">Pas encore trié</span>
+                            )}
+                          </td>
                           <td className={tdClass}>
                             {enTransitPourCePoste ? (
                               <Badge tone="warning">En transit</Badge>

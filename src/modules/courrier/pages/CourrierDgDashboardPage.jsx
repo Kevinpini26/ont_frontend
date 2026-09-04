@@ -131,6 +131,17 @@ export function CourrierDgDashboardPage() {
 
   const lignesAlertes = useMemo(() => {
     return [
+      // Un dossier qui a bouclé au-delà du seuil configuré (voir
+      // config('courrier.circuit.tours_avant_alerte')) est bloqué : signalé
+      // en premier, gravité la plus haute — voir
+      // CourrierCircuitService::representerDg().
+      ...(statsCourrier?.dossiers_en_boucle ?? []).map((c) => ({
+        id: `boucle-${c.id}`,
+        to: `/courriers/${c.id}`,
+        gravite: 'danger',
+        texte: c.objet,
+        detail: `${c.tour}ᵉ passage`,
+      })),
       ...attenteAvisDg.map((c) => ({ id: `avis-${c.id}`, to: `/courriers/${c.id}`, gravite: 'warning', texte: c.objet, detail: 'Avis à rendre' })),
       ...attenteRelecture.map((c) => ({ id: `signature-${c.id}`, to: `/courriers/${c.id}`, gravite: 'warning', texte: c.objet, detail: 'Signature à donner' })),
       ...(alertesStagiaires?.echeance_10_jours ?? []).map((s) => ({
@@ -141,7 +152,7 @@ export function CourrierDgDashboardPage() {
         detail: `${s.jours_restants} j`,
       })),
     ];
-  }, [attenteAvisDg, attenteRelecture, alertesStagiaires]);
+  }, [statsCourrier, attenteAvisDg, attenteRelecture, alertesStagiaires]);
 
   const parDirection = useMemo(
     () => (statsStagiaires?.par_direction ?? []).map((d) => ({ nom: d.direction_nom, total: d.total })),
