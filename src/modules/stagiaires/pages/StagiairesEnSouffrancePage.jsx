@@ -8,7 +8,6 @@ import { EmptyState } from '../../../shared/components/ui/EmptyState';
 import {
   TableWrap,
   tableClass,
-  theadClass,
   thClass,
   tbodyClass,
   tdClass,
@@ -17,6 +16,13 @@ import {
   SkeletonRows,
 } from '../../../shared/components/ui/Table';
 import { Clock } from 'lucide-react';
+
+// Statique (pas theadClass, qui est sticky) : une liste de dossiers en
+// souffrance reste par nature courte (l'exception, pas la norme) — un
+// en-tête collant s'y superposerait au contenu plutôt que de
+// l'accompagner au défilement (même correctif que
+// TableauRepartitionDetailPage/JustesseTriPage).
+const theadClassStatique = 'border-b border-border bg-surface text-label font-semibold uppercase tracking-wide text-text-subtle';
 
 const NIVEAU = {
   1: { tone: 'warning', label: 'En retard' },
@@ -54,7 +60,7 @@ export function StagiairesEnSouffrancePage() {
           ) : (
             <TableWrap>
               <table className={tableClass}>
-                <thead className={theadClass}>
+                <thead className={theadClassStatique}>
                   <tr>
                     <th className={thClass}>Stagiaire</th>
                     <th className={thClass}>Direction</th>

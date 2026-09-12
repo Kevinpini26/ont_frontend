@@ -60,7 +60,7 @@ export function NotificationsDiffusionCard({ stagiaireId }) {
               </div>
               <p className="mt-1 truncate text-text-muted">{n.destinataire}</p>
               <p className="text-xs text-text-subtle">
-                Envoyé le {n.envoye_at} {n.envoye_par ? `par ${n.envoye_par}` : ''}
+                Envoyé le {new Date(n.envoye_at).toLocaleString('fr-FR')} {n.envoye_par ? `par ${n.envoye_par}` : ''}
               </p>
             </div>
             <Button

@@ -17,6 +17,22 @@ import { useEffect } from 'react';
 // Lighthouse "unused-javascript" sur /depot-courrier-externe).
 const EXTENSIONS = [Document, Paragraph, Text, Bold, Italic, Heading.configure({ levels: [2] }), BulletList, ListItem, UndoRedo];
 
+/**
+ * Un document ProseMirror { type: 'doc', content: [] } (zéro bloc) est
+ * invalide pour ce schéma ("doc: block+", au moins un bloc) — Editor.
+ * createView() plante alors sur un état interne jamais initialisé,
+ * plutôt que de lever une erreur de validation lisible. Toujours
+ * illégitime en usage normal (voir CourrierFactory), mais un contenu
+ * corrompu ne doit pas faire disparaître toute la page derrière l'écran
+ * d'erreur générique : on retombe sur un document vide valide.
+ */
+function contenuValide(content) {
+  if (content && typeof content === 'object' && content.type === 'doc' && Array.isArray(content.content) && content.content.length === 0) {
+    return '';
+  }
+  return content ?? '';
+}
+
 const toolbarBtn = (active) =>
   `rounded-field px-2.5 py-1.5 text-sm font-medium transition-colors ${
     active
@@ -33,8 +49,17 @@ const toolbarBtn = (active) =>
  */
 export function TipTapEditor({ content, onChange, editable = true, id }) {
   const editor = useEditor({
+    // Sans ce réglage, useEditor crée la vue ProseMirror dès le rendu
+    // initial — un double rendu strict de React (StrictMode, activé en
+    // développement dans main.jsx) peut alors laisser une vue à moitié
+    // construite (`Cannot read properties of undefined
+    // (reading 'dispatchTransaction')`, TipTapEditor plantant sur tout
+    // courrier dont le contenu est réellement affiché). Différer la
+    // création à un effet (après le montage) rend l'initialisation
+    // résiliente à ce double rendu.
+    immediatelyRender: false,
     extensions: EXTENSIONS,
-    content: content ?? '',
+    content: contenuValide(content),
     editable,
     onUpdate: ({ editor }) => onChange?.(editor.getJSON()),
     // `id` posé ici (et non sur EditorContent) : ProseMirror monte son
@@ -54,7 +79,7 @@ export function TipTapEditor({ content, onChange, editable = true, id }) {
       const current = JSON.stringify(editor.getJSON());
       const next = JSON.stringify(content);
       if (current !== next) {
-        editor.commands.setContent(content ?? '', { emitUpdate: false });
+        editor.commands.setContent(contenuValide(content), { emitUpdate: false });
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

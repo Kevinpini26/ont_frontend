@@ -8,7 +8,6 @@ import { SkeletonStatCards } from '../../../shared/components/ui/Skeleton';
 import {
   TableWrap,
   tableClass,
-  theadClass,
   thClass,
   tbodyClass,
   tdClass,
@@ -17,6 +16,12 @@ import {
   SkeletonRows,
 } from '../../../shared/components/ui/Table';
 import { Target } from 'lucide-react';
+
+// Statique (pas theadClass, qui est sticky) : ce tableau reste toujours
+// court, jamais scrollable sur sa propre hauteur — un en-tête collant s'y
+// superposerait à l'unique ligne de contenu plutôt que de l'accompagner
+// au défilement (même correctif que TableauRepartitionDetailPage).
+const theadClassStatique = 'border-b border-border bg-surface text-label font-semibold uppercase tracking-wide text-text-subtle';
 
 function formaterTaux(taux) {
   return taux === null || taux === undefined ? '—' : `${Math.round(taux * 100)} %`;
@@ -59,7 +64,7 @@ export function JustesseTriPage() {
           ) : (
             <TableWrap>
               <table className={tableClass}>
-                <thead className={theadClass}>
+                <thead className={theadClassStatique}>
                   <tr>
                     <th className={thClass}>Agent</th>
                     <th className={thClass}>Triés</th>

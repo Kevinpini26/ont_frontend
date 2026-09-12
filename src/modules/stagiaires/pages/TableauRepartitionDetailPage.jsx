@@ -157,7 +157,7 @@ export function TableauRepartitionDetailPage() {
           {tableau.scellement && (
             <p className="text-text-muted">
               <span className="font-medium text-text">Scellé le : </span>
-              {tableau.scellement.created_at} par {tableau.scellement.auteur}
+              {new Date(tableau.scellement.created_at).toLocaleString('fr-FR')} par {tableau.scellement.auteur}
               {tableau.scellement.mention_interim && ' (intérim)'}
               <span className="ml-2 font-mono text-xs text-text-subtle" title="Empreinte SHA-256 du PDF approuvé">
                 {tableau.scellement.pdf_sha256.slice(0, 12)}…
