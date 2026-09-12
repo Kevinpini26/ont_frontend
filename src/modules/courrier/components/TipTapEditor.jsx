@@ -49,14 +49,9 @@ const toolbarBtn = (active) =>
  */
 export function TipTapEditor({ content, onChange, editable = true, id }) {
   const editor = useEditor({
-    // Sans ce réglage, useEditor crée la vue ProseMirror dès le rendu
-    // initial — un double rendu strict de React (StrictMode, activé en
-    // développement dans main.jsx) peut alors laisser une vue à moitié
-    // construite (`Cannot read properties of undefined
-    // (reading 'dispatchTransaction')`, TipTapEditor plantant sur tout
-    // courrier dont le contenu est réellement affiché). Différer la
-    // création à un effet (après le montage) rend l'initialisation
-    // résiliente à ce double rendu.
+    // Recommandation tiptap pour un montage React (évite une classe de
+    // plantages liés à un rendu immédiat hors d'un effet) — sans effet
+    // observable ici, gardé par prudence.
     immediatelyRender: false,
     extensions: EXTENSIONS,
     content: contenuValide(content),
@@ -66,7 +61,18 @@ export function TipTapEditor({ content, onChange, editable = true, id }) {
     // propre <div contenteditable> comme enfant du wrapper d'EditorContent
     // — un <label htmlFor> ne donne un nom accessible qu'en ciblant cet
     // élément-là, celui qui porte réellement le rôle textbox.
-    editorProps: id ? { attributes: { id } } : undefined,
+    //
+    // Passer explicitement `editorProps: undefined` (au lieu d'omettre la
+    // clé) plantait TipTapEditor à CHAQUE montage, avec ou sans `id` :
+    // Editor.setOptions() fusionne les options par un simple spread
+    // ({...defauts, ...options}), qui écrase le défaut interne de tiptap
+    // (`editorProps: {}`) dès que la clé est présente — même si sa valeur
+    // est `undefined`. createView() lit alors `editorProps.dispatchTransaction`
+    // sur `undefined` et lève `Cannot read properties of undefined
+    // (reading 'dispatchTransaction')`. La clé ne doit donc jamais être
+    // posée du tout quand il n'y a pas d'id, pour laisser le défaut de
+    // tiptap s'appliquer.
+    ...(id ? { editorProps: { attributes: { id } } } : {}),
   });
 
   useEffect(() => {
