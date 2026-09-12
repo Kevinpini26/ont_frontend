@@ -25,15 +25,6 @@ export async function examinerDossier(id) {
   return data.data;
 }
 
-export async function affecter(id, directionId, { forcer = false, justification = null } = {}) {
-  const { data } = await apiClient.post(`/stagiaires/${id}/affecter`, {
-    direction_id: directionId,
-    forcer,
-    justification,
-  });
-  return data.data;
-}
-
 export async function reaffecter(id, directionId, { forcer = false, justification } = {}) {
   const { data } = await apiClient.post(`/stagiaires/${id}/reaffecter`, {
     direction_id: directionId,
@@ -149,6 +140,16 @@ export async function getDisponibiliteDemandes() {
 export async function updateDisponibiliteDemandes(type, ouvert) {
   const { data } = await apiClient.post('/stagiaires/disponibilite-demandes', { type, ouvert });
   return data;
+}
+
+export async function getNotificationsDiffusion(id) {
+  const { data } = await apiClient.get(`/stagiaires/${id}/notifications-diffusion`);
+  return data.data;
+}
+
+export async function renvoyerNotificationDiffusion(notificationId) {
+  const { data } = await apiClient.post(`/notifications-diffusion/${notificationId}/renvoyer`);
+  return data.data;
 }
 
 export async function importerHistoriqueStagiaires(fichier) {

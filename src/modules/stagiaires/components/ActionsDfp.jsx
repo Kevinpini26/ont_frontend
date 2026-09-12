@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
-  affecter,
   evaluerDfp,
   examinerDossier,
   ouvrirPeriodeEvaluation,
@@ -22,13 +22,10 @@ const STATUTS_OUVERTURE_EVALUATION = ['stage_en_cours', 'evaluation_en_cours'];
 
 export function ActionsDfp({ stagiaire, executer }) {
   const [directions, setDirections] = useState([]);
-  const [directionId, setDirectionId] = useState('');
   const [dateDebut, setDateDebut] = useState('');
   const [dateFin, setDateFin] = useState('');
   const estProfessionnel = stagiaire.type_stage === 'professionnel';
   const [grille, setGrille] = useState(() => (estProfessionnel ? grilleProVide() : grilleVide()));
-  const [quotaAtteint, setQuotaAtteint] = useState(false);
-  const [justification, setJustification] = useState('');
   const [envoi, setEnvoi] = useState(false);
   const [envoiOuverture, setEnvoiOuverture] = useState(false);
 
@@ -39,25 +36,11 @@ export function ActionsDfp({ stagiaire, executer }) {
   const [reaffectEnvoi, setReaffectEnvoi] = useState(false);
 
   useEffect(() => {
-    if (stagiaire.statut === 'en_attente_affectation' || peutReaffecter) {
+    if (peutReaffecter) {
       listDirections().then((dirs) => setDirections(dirs.filter((d) => d.actif)));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stagiaire.statut]);
-
-  async function tenterAffecter(forcer = false) {
-    setEnvoi(true);
-    try {
-      await executer(() => affecter(stagiaire.id, Number(directionId), { forcer, justification: justification || null }));
-      setQuotaAtteint(false);
-    } catch (err) {
-      if (err.response?.data?.quota_atteint) {
-        setQuotaAtteint(true);
-      }
-    } finally {
-      setEnvoi(false);
-    }
-  }
 
   async function tenterReaffecter(forcer = false) {
     setReaffectEnvoi(true);
@@ -170,55 +153,45 @@ export function ActionsDfp({ stagiaire, executer }) {
   if (stagiaire.statut === 'en_attente_affectation') {
     return (
       <Card>
-        <CardHeader title="Affecter à une direction" />
-        <CardBody className="space-y-4">
-          <Field label="Direction d'accueil" htmlFor="direction_id">
-            <select id="direction_id" className={inputClass} value={directionId} onChange={(e) => setDirectionId(e.target.value)}>
-              <option value="" disabled>
-                Choisir une direction
-              </option>
-              {directions.map((d) => (
-                <option key={d.id} value={d.id}>
-                  {d.code} — {d.nom}
-                  {d.capacite_max !== null ? ` (capacité ${d.capacite_max})` : ''}
-                </option>
-              ))}
-            </select>
-          </Field>
+        <CardHeader title="En attente d'affectation" />
+        <CardBody>
+          <p className="text-sm text-text-muted">
+            Ce dossier est éligible à un tableau de répartition — l'affectation se décide désormais en y sélectionnant ce dossier, plus
+            depuis cette fiche.
+          </p>
+          <Link to="/tableaux-repartition" className="mt-3 inline-block text-sm font-medium text-ont-blue-700 underline">
+            Aller aux tableaux de répartition
+          </Link>
+        </CardBody>
+      </Card>
+    );
+  }
 
-          {quotaAtteint && (
-            <Alert tone="error">
-              <p className="mb-2">
-                Cette direction a atteint sa capacité maximale de stagiaires. Vous pouvez néanmoins procéder en justifiant la dérogation
-                ci-dessous ; cette justification est conservée dans le journal d'audit.
-              </p>
-              <Field label="Justification de la dérogation" htmlFor="justification" required>
-                <textarea
-                  id="justification"
-                  rows={2}
-                  className={inputClass}
-                  value={justification}
-                  onChange={(e) => setJustification(e.target.value)}
-                />
-              </Field>
-              <Button
-                type="button"
-                variant="gold"
-                size="sm"
-                className="mt-2"
-                disabled={!justification.trim() || envoi}
-                onClick={() => tenterAffecter(true)}
-              >
-                Affecter malgré le quota
-              </Button>
-            </Alert>
-          )}
+  if (stagiaire.statut === 'en_instruction') {
+    return (
+      <Card>
+        <CardHeader title="En instruction" />
+        <CardBody>
+          <p className="text-sm text-text-muted">
+            Ce dossier figure dans un tableau de répartition en cours — l'issue (retenu ou non retenu) ne devient effective qu'à
+            l'approbation du tableau par la DG. Aucune information n'est transmise au candidat avant cette approbation.
+          </p>
+        </CardBody>
+      </Card>
+    );
+  }
 
-          {!quotaAtteint && (
-            <Button disabled={!directionId || envoi} onClick={() => tenterAffecter(false)}>
-              Affecter
-            </Button>
-          )}
+  if (stagiaire.statut === 'non_retenu') {
+    return (
+      <Card>
+        <CardHeader title="Dossier non retenu" />
+        <CardBody className="space-y-2 text-sm text-text-muted">
+          <p>
+            <span className="font-medium text-text">Motif : </span>
+            {stagiaire.motif_non_retenu_label}
+          </p>
+          {stagiaire.motif_non_retenu_libre && <p>{stagiaire.motif_non_retenu_libre}</p>}
+          <p className="text-xs text-text-subtle">Le candidat a été notifié — voir l'historique des notifications ci-contre.</p>
         </CardBody>
       </Card>
     );

@@ -10,6 +10,7 @@ import { DureeStageCard } from '../components/DureeStageCard';
 import { ConventionCard } from '../components/ConventionCard';
 import { RetourExperienceCard } from '../components/RetourExperienceCard';
 import { LiensARelancerCard } from '../components/LiensARelancerCard';
+import { NotificationsDiffusionCard } from '../components/NotificationsDiffusionCard';
 import { ActionsDfp } from '../components/ActionsDfp';
 import { ActionsDirection } from '../components/ActionsDirection';
 import { PresencesCard } from '../components/PresencesCard';
@@ -163,6 +164,13 @@ export function StagiaireDetailPage() {
                   {stagiaire.periode_debut_demandee} → {stagiaire.periode_fin_demandee}
                 </p>
               )}
+              {stagiaire.statut === 'non_retenu' && (
+                <p>
+                  <span className="font-medium text-text">Motif du refus : </span>
+                  {stagiaire.motif_non_retenu_label}
+                  {stagiaire.motif_non_retenu_libre ? ` — ${stagiaire.motif_non_retenu_libre}` : ''}
+                </p>
+              )}
               {stagiaire.evaluation?.note_finale != null && (
                 <p className="flex items-center gap-3">
                   <BadgeReussite noteFinale={stagiaire.evaluation.note_finale} className="h-20 w-20 shrink-0" />
@@ -196,6 +204,10 @@ export function StagiaireDetailPage() {
           {stagiaire.liens_publics?.length > 0 && <LiensARelancerCard liens={stagiaire.liens_publics} />}
 
           {user.role === ROLES.AGENT_DFP && <PresencesCard stagiaire={stagiaire} />}
+
+          {user.role === ROLES.AGENT_DFP && ['affecte', 'stage_en_cours', 'evaluation_en_cours', 'cloture', 'non_retenu'].includes(stagiaire.statut) && (
+            <NotificationsDiffusionCard stagiaireId={stagiaire.id} />
+          )}
         </div>
       </div>
     </div>
