@@ -3,13 +3,14 @@ import { useParams } from 'react-router-dom';
 import { useRequete } from '../../../shared/hooks/useRequete';
 import {
   getTableauRepartition,
-  ajouterLigneTableau,
+  ajouterLignesEnLotTableau,
   retirerLigneTableau,
   soumettreTableau,
   representerDgTableau,
   rendreAvisTableau,
+  getDossiersEligibles,
+  getMotifsNonRetenu,
 } from '../api/tableauxRepartitionApi';
-import { listStagiaires } from '../api/stagiairesApi';
 import { listDirections } from '../../kernel/api/directionsApi';
 import { useAuthStore } from '../../kernel/store/authStore';
 import { ROLES } from '../../kernel/constants';
@@ -46,21 +47,18 @@ const TONE_STATUT = {
   approuve: 'success',
 };
 
-const LIGNE_VIDE = {
-  stagiaireId: '',
-  directionAccueilProposeeId: '',
-  dateDebutProposee: '',
-  dateFinProposee: '',
-  encadrantPressenti: '',
-};
+const TONE_AVERTISSEMENT = { quota_atteint: 'danger', quota_proche: 'warning', dates_hors_periode: 'warning', doublon_suspecte: 'warning' };
 
 export function TableauRepartitionDetailPage() {
   const { id } = useParams();
   const user = useAuthStore((s) => s.user);
   const { donnees: tableau, setDonnees: setTableau, chargement } = useRequete((signal) => getTableauRepartition(id, signal), [id]);
-  const [stagiairesDisponibles, setStagiairesDisponibles] = useState([]);
+  const [dossiersEligibles, setDossiersEligibles] = useState([]);
+  const [motifsNonRetenu, setMotifsNonRetenu] = useState({});
   const [directions, setDirections] = useState([]);
-  const [ligne, setLigne] = useState(LIGNE_VIDE);
+  // Clé = id du stagiaire, valeur = ses champs de proposition — un seul
+  // état pour toute la sélection, un seul geste l'enregistre.
+  const [selection, setSelection] = useState({});
   const [avis, setAvis] = useState('favorable');
   const [observations, setObservations] = useState('');
   const [erreur, setErreur] = useState(null);
@@ -69,13 +67,39 @@ export function TableauRepartitionDetailPage() {
 
   useEffect(() => {
     listDirections().then(setDirections);
+    getMotifsNonRetenu().then(setMotifsNonRetenu);
   }, []);
 
   useEffect(() => {
     if (tableau?.modifiable) {
-      listStagiaires({ statut: 'en_attente_affectation' }).then((r) => setStagiairesDisponibles(r.data ?? []));
+      getDossiersEligibles().then(setDossiersEligibles);
     }
   }, [tableau?.modifiable]);
+
+  function basculerSelection(stagiaire, coche) {
+    setSelection((s) => {
+      const suivant = { ...s };
+      if (coche) {
+        suivant[stagiaire.id] = {
+          directionAccueilProposeeId: '',
+          dateDebutProposee: stagiaire.periode_debut_demandee ?? '',
+          dateFinProposee: stagiaire.periode_fin_demandee ?? '',
+          encadrantPressenti: '',
+          issueProposee: 'retenu',
+          motifNonRetenu: '',
+          motifNonRetenuLibre: '',
+        };
+      } else {
+        delete suivant[stagiaire.id];
+      }
+
+      return suivant;
+    });
+  }
+
+  function modifierSelection(stagiaireId, champ, valeur) {
+    setSelection((s) => ({ ...s, [stagiaireId]: { ...s[stagiaireId], [champ]: valeur } }));
+  }
 
   async function executer(action) {
     setErreur(null);
@@ -90,10 +114,12 @@ export function TableauRepartitionDetailPage() {
     }
   }
 
-  async function soumettreLigne(e) {
+  async function enregistrerSelection(e) {
     e.preventDefault();
-    await executer(() => ajouterLigneTableau(id, ligne));
-    setLigne(LIGNE_VIDE);
+    const lignes = Object.entries(selection).map(([stagiaireId, champs]) => ({ stagiaireId, ...champs }));
+    await executer(() => ajouterLignesEnLotTableau(id, lignes));
+    setSelection({});
+    getDossiersEligibles().then(setDossiersEligibles);
   }
 
   async function soumettreAvis(e) {
@@ -153,6 +179,8 @@ export function TableauRepartitionDetailPage() {
                     <th className={thClass}>Direction d'accueil proposée</th>
                     <th className={thClass}>Dates proposées</th>
                     <th className={thClass}>Encadrant pressenti</th>
+                    <th className={thClass}>Issue proposée</th>
+                    <th className={thClass}>Avertissements</th>
                     {peutModifier && <th className={thClass}></th>}
                   </tr>
                 </thead>
@@ -163,6 +191,21 @@ export function TableauRepartitionDetailPage() {
                       <td className={tdClass}>{l.direction_accueil_proposee?.nom}</td>
                       <td className={tdClass}>{l.date_debut_proposee} — {l.date_fin_proposee}</td>
                       <td className={tdClass}>{l.encadrant_pressenti}</td>
+                      <td className={tdClass}>
+                        <Badge tone={l.issue_proposee === 'retenu' ? 'success' : 'danger'}>{l.issue_proposee_label}</Badge>
+                        {l.motif_non_retenu_label && <div className="mt-1 text-xs text-text-subtle">{l.motif_non_retenu_label}</div>}
+                      </td>
+                      <td className={tdClass}>
+                        {l.avertissements?.length > 0 ? (
+                          <div className="flex flex-col gap-1">
+                            {l.avertissements.map((a) => (
+                              <Badge key={a.code} tone={TONE_AVERTISSEMENT[a.code] ?? 'warning'}>{a.message}</Badge>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-text-subtle">—</span>
+                        )}
+                      </td>
                       {peutModifier && (
                         <td className={tdClass}>
                           <Button size="sm" variant="secondary" disabled={envoiEnCours} onClick={() => executer(() => retirerLigneTableau(id, l.id))}>
@@ -181,38 +224,106 @@ export function TableauRepartitionDetailPage() {
 
       {peutModifier && (
         <Card className="mb-6">
-          <CardHeader title="Ajouter une demande" />
+          <CardHeader
+            title="Sélection des dossiers"
+            description="Dossiers dont le courrier a été orienté vers la DFP par la Direction Générale — rien n'est resaisi, tout vient déjà du dossier."
+          />
           <CardBody>
-            <form onSubmit={soumettreLigne} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field label="Stagiaire (en attente d'affectation)" htmlFor="stagiaireId" required>
-                <select id="stagiaireId" className={inputClass} value={ligne.stagiaireId} onChange={(e) => setLigne((l) => ({ ...l, stagiaireId: e.target.value }))} required>
-                  <option value="" disabled>Choisir…</option>
-                  {stagiairesDisponibles.map((s) => (
-                    <option key={s.id} value={s.id}>{s.nom}</option>
-                  ))}
-                </select>
-              </Field>
-              <Field label="Direction d'accueil proposée" htmlFor="directionAccueilProposeeId" required>
-                <select id="directionAccueilProposeeId" className={inputClass} value={ligne.directionAccueilProposeeId} onChange={(e) => setLigne((l) => ({ ...l, directionAccueilProposeeId: e.target.value }))} required>
-                  <option value="" disabled>Choisir…</option>
-                  {directions.map((d) => (
-                    <option key={d.id} value={d.id}>{d.code} — {d.nom}</option>
-                  ))}
-                </select>
-              </Field>
-              <Field label="Date de début proposée" htmlFor="dateDebutProposee" required>
-                <input id="dateDebutProposee" type="date" className={inputClass} value={ligne.dateDebutProposee} onChange={(e) => setLigne((l) => ({ ...l, dateDebutProposee: e.target.value }))} required />
-              </Field>
-              <Field label="Date de fin proposée" htmlFor="dateFinProposee" required>
-                <input id="dateFinProposee" type="date" className={inputClass} value={ligne.dateFinProposee} onChange={(e) => setLigne((l) => ({ ...l, dateFinProposee: e.target.value }))} required />
-              </Field>
-              <Field label="Encadrant pressenti" htmlFor="encadrantPressenti" required>
-                <input id="encadrantPressenti" className={inputClass} value={ligne.encadrantPressenti} onChange={(e) => setLigne((l) => ({ ...l, encadrantPressenti: e.target.value }))} required />
-              </Field>
-              <div className="flex items-end">
-                <Button type="submit" disabled={envoiEnCours}>Ajouter</Button>
-              </div>
-            </form>
+            {dossiersEligibles.length === 0 ? (
+              <p className="text-text-muted">Aucun dossier éligible pour le moment.</p>
+            ) : (
+              <form onSubmit={enregistrerSelection}>
+                <TableWrap>
+                  <table className={tableClass}>
+                    <thead className={theadClassStatique}>
+                      <tr>
+                        <th className={thClass}></th>
+                        <th className={thClass}>Dossier</th>
+                        <th className={thClass}>Direction d'accueil proposée</th>
+                        <th className={thClass}>Dates proposées</th>
+                        <th className={thClass}>Encadrant pressenti</th>
+                        <th className={thClass}>Issue</th>
+                      </tr>
+                    </thead>
+                    <tbody className={tbodyClass}>
+                      {dossiersEligibles.map((s) => {
+                        const champs = selection[s.id];
+                        const coche = champs !== undefined;
+
+                        return (
+                          <tr key={s.id} className={trHoverClass}>
+                            <td className={tdClassPremiere}>
+                              <input
+                                type="checkbox"
+                                checked={coche}
+                                onChange={(e) => basculerSelection(s, e.target.checked)}
+                                aria-label={`Sélectionner ${s.nom}`}
+                              />
+                            </td>
+                            <td className={tdClass}>
+                              {s.nom}
+                              <div className="text-xs text-text-subtle">
+                                {s.etablissement_origine} · {s.type_stage_label} · demandé du {s.periode_debut_demandee} au {s.periode_fin_demandee}
+                                {s.doublon_suspecte && <span className="ml-1 text-ont-red-600">· doublon suspecté</span>}
+                              </div>
+                            </td>
+                            <td className={tdClass}>
+                              <select
+                                className={inputClass}
+                                disabled={!coche}
+                                value={champs?.directionAccueilProposeeId ?? ''}
+                                onChange={(e) => modifierSelection(s.id, 'directionAccueilProposeeId', e.target.value)}
+                                required={coche}
+                              >
+                                <option value="" disabled>Choisir…</option>
+                                {directions.map((d) => (
+                                  <option key={d.id} value={d.id}>{d.code} — {d.nom}</option>
+                                ))}
+                              </select>
+                            </td>
+                            <td className={tdClass}>
+                              <div className="flex flex-col gap-1">
+                                <input type="date" className={inputClass} disabled={!coche} required={coche}
+                                  value={champs?.dateDebutProposee ?? ''} onChange={(e) => modifierSelection(s.id, 'dateDebutProposee', e.target.value)} />
+                                <input type="date" className={inputClass} disabled={!coche} required={coche}
+                                  value={champs?.dateFinProposee ?? ''} onChange={(e) => modifierSelection(s.id, 'dateFinProposee', e.target.value)} />
+                              </div>
+                            </td>
+                            <td className={tdClass}>
+                              <input className={inputClass} disabled={!coche} required={coche}
+                                value={champs?.encadrantPressenti ?? ''} onChange={(e) => modifierSelection(s.id, 'encadrantPressenti', e.target.value)} />
+                            </td>
+                            <td className={tdClass}>
+                              <div className="flex flex-col gap-1">
+                                <select className={inputClass} disabled={!coche}
+                                  value={champs?.issueProposee ?? 'retenu'} onChange={(e) => modifierSelection(s.id, 'issueProposee', e.target.value)}>
+                                  <option value="retenu">Retenu</option>
+                                  <option value="non_retenu">Non retenu</option>
+                                </select>
+                                {champs?.issueProposee === 'non_retenu' && (
+                                  <select className={inputClass}
+                                    value={champs?.motifNonRetenu ?? ''} onChange={(e) => modifierSelection(s.id, 'motifNonRetenu', e.target.value)} required>
+                                    <option value="" disabled>Motif…</option>
+                                    {Object.entries(motifsNonRetenu).map(([valeur, libelle]) => (
+                                      <option key={valeur} value={valeur}>{libelle}</option>
+                                    ))}
+                                  </select>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </TableWrap>
+                <div className="mt-4">
+                  <Button type="submit" disabled={envoiEnCours || Object.keys(selection).length === 0}>
+                    Enregistrer la sélection ({Object.keys(selection).length})
+                  </Button>
+                </div>
+              </form>
+            )}
           </CardBody>
         </Card>
       )}
