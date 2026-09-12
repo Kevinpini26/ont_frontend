@@ -164,6 +164,18 @@ export function StagiaireDetailPage() {
                   {stagiaire.periode_debut_demandee} → {stagiaire.periode_fin_demandee}
                 </p>
               )}
+              {(stagiaire.courrier_cote_classement || stagiaire.tableau_repartition) && (
+                <p>
+                  <span className="font-medium text-text">Classement : </span>
+                  {stagiaire.courrier_cote_classement && `lettre ${stagiaire.courrier_cote_classement}`}
+                  {stagiaire.courrier_cote_classement && stagiaire.tableau_repartition && ' — '}
+                  {stagiaire.tableau_repartition && (
+                    <Link to={`/tableaux-repartition/${stagiaire.tableau_repartition.id}`} className="underline">
+                      tableau {stagiaire.tableau_repartition.cote_classement}
+                    </Link>
+                  )}
+                </p>
+              )}
               {stagiaire.statut === 'non_retenu' && (
                 <p>
                   <span className="font-medium text-text">Motif du refus : </span>

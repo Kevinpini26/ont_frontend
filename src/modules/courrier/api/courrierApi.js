@@ -156,6 +156,16 @@ export async function rendreAvis(id, avisDg, avisDgCommentaire) {
   return data.data;
 }
 
+/**
+ * Lot C : le signataire (DG, ou DGA en intérim) renvoie au tri un
+ * courrier qui n'aurait jamais dû lui être présenté — sans incrémenter
+ * le tour, jamais une faute.
+ */
+export async function renvoyerAuTri(id, motif) {
+  const { data } = await apiClient.post(`/courriers/${id}/renvoyer-au-tri`, { motif });
+  return data.data;
+}
+
 export async function soumettreProjetReponse(id, projetReponseContenu, relecteurId) {
   const { data } = await apiClient.post(`/courriers/${id}/soumettre-projet-reponse`, {
     projet_reponse_contenu: projetReponseContenu,
@@ -183,6 +193,37 @@ export async function enregistrer(id, classification, noteTechnique, accuseRecep
     accuse_reception_partenaire: accuseReceptionPartenaire,
   });
   return data.data;
+}
+
+/**
+ * Lot C : transmission par lot — un bordereau unique regroupe plusieurs
+ * dossiers déjà en attente d'un même poste destinataire ; une seule
+ * décharge (accuserReceptionBordereauLot) débloque tous les dossiers du
+ * lot d'un coup.
+ */
+export async function creerBordereauLot(courrierIds) {
+  const { data } = await apiClient.post('/bordereaux-lot', { courrier_ids: courrierIds });
+  return data.data;
+}
+
+export async function getBordereauLot(id) {
+  const { data } = await apiClient.get(`/bordereaux-lot/${id}`);
+  return data.data;
+}
+
+export async function accuserReceptionBordereauLot(id) {
+  const { data } = await apiClient.post(`/bordereaux-lot/${id}/accuser-reception`);
+  return data.data;
+}
+
+export function bordereauLotPdfUrl(id) {
+  return `/bordereaux-lot/${id}/pdf`;
+}
+
+/** Lot C : statistique de justesse du tri, réservée au Secrétariat 01. */
+export async function getJustesseTri() {
+  const { data } = await apiClient.get('/courriers/justesse-tri');
+  return data;
 }
 
 export async function listAnnotations(id) {

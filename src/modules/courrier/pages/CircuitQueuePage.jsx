@@ -1,6 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Navigate, useParams, Link } from 'react-router-dom';
-import { accuserReception, createCourrier, initierCourrierDg, listCourriers } from '../api/courrierApi';
+import {
+  accuserReception,
+  accuserReceptionBordereauLot,
+  bordereauLotPdfUrl,
+  creerBordereauLot,
+  createCourrier,
+  initierCourrierDg,
+  listCourriers,
+} from '../api/courrierApi';
+import { DocumentPreviewModal } from '../../../shared/components/DocumentPreviewModal';
 import { useRequete } from '../../../shared/hooks/useRequete';
 import { ACTION_PAR_POSTE, DEGRE_URGENCE_LABELS, ORDRE_URGENCE, STATUT_LABELS, TONE_URGENCE, TYPE_LABELS } from '../constants';
 import { SearchBar } from '../../../shared/components/SearchBar';
@@ -73,6 +82,10 @@ export function CircuitQueuePage() {
   const [agents, setAgents] = useState([]);
   const [erreurDg, setErreurDg] = useState(null);
   const [envoiDgEnCours, setEnvoiDgEnCours] = useState(false);
+  const [selection, setSelection] = useState([]);
+  const [bordereauEnCours, setBordereauEnCours] = useState(false);
+  const [erreurBordereau, setErreurBordereau] = useState(null);
+  const [apercuBordereau, setApercuBordereau] = useState(null);
 
   useEffect(() => {
     if (poste === 'secretariat_1' && afficherFormulaireDg) {
@@ -171,6 +184,33 @@ export function CircuitQueuePage() {
   async function accuserReceptionEtRecharger(id) {
     await accuserReception(id);
     await charger();
+  }
+
+  function basculerSelection(id) {
+    setSelection((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
+  }
+
+  /**
+   * Lot C : regrouper puis décharger en un seul geste utilisateur — sous
+   * le capot, deux appels distincts (le bordereau se crée, puis se
+   * décharge), mais du point de vue de l'agent, un seul clic traite tout
+   * le lot sélectionné, là où il fallait jusqu'ici une décharge par
+   * dossier.
+   */
+  async function dechargerSelectionEnBordereau() {
+    setErreurBordereau(null);
+    setBordereauEnCours(true);
+    try {
+      const bordereau = await creerBordereauLot(selection);
+      await accuserReceptionBordereauLot(bordereau.id);
+      setSelection([]);
+      setApercuBordereau(bordereau);
+      await charger();
+    } catch (err) {
+      setErreurBordereau(err.response?.data?.message ?? 'Échec du regroupement en bordereau.');
+    } finally {
+      setBordereauEnCours(false);
+    }
   }
 
   return (
@@ -386,7 +426,22 @@ export function CircuitQueuePage() {
       )}
 
       <Card>
-        <CardHeader title={`À traiter (${enAttente.length})`} action={<SearchBar value={recherche} onChange={setRecherche} />} />
+        <CardHeader
+          title={`À traiter (${enAttente.length})`}
+          action={<SearchBar value={recherche} onChange={setRecherche} />}
+        />
+        {selection.length > 0 && (
+          <div className="flex flex-wrap items-center gap-3 border-b border-border bg-surface-sunken px-4 py-3">
+            <span className="text-sm text-text-muted">{selection.length} sélectionné(s)</span>
+            {erreurBordereau && <span className="text-sm text-ont-red-700">{erreurBordereau}</span>}
+            <Button type="button" size="sm" disabled={bordereauEnCours} onClick={dechargerSelectionEnBordereau}>
+              {bordereauEnCours ? 'Traitement…' : 'Décharger la sélection en bordereau'}
+            </Button>
+            <Button type="button" size="sm" variant="secondary" onClick={() => setSelection([])}>
+              Annuler la sélection
+            </Button>
+          </div>
+        )}
         <CardBody className="p-0">
           <AnnonceChargement chargement={chargement} count={enAttente.length} libelle="courrier(s) à traiter" />
           {!chargement && enAttente.length === 0 ? (
@@ -398,6 +453,7 @@ export function CircuitQueuePage() {
               <table className={tableClass}>
                 <thead className={theadClass}>
                   <tr>
+                    <th className={thClass}></th>
                     <th className={thClass}>Référence</th>
                     <th className={thClass}>Objet</th>
                     <th className={thClass}>Type</th>
@@ -408,7 +464,7 @@ export function CircuitQueuePage() {
                 </thead>
                 <tbody className={tbodyClass}>
                   {chargement ? (
-                    <SkeletonRows colonnes={6} />
+                    <SkeletonRows colonnes={7} />
                   ) : (
                     enAttente.map((c) => {
                       // Cas particulier : la file "dg" affiche aussi les
@@ -422,6 +478,16 @@ export function CircuitQueuePage() {
 
                       return (
                         <tr key={c.id} className={trHoverClass}>
+                          <td className={tdClass}>
+                            {enTransitPourCePoste && (
+                              <input
+                                type="checkbox"
+                                checked={selection.includes(c.id)}
+                                onChange={() => basculerSelection(c.id)}
+                                aria-label={`Sélectionner ${c.numero_accuse_reception}`}
+                              />
+                            )}
+                          </td>
                           <td className={`${tdClassPremiere} whitespace-nowrap`}>{c.numero_accuse_reception}</td>
                           <td className={`${tdClass} max-w-[16rem] truncate`} title={c.objet}>{c.objet}</td>
                           <td className={tdClass}>{TYPE_LABELS[c.type]}</td>
@@ -462,6 +528,14 @@ export function CircuitQueuePage() {
           )}
         </CardBody>
       </Card>
+
+      <DocumentPreviewModal
+        open={apercuBordereau !== null}
+        onClose={() => setApercuBordereau(null)}
+        title={`Bordereau ${apercuBordereau?.numero ?? ''}`}
+        url={apercuBordereau ? bordereauLotPdfUrl(apercuBordereau.id) : undefined}
+        downloadFilename={apercuBordereau ? `bordereau-${apercuBordereau.numero}.pdf` : undefined}
+      />
     </div>
   );
 }

@@ -45,6 +45,9 @@ const CourrierCircuitDashboardPage = lazy(() =>
 const CourrierDgDashboardPage = lazy(() =>
   import('./modules/courrier/pages/CourrierDgDashboardPage').then((m) => ({ default: m.CourrierDgDashboardPage })),
 );
+const JustesseTriPage = lazy(() =>
+  import('./modules/courrier/pages/JustesseTriPage').then((m) => ({ default: m.JustesseTriPage })),
+);
 const DirectionDashboardPage = lazy(() =>
   import('./modules/courrier/pages/DirectionDashboardPage').then((m) => ({ default: m.DirectionDashboardPage })),
 );
@@ -60,6 +63,9 @@ const DfpDashboardPage = lazy(() =>
 );
 const DfpCourrierPage = lazy(() =>
   import('./modules/stagiaires/pages/DfpCourrierPage').then((m) => ({ default: m.DfpCourrierPage })),
+);
+const StagiairesEnSouffrancePage = lazy(() =>
+  import('./modules/stagiaires/pages/StagiairesEnSouffrancePage').then((m) => ({ default: m.StagiairesEnSouffrancePage })),
 );
 const DfpStagiairesPage = lazy(() =>
   import('./modules/stagiaires/pages/DfpStagiairesPage').then((m) => ({ default: m.DfpStagiairesPage })),
@@ -176,6 +182,10 @@ function AppRoutes() {
             <Route path="/circuit/espace-dg" element={<CourrierDgDashboardPage />} />
           </Route>
 
+          <Route element={<ProtectedRoute roles={[ROLES.AGENT_CIRCUIT_COURRIER]} postes={['secretariat_1']} />}>
+            <Route path="/circuit/justesse-tri" element={<JustesseTriPage />} />
+          </Route>
+
           <Route element={<ProtectedRoute roles={[ROLES.AGENT_DFP]} />}>
             <Route path="/stagiaires/dashboard" element={<DfpDashboardPage />} />
             <Route path="/stagiaires/courrier" element={<DfpCourrierPage />} />
@@ -184,6 +194,7 @@ function AppRoutes() {
             <Route path="/stagiaires/statistiques" element={<DfpStatistiquesPage />} />
             <Route path="/stagiaires/demandes" element={<DemandesStagePage />} />
             <Route path="/stagiaires/presences" element={<PresencesApercuPage />} />
+            <Route path="/stagiaires/en-souffrance" element={<StagiairesEnSouffrancePage />} />
             <Route path="/stagiaires/parametres" element={<DisponibiliteDemandesPage />} />
           </Route>
 

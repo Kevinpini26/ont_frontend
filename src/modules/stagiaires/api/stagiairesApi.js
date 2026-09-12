@@ -15,6 +15,12 @@ export async function getStagiairesAlertes(params = {}, signal) {
   return data;
 }
 
+/** Lot C, point 5 : délai indicatif dépassé par étape — jamais bloquant. */
+export async function getStagiairesEnSouffrance(signal) {
+  const { data } = await apiClient.get('/stagiaires/en-souffrance', { signal });
+  return data.data;
+}
+
 export async function getStagiaire(id) {
   const { data } = await apiClient.get(`/stagiaires/${id}`);
   return data.data;

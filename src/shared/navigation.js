@@ -1,4 +1,4 @@
-import { BarChart3, Building2, CalendarCheck, ClipboardList, FileClock, History, Inbox, LayoutDashboard, Mail, ScrollText, Settings, Users } from 'lucide-react';
+import { BarChart3, Building2, CalendarCheck, ClipboardList, Clock, FileClock, History, Inbox, LayoutDashboard, Mail, ScrollText, Settings, Target, Users } from 'lucide-react';
 import { ROLES } from '../modules/kernel/constants';
 
 /**
@@ -38,6 +38,7 @@ export function navigationForUser(user) {
           { label: 'Demandes de stage', to: '/stagiaires/demandes', icon: FileClock, countKey: 'demandes_stage' },
           { label: 'Tableaux de répartition', to: '/tableaux-repartition', icon: ClipboardList },
           { label: 'Présences', to: '/stagiaires/presences', icon: CalendarCheck },
+          { label: 'Dossiers en souffrance', to: '/stagiaires/en-souffrance', icon: Clock },
           { label: 'Historique', to: '/stagiaires/historique', icon: History },
         ],
       },
@@ -95,6 +96,12 @@ export function navigationForUser(user) {
     // toujours possible, backend-gated).
     if (['reception', 'dg', 'dga'].includes(user.poste)) {
       items.push({ label: 'Tableaux de répartition', to: '/tableaux-repartition', icon: ClipboardList });
+    }
+
+    // Lot C : la statistique de justesse du tri n'a de sens que pour
+    // celui qui trie.
+    if (user.poste === 'secretariat_1') {
+      items.push({ label: 'Justesse du tri', to: '/circuit/justesse-tri', icon: Target });
     }
 
     return [{ title: 'Circuit courrier', items }];

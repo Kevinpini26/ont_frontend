@@ -10,6 +10,7 @@ import {
   representerDg,
   requalifierUrgence,
   rendreAvis,
+  renvoyerAuTri,
   signer,
   soumettreProjetReponse,
   transmettreAuTriDepuisProtocole,
@@ -65,7 +66,7 @@ export function CourrierDetailPage() {
         title={courrier.objet}
         description={`${courrier.numero_accuse_reception}${
           courrier.numero_enregistrement ? ` · Enregistré sous ${courrier.numero_enregistrement}` : ''
-        } · ${TYPE_LABELS[courrier.type]}`}
+        }${courrier.cote_classement ? ` · Cote ${courrier.cote_classement}` : ''} · ${TYPE_LABELS[courrier.type]}`}
         action={
           ['signe', 'enregistre'].includes(courrier.statut) && (
             <Button
@@ -449,6 +450,7 @@ function ActionsCourrier({ courrier, user, executer }) {
   const [projetContenu, setProjetContenu] = useState(courrier.projet_reponse_contenu ?? '');
   const [avisDg, setAvisDg] = useState('favorable');
   const [avisCommentaire, setAvisCommentaire] = useState('');
+  const [motifReorientation, setMotifReorientation] = useState('');
   const [degreUrgenceTri, setDegreUrgenceTri] = useState('normal');
   const [relectureCommentaire, setRelectureCommentaire] = useState('');
   const [noteTechnique, setNoteTechnique] = useState('');
@@ -619,35 +621,63 @@ function ActionsCourrier({ courrier, user, executer }) {
   // DGA ne voit aucune action ici, cohérent avec le blocage 422 côté serveur.
   if (courrier.statut === 'en_attente_avis_dg' && (user.poste === 'dg' || (user.poste === 'dga' && dgIndisponible))) {
     return (
-      <Card>
-        <CardHeader title="Rendre un avis" />
-        <CardBody className="space-y-4">
-          {user.poste === 'dga' && (
-            <Alert tone="info">Vous intervenez en intérim de la DG, actuellement marquée indisponible.</Alert>
-          )}
-          <Field label="Avis" htmlFor="avis">
-            <select id="avis" className={inputClass} value={avisDg} onChange={(e) => setAvisDg(e.target.value)}>
-              <option value="favorable">Favorable</option>
-              <option value="defavorable">Défavorable</option>
-              <option value="reserve">Réservé</option>
-            </select>
-          </Field>
-          <Field
-            label="Commentaire"
-            htmlFor="avisCommentaire"
-            required={avisDg === 'reserve'}
-            hint={avisDg === 'reserve' ? "Un avis réservé doit préciser ce qui est attendu pour que le dossier puisse revenir complet." : undefined}
-          >
-            <textarea id="avisCommentaire" rows={3} className={inputClass} value={avisCommentaire} onChange={(e) => setAvisCommentaire(e.target.value)} />
-          </Field>
-          <Button
-            disabled={envoiEnCours || (avisDg === 'reserve' && !avisCommentaire.trim())}
-            onClick={() => executerEtSuivre(() => rendreAvis(courrier.id, avisDg, avisCommentaire))}
-          >
-            Valider l'avis
-          </Button>
-        </CardBody>
-      </Card>
+      <div className="space-y-6">
+        <Card>
+          <CardHeader title="Rendre un avis" />
+          <CardBody className="space-y-4">
+            {user.poste === 'dga' && (
+              <Alert tone="info">Vous intervenez en intérim de la DG, actuellement marquée indisponible.</Alert>
+            )}
+            <Field label="Avis" htmlFor="avis">
+              <select id="avis" className={inputClass} value={avisDg} onChange={(e) => setAvisDg(e.target.value)}>
+                <option value="favorable">Favorable</option>
+                <option value="defavorable">Défavorable</option>
+                <option value="reserve">Réservé</option>
+              </select>
+            </Field>
+            <Field
+              label="Commentaire"
+              htmlFor="avisCommentaire"
+              required={avisDg === 'reserve'}
+              hint={avisDg === 'reserve' ? "Un avis réservé doit préciser ce qui est attendu pour que le dossier puisse revenir complet." : undefined}
+            >
+              <textarea id="avisCommentaire" rows={3} className={inputClass} value={avisCommentaire} onChange={(e) => setAvisCommentaire(e.target.value)} />
+            </Field>
+            <Button
+              disabled={envoiEnCours || (avisDg === 'reserve' && !avisCommentaire.trim())}
+              onClick={() => executerEtSuivre(() => rendreAvis(courrier.id, avisDg, avisCommentaire))}
+            >
+              Valider l'avis
+            </Button>
+          </CardBody>
+        </Card>
+
+        <Card>
+          <CardHeader
+            title="Renvoyer au tri"
+            description="Ce dossier n'aurait jamais dû vous être présenté (mauvaise orientation) — renvoyez-le au Secrétariat 01 sans que ce soit une faute : le tour n'est pas incrémenté."
+          />
+          <CardBody className="space-y-4">
+            <Field label="Motif (facultatif)" htmlFor="motifReorientation">
+              <textarea
+                id="motifReorientation"
+                rows={2}
+                className={inputClass}
+                value={motifReorientation}
+                onChange={(e) => setMotifReorientation(e.target.value)}
+              />
+            </Field>
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={envoiEnCours}
+              onClick={() => executerEtSuivre(() => renvoyerAuTri(courrier.id, motifReorientation || null))}
+            >
+              Renvoyer au tri
+            </Button>
+          </CardBody>
+        </Card>
+      </div>
     );
   }
 

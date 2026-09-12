@@ -149,6 +149,21 @@ export function TableauRepartitionDetailPage() {
           <p className="text-text-muted">
             <span className="font-medium text-text">Rédacteur : </span>{tableau.redacteur}
           </p>
+          {tableau.cote_classement && (
+            <p className="text-text-muted">
+              <span className="font-medium text-text">Cote de classement : </span>{tableau.cote_classement}
+            </p>
+          )}
+          {tableau.scellement && (
+            <p className="text-text-muted">
+              <span className="font-medium text-text">Scellé le : </span>
+              {tableau.scellement.created_at} par {tableau.scellement.auteur}
+              {tableau.scellement.mention_interim && ' (intérim)'}
+              <span className="ml-2 font-mono text-xs text-text-subtle" title="Empreinte SHA-256 du PDF approuvé">
+                {tableau.scellement.pdf_sha256.slice(0, 12)}…
+              </span>
+            </p>
+          )}
           {tableau.tour > 1 && (
             <Alert tone="warning">Ce tableau boucle : {tableau.tour}ᵉ passage devant la Direction Générale.</Alert>
           )}
