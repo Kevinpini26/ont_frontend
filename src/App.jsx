@@ -48,6 +48,9 @@ const CourrierDgDashboardPage = lazy(() =>
 const JustesseTriPage = lazy(() =>
   import('./modules/courrier/pages/JustesseTriPage').then((m) => ({ default: m.JustesseTriPage })),
 );
+const RattrapageNumerisationPage = lazy(() =>
+  import('./modules/courrier/pages/RattrapageNumerisationPage').then((m) => ({ default: m.RattrapageNumerisationPage })),
+);
 const DirectionDashboardPage = lazy(() =>
   import('./modules/courrier/pages/DirectionDashboardPage').then((m) => ({ default: m.DirectionDashboardPage })),
 );
@@ -112,6 +115,7 @@ const CourrierExternePage = lazy(() =>
   import('./modules/public/pages/CourrierExternePage').then((m) => ({ default: m.CourrierExternePage })),
 );
 const PublicLienPage = lazy(() => import('./modules/public/pages/PublicLienPage').then((m) => ({ default: m.PublicLienPage })));
+const CapturePage = lazy(() => import('./modules/public/pages/CapturePage').then((m) => ({ default: m.CapturePage })));
 const PublicAttestationVerificationPage = lazy(() =>
   import('./modules/public/pages/PublicAttestationVerificationPage').then((m) => ({
     default: m.PublicAttestationVerificationPage,
@@ -136,6 +140,7 @@ function AppRoutes() {
         <Route path="/verification-attestation" element={<PublicAttestationVerificationPage />} />
         <Route path="/verification-attestation/:numero" element={<PublicAttestationVerificationPage />} />
         <Route path="/liens/:token" element={<PublicLienPage />} />
+        <Route path="/capture/:token" element={<CapturePage />} />
 
         {/* Anciens chemins, conservés en redirection pour ne pas casser un lien déjà partagé (email, favori). */}
         <Route path="/demande-stage" element={<RedirectAvecQuery vers="/demande-de-stage" />} />
@@ -184,6 +189,10 @@ function AppRoutes() {
 
           <Route element={<ProtectedRoute roles={[ROLES.AGENT_CIRCUIT_COURRIER]} postes={['secretariat_1']} />}>
             <Route path="/circuit/justesse-tri" element={<JustesseTriPage />} />
+          </Route>
+
+          <Route element={<ProtectedRoute roles={[ROLES.AGENT_CIRCUIT_COURRIER]} postes={['reception']} />}>
+            <Route path="/circuit/a-numeriser" element={<RattrapageNumerisationPage />} />
           </Route>
 
           <Route element={<ProtectedRoute roles={[ROLES.AGENT_DFP]} />}>

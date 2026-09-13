@@ -26,6 +26,8 @@ import { useAuthStore } from '../../kernel/store/authStore';
 import { StatutTimeline } from '../components/StatutTimeline';
 import { BordereauxTimeline } from '../components/BordereauxTimeline';
 import { AnnotationsPanel } from '../components/AnnotationsPanel';
+import { NumerisationPanel } from '../components/NumerisationPanel';
+import { classificationAttendue } from '../utils/classification';
 import { TipTapEditor } from '../components/TipTapEditor';
 import { ACTION_PAR_POSTE, TYPE_LABELS, CLASSIFICATION_LABELS, DEGRE_URGENCE_LABELS, TONE_URGENCE, MENTION_IMPUTATION_LABELS } from '../constants';
 import { listDirections } from '../../kernel/api/directionsApi';
@@ -68,7 +70,7 @@ export function CourrierDetailPage() {
           courrier.numero_enregistrement ? ` · Enregistré sous ${courrier.numero_enregistrement}` : ''
         }${courrier.cote_classement ? ` · Cote ${courrier.cote_classement}` : ''} · ${TYPE_LABELS[courrier.type]}`}
         action={
-          ['signe', 'enregistre'].includes(courrier.statut) && (
+          courrier.pdf_disponible && (
             <Button
               type="button"
               variant="secondary"
@@ -277,6 +279,8 @@ export function CourrierDetailPage() {
           </CardBody>
         </Card>
 
+        <NumerisationPanel courrier={courrier} />
+
         {courrier.contenu && (
           <Card>
             <CardHeader title="Contenu du courrier" />
@@ -473,10 +477,9 @@ function ActionsCourrier({ courrier, user, executer }) {
   const estRelecteurDesigne = courrier.relecteur?.id === user.id;
 
   // Le classement interne/externe n'est jamais un choix libre de l'agent —
-  // déterminé côté serveur par la nature du courrier (voir
-  // Courrier::classificationAttendue()) et rejeté s'il ne correspond pas.
-  // Calculé ici uniquement pour affichage et pour l'envoyer déjà correct.
-  const classification = courrier.expediteur_externe_nom || courrier.candidat?.nom ? 'externe' : 'interne';
+  // déterminé côté serveur par la nature du courrier et rejeté s'il ne
+  // correspond pas (voir classificationAttendue()).
+  const classification = classificationAttendue(courrier);
 
   async function executerEtSuivre(action) {
     setEnvoiEnCours(true);

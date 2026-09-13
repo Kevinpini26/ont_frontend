@@ -235,3 +235,15 @@ export async function ajouterAnnotation(id, contenu) {
   const { data } = await apiClient.post(`/courriers/${id}/annotations`, { contenu });
   return data.data;
 }
+
+/** Lot 1 (numérisation) : jeton de capture mobile, à usage unique, valable 15 min. */
+export async function genererJetonCapture(id, numeroSms) {
+  const { data } = await apiClient.post(`/courriers/${id}/jeton-capture`, numeroSms ? { numero_sms: numeroSms } : {});
+  return data;
+}
+
+/** Liste de rattrapage (Réception/administrateur) des courriers déposés sans scan disponible le jour même. */
+export async function listCourriersANumeriser() {
+  const { data } = await apiClient.get('/courriers/a-numeriser');
+  return data.data;
+}

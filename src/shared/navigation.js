@@ -1,4 +1,4 @@
-import { BarChart3, Building2, CalendarCheck, ClipboardList, Clock, FileClock, History, Inbox, LayoutDashboard, Mail, ScrollText, Settings, Target, Users } from 'lucide-react';
+import { BarChart3, Building2, CalendarCheck, ClipboardList, Clock, FileClock, History, Inbox, LayoutDashboard, Mail, ScanLine, ScrollText, Settings, Target, Users } from 'lucide-react';
 import { ROLES } from '../modules/kernel/constants';
 
 /**
@@ -96,6 +96,13 @@ export function navigationForUser(user) {
     // toujours possible, backend-gated).
     if (['reception', 'dg', 'dga'].includes(user.poste)) {
       items.push({ label: 'Tableaux de répartition', to: '/tableaux-repartition', icon: ClipboardList });
+    }
+
+    // Numérisation (voir docs/numerisation-courrier.md) : réservée à la
+    // Réception (poste qui scanne), même périmètre que
+    // CourrierRattrapageNumerisationController::index() côté serveur.
+    if (user.poste === 'reception') {
+      items.push({ label: 'Documents à numériser', to: '/circuit/a-numeriser', icon: ScanLine });
     }
 
     // Lot C : la statistique de justesse du tri n'a de sens que pour
