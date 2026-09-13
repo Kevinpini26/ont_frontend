@@ -27,7 +27,6 @@ import { AnnonceChargement } from '../../../shared/components/ui/AnnonceChargeme
 import {
   TableWrap,
   tableClass,
-  theadClass,
   thClass,
   tbodyClass,
   tdClass,
@@ -37,6 +36,14 @@ import {
 } from '../../../shared/components/ui/Table';
 import { TipTapEditor } from '../components/TipTapEditor';
 import { Inbox } from 'lucide-react';
+
+// theadClass (sticky top-14 z-[5]) recouvre visuellement l'unique ligne
+// dès que la file (filtrée par recherche ou peu fournie) tient sur un
+// seul écran — même trappe que sur JustesseTriPage/StagiairesEnSouffrancePage,
+// confirmée ici via getBoundingClientRect (le <tr> se retrouve sous le
+// <thead>). Cette file peut être longue en usage réel, mais un en-tête figé
+// qui masque parfois la donnée est pire qu'un en-tête qui défile toujours.
+const theadClassStatique = 'border-b border-border bg-surface text-label font-semibold uppercase tracking-wide text-text-subtle';
 
 const FORMULAIRE_DG_VIDE = {
   direction_destination_id: '',
@@ -451,7 +458,7 @@ export function CircuitQueuePage() {
           ) : (
             <TableWrap>
               <table className={tableClass}>
-                <thead className={theadClass}>
+                <thead className={theadClassStatique}>
                   <tr>
                     <th className={thClass}></th>
                     <th className={thClass}>Référence</th>

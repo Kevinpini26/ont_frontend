@@ -52,10 +52,17 @@ export function TableWrap({ children }) {
 }
 
 export const tableClass = 'w-full min-w-full text-left text-sm';
-// top-14 : docke l'en-tête juste sous la barre d'application (h-14, elle
-// aussi sticky) plutôt que de défiler sous elle ; z-[5] reste en dessous de
-// son z-10 pour ne jamais la recouvrir à la jonction des deux.
-export const theadClass = 'sticky top-14 z-[5] border-b border-border bg-surface text-label font-semibold uppercase tracking-wide text-text-subtle';
+// Jamais sticky : TableWrap ci-dessus pose overflow-x-auto sur son wrapper
+// pour le défilement horizontal, ce qui — par la règle CSS qui force
+// overflow-y à "auto" dès que overflow-x n'est pas "visible" — fait de ce
+// wrapper malgré lui le conteneur de référence de tout position: sticky
+// descendant, plutôt que la fenêtre. Un en-tête sticky s'y fige alors en
+// permanence 56px sous le haut du wrapper (confirmé via
+// getBoundingClientRect(), y compris avec le sticky posé sur chaque <th>
+// plutôt que sur le <thead>), recouvrant la ou les premières lignes dès
+// qu'un tableau est court — pas un cas limite, un défaut structurel de
+// TableWrap qu'aucune combinaison overflow-y (auto/hidden/clip) ne corrige.
+export const theadClass = 'border-b border-border bg-surface text-label font-semibold uppercase tracking-wide text-text-subtle';
 export const thClass = 'px-4 py-3 font-semibold whitespace-nowrap';
 // Colonnes de nombres/dates : alignées à droite, chiffres à chasse fixe
 // pour que les lignes successives restent verticalement comparables.
