@@ -59,3 +59,24 @@ export function SkeletonLines({ lignes = 3 }) {
     </div>
   );
 }
+
+/**
+ * Variante de SkeletonLines pour un fil de commentaires (avatar rond en
+ * tête de chaque entrée, voir AnnotationsPanel) — une bulle vide sans
+ * pastille ronde à côté ne laisserait pas deviner qu'un avatar va suivre.
+ */
+export function SkeletonAvatarLines({ lignes = 2 }) {
+  return (
+    <div className="space-y-4">
+      {Array.from({ length: lignes }).map((_, i) => (
+        <div key={i} className="flex gap-3">
+          <Barre className="h-9 w-9 shrink-0 rounded-full" />
+          <div className="flex-1 space-y-2 py-1">
+            <Barre className="h-3 w-1/3" />
+            <Barre className="h-3 w-2/3" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
