@@ -11,10 +11,12 @@ import {
   requalifierUrgence,
   rendreAvis,
   renvoyerAuTri,
+  renvoyerPourCorrection,
   signer,
   soumettreProjetReponse,
   transmettreAuTriDepuisProtocole,
   transmettreAvisDg,
+  transmettreDepuisClasseur,
   transmettreProtocole,
   transmettreTri,
   validerAvantDiffusion,
@@ -29,7 +31,15 @@ import { AnnotationsPanel } from '../components/AnnotationsPanel';
 import { NumerisationPanel } from '../components/NumerisationPanel';
 import { classificationAttendue } from '../utils/classification';
 import { TipTapEditor } from '../components/TipTapEditor';
-import { ACTION_PAR_POSTE, TYPE_LABELS, CLASSIFICATION_LABELS, DEGRE_URGENCE_LABELS, TONE_URGENCE, MENTION_IMPUTATION_LABELS } from '../constants';
+import {
+  ACTION_PAR_POSTE,
+  TYPE_LABELS,
+  CLASSIFICATION_LABELS,
+  DEGRE_URGENCE_LABELS,
+  TONE_URGENCE,
+  MENTION_IMPUTATION_LABELS,
+  POSTES_ASSISTANTS,
+} from '../constants';
 import { listDirections } from '../../kernel/api/directionsApi';
 import { PageHeader } from '../../../shared/components/ui/PageHeader';
 import { Card, CardBody, CardHeader } from '../../../shared/components/ui/Card';
@@ -457,13 +467,14 @@ function ActionsCourrier({ courrier, user, executer }) {
   const [motifReorientation, setMotifReorientation] = useState('');
   const [degreUrgenceTri, setDegreUrgenceTri] = useState('normal');
   const [relectureCommentaire, setRelectureCommentaire] = useState('');
+  const [observationCorrection, setObservationCorrection] = useState('');
   const [noteTechnique, setNoteTechnique] = useState('');
   const [accuseReceptionPartenaire, setAccuseReceptionPartenaire] = useState('');
   const [envoiEnCours, setEnvoiEnCours] = useState(false);
   const [dgIndisponible, setDgIndisponible] = useState(false);
 
   useEffect(() => {
-    if (courrier.statut === 'projet_reponse_en_cours' && user.poste === 'secretariat_1') {
+    if (courrier.statut === 'projet_a_rediger' && POSTES_ASSISTANTS.includes(user.poste)) {
       listAgentsCircuitCourrier().then(setAgents);
     }
   }, [courrier.statut, user.poste]);
@@ -492,18 +503,18 @@ function ActionsCourrier({ courrier, user, executer }) {
 
   // Tant que le bordereau qui a amené ce dossier à son statut actuel n'est
   // pas acquitté, aucune des actions ci-dessous n'est accessible — voir
-  // CourrierCircuitService::assertDechargeDonnee(). en_relecture est un cas
-  // particulier : le destinataire est le relecteur désigné précisément,
-  // jamais un poste (contrairement à ACTION_PAR_POSTE, qui liste aussi la
-  // DG pour ce statut — pour la signature, une fois la relecture validée,
-  // pas pour la décharge elle-même).
+  // CourrierCircuitService::assertDechargeDonnee(). en_relecture/projet_a_valider
+  // sont un cas particulier : le destinataire est le relecteur désigné
+  // précisément, jamais un poste (contrairement à ACTION_PAR_POSTE, qui liste
+  // aussi la DG pour ces statuts — pour la signature, une fois la relecture
+  // validée, pas pour la décharge elle-même).
   if (courrier.en_transit) {
     // reception a une entrée non-tableau ({ statutDepart: null }, jamais
     // habilitée à une transition) — Array.isArray exclut ce cas plutôt que
     // de planter sur .some().
     const actionsDuPoste = ACTION_PAR_POSTE[user.poste];
     const eligiblePourDecharge =
-      courrier.statut === 'en_relecture'
+      courrier.statut === 'en_relecture' || courrier.statut === 'projet_a_valider'
         ? estRelecteurDesigne
         : Array.isArray(actionsDuPoste) && actionsDuPoste.some((a) => a.statutDepart === courrier.statut);
 
@@ -573,7 +584,10 @@ function ActionsCourrier({ courrier, user, executer }) {
   if (courrier.statut === 'en_attente_tri' && user.poste === 'secretariat_1') {
     return (
       <Card>
-        <CardHeader title="Trier par degré d'urgence" description="Choisissez un degré avant de transmettre ce dossier à la Direction Générale." />
+        <CardHeader
+          title="Trier par degré d'urgence"
+          description="Un degré urgent ou très urgent part directement à la Direction Générale ; un degré normal reste tenu au classeur d'attente, à transmettre vous-même quand vous le jugerez bon."
+        />
         <CardBody className="space-y-4">
           <Field label="Degré d'urgence" htmlFor="degreUrgenceTri">
             <select id="degreUrgenceTri" className={inputClass} value={degreUrgenceTri} onChange={(e) => setDegreUrgenceTri(e.target.value)}>
@@ -583,7 +597,23 @@ function ActionsCourrier({ courrier, user, executer }) {
             </select>
           </Field>
           <Button disabled={envoiEnCours} onClick={() => executerEtSuivre(() => transmettreAvisDg(courrier.id, degreUrgenceTri))}>
-            Transmettre à la DG pour avis
+            Trier
+          </Button>
+        </CardBody>
+      </Card>
+    );
+  }
+
+  if (courrier.statut === 'en_attente_classeur' && user.poste === 'secretariat_1') {
+    return (
+      <Card>
+        <CardHeader
+          title="Au classeur d'attente"
+          description="Ce dossier n'est pas urgent — il n'a jamais quitté votre bureau. Transmettez-le à la Direction Générale quand vous le jugerez bon."
+        />
+        <CardBody>
+          <Button disabled={envoiEnCours} onClick={() => executerEtSuivre(() => transmettreDepuisClasseur(courrier.id))}>
+            Transmettre à la DG
           </Button>
         </CardBody>
       </Card>
@@ -698,11 +728,16 @@ function ActionsCourrier({ courrier, user, executer }) {
     );
   }
 
-  if (courrier.statut === 'projet_reponse_en_cours' && user.poste === 'secretariat_1') {
+  if (courrier.statut === 'projet_a_rediger' && POSTES_ASSISTANTS.includes(user.poste)) {
     return (
       <Card>
         <CardHeader title="Rédiger le projet de réponse" />
         <CardBody className="space-y-4">
+          {courrier.projet_renvoi_observation && (
+            <Alert tone="warning">
+              Renvoyé pour correction par {courrier.projet_renvoye_par ?? 'le relecteur'} : {courrier.projet_renvoi_observation}
+            </Alert>
+          )}
           <TipTapEditor content={projetContenu} onChange={setProjetContenu} />
           <Field label="Relecteur désigné" htmlFor="relecteur">
             <select id="relecteur" className={inputClass} value={relecteurId} onChange={(e) => setRelecteurId(e.target.value)}>
@@ -729,29 +764,64 @@ function ActionsCourrier({ courrier, user, executer }) {
     );
   }
 
-  if (courrier.statut === 'en_relecture' && estRelecteurDesigne && !courrier.relecture_validee_at) {
+  if ((courrier.statut === 'en_relecture' || courrier.statut === 'projet_a_valider') && estRelecteurDesigne && !courrier.relecture_validee_at) {
+    // Le renvoi pour correction (lot assistants) n'existe que pour
+    // projet_a_valider — en_relecture (dg_initie/sortant) n'a pas
+    // d'assistant rédacteur à qui renvoyer, voir CourrierPolicy::renvoyerPourCorrection().
+    const peutRenvoyerPourCorrection = courrier.statut === 'projet_a_valider';
+
     return (
-      <Card>
-        <CardHeader title="Validation de la relecture" />
-        <CardBody className="space-y-4">
-          <Field label="Commentaire (optionnel)" htmlFor="relectureCommentaire">
-            <textarea
-              id="relectureCommentaire"
-              rows={3}
-              className={inputClass}
-              value={relectureCommentaire}
-              onChange={(e) => setRelectureCommentaire(e.target.value)}
+      <div className="space-y-6">
+        <Card>
+          <CardHeader title="Validation de la relecture" />
+          <CardBody className="space-y-4">
+            <Field label="Commentaire (optionnel)" htmlFor="relectureCommentaire">
+              <textarea
+                id="relectureCommentaire"
+                rows={3}
+                className={inputClass}
+                value={relectureCommentaire}
+                onChange={(e) => setRelectureCommentaire(e.target.value)}
+              />
+            </Field>
+            <Button disabled={envoiEnCours} onClick={() => executerEtSuivre(() => validerRelecture(courrier.id, relectureCommentaire))}>
+              Valider la relecture
+            </Button>
+          </CardBody>
+        </Card>
+
+        {peutRenvoyerPourCorrection && (
+          <Card>
+            <CardHeader
+              title="Renvoyer pour correction"
+              description="L'observation est obligatoire : l'assistant rédacteur doit savoir précisément ce qui ne va pas."
             />
-          </Field>
-          <Button disabled={envoiEnCours} onClick={() => executerEtSuivre(() => validerRelecture(courrier.id, relectureCommentaire))}>
-            Valider la relecture
-          </Button>
-        </CardBody>
-      </Card>
+            <CardBody className="space-y-4">
+              <Field label="Observation" htmlFor="observationCorrection" required>
+                <textarea
+                  id="observationCorrection"
+                  rows={3}
+                  className={inputClass}
+                  value={observationCorrection}
+                  onChange={(e) => setObservationCorrection(e.target.value)}
+                />
+              </Field>
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={envoiEnCours || !observationCorrection.trim()}
+                onClick={() => executerEtSuivre(() => renvoyerPourCorrection(courrier.id, observationCorrection))}
+              >
+                Renvoyer pour correction
+              </Button>
+            </CardBody>
+          </Card>
+        )}
+      </div>
     );
   }
 
-  if (courrier.statut === 'en_relecture' && user.poste === 'dg') {
+  if ((courrier.statut === 'en_relecture' || courrier.statut === 'projet_a_valider') && user.poste === 'dg') {
     return (
       <Card>
         <CardBody className="space-y-4">

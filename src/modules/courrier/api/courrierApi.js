@@ -118,6 +118,16 @@ export async function representerDg(id) {
 }
 
 /**
+ * Lot assistants : le Secrétariat 01 transmet à la DG, à son initiative, un
+ * dossier tenu au classeur d'attente (degré d'urgence normal, voir
+ * transmettreAvisDg()) — jamais automatique.
+ */
+export async function transmettreDepuisClasseur(id) {
+  const { data } = await apiClient.post(`/courriers/${id}/transmettre-depuis-classeur`);
+  return data.data;
+}
+
+/**
  * Lot 3 : le Secrétariat 02 transmet un courrier imputé (avis DG favorable)
  * au secrétariat de la direction imputée à titre principal.
  */
@@ -181,6 +191,15 @@ export async function validerRelecture(id, relectureCommentaire) {
   return data.data;
 }
 
+/**
+ * Lot assistants : le relecteur désigné renvoie le projet à l'assistant
+ * rédacteur — observation obligatoire côté serveur.
+ */
+export async function renvoyerPourCorrection(id, observation) {
+  const { data } = await apiClient.post(`/courriers/${id}/renvoyer-pour-correction`, { observation });
+  return data.data;
+}
+
 export async function signer(id) {
   const { data } = await apiClient.post(`/courriers/${id}/signer`);
   return data.data;
@@ -224,6 +243,16 @@ export function bordereauLotPdfUrl(id) {
 export async function getJustesseTri() {
   const { data } = await apiClient.get('/courriers/justesse-tri');
   return data;
+}
+
+/**
+ * Décore l'ancienneté des dossiers actionnables par l'utilisateur courant
+ * (poste, ou relecteur désigné) — ne remplace aucun statut, voir
+ * CourrierEnSouffrance côté backend. `niveau` 1-3 croissant avec le retard.
+ */
+export async function getCourriersEnSouffrance(signal) {
+  const { data } = await apiClient.get('/courriers/en-souffrance', { signal });
+  return data.data;
 }
 
 export async function listAnnotations(id) {

@@ -111,19 +111,22 @@ export function CourrierDgDashboardPage() {
   }, [statutFiltre]);
 
   // Zone d'alertes (Lot C3) : exactement la définition serveur de
-  // "en_attente_decision" (statut en_attente_avis_dg OU en_relecture, voir
-  // CourrierStatistiqueController::dg()), plus les stagiaires à échéance —
-  // jamais une agrégation approximative refaite côté client.
+  // "en_attente_decision" (statut en_attente_avis_dg OU en_relecture OU
+  // projet_a_valider, voir CourrierStatistiqueController::dg()), plus les
+  // stagiaires à échéance — jamais une agrégation approximative refaite
+  // côté client. projet_a_valider joue le même rôle qu'en_relecture pour
+  // le circuit complet (lot assistants) : les deux listes sont fusionnées.
   useEffect(() => {
     setChargementAlertes(true);
     Promise.all([
       listCourriers({ statut: 'en_attente_avis_dg' }),
       listCourriers({ statut: 'en_relecture' }),
+      listCourriers({ statut: 'projet_a_valider' }),
       getStagiairesAlertes(),
     ])
-      .then(([avisDg, relecture, alertesStag]) => {
+      .then(([avisDg, relecture, projetAValider, alertesStag]) => {
         setAttenteAvisDg(avisDg.data);
-        setAttenteRelecture(relecture.data);
+        setAttenteRelecture([...relecture.data, ...projetAValider.data]);
         setAlertesStagiaires(alertesStag);
       })
       .finally(() => setChargementAlertes(false));

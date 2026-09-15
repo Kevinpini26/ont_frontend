@@ -475,12 +475,13 @@ export function CircuitQueuePage() {
                   ) : (
                     enAttente.map((c) => {
                       // Cas particulier : la file "dg" affiche aussi les
-                      // dossiers en_relecture (pour la signature), mais le
-                      // destinataire du bordereau en_relecture est toujours le
+                      // dossiers en_relecture/projet_a_valider (pour la
+                      // signature), mais leur destinataire est toujours le
                       // relecteur désigné, jamais la DG — lui montrer "en
                       // transit"/"Accuser réception" produirait un bouton que
                       // la DG ne peut jamais actionner avec succès.
-                      const dechargeNonPertinentePourCePoste = poste === 'dg' && c.statut === 'en_relecture';
+                      const dechargeNonPertinentePourCePoste =
+                        poste === 'dg' && (c.statut === 'en_relecture' || c.statut === 'projet_a_valider');
                       const enTransitPourCePoste = c.en_transit && !dechargeNonPertinentePourCePoste;
 
                       return (

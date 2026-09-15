@@ -7,17 +7,24 @@
 // entre "recu" et "en_attente_avis_dg" depuis la correction du circuit
 // (bouclage) — voir config('courrier.circuit_transitions') côté backend.
 // "retour_reception" (un avis DG "réservé" renvoie le dossier boucler vers
-// la Réception) n'apparaît volontairement PAS dans cette liste linéaire :
-// une frise à sens unique ne peut pas bien représenter un cycle — voir
-// StatutTimeline.jsx, qui l'affiche comme un retour temporaire vers
+// la Réception) et "en_attente_classeur" (un degré normal reste tenu par le
+// Secrétariat 01, qui le transmet lui-même quand il le juge bon) n'apparaissent
+// volontairement PAS dans cette liste linéaire : une frise à sens unique ne
+// peut pas bien représenter un cycle ou un détour qui reconverge — voir
+// StatutTimeline.jsx, qui les affiche comme un retour/détour temporaire vers
 // "en_attente_avis_dg" plutôt que de casser l'index de progression.
+//
+// "projet_reponse_en_cours"/"en_relecture" renommés en "projet_a_rediger"/
+// "projet_a_valider" (lot assistants) : la rédaction du projet de réponse
+// revient aux quatre postes assistants, le Secrétariat 01 gardant le tri —
+// voir docs/questions-ont.md côté backend.
 export const STATUTS = [
   'recu',
   'en_attente_tri',
   'au_protocole',
   'en_attente_avis_dg',
-  'projet_reponse_en_cours',
-  'en_relecture',
+  'projet_a_rediger',
+  'projet_a_valider',
   'signe',
   'enregistre',
 ];
@@ -44,9 +51,11 @@ export const STATUT_LABELS = {
   au_protocole: 'Au protocole',
   en_circuit_hierarchique: 'En circuit hiérarchique',
   en_attente_tri: 'En attente de tri',
+  en_attente_classeur: "Au classeur d'attente",
   retour_reception: 'Retour à la Réception',
   en_attente_avis_dg: "En attente d'avis DG",
-  projet_reponse_en_cours: 'Projet de réponse en cours',
+  projet_a_rediger: 'Projet de réponse à rédiger',
+  projet_a_valider: 'Projet en attente de validation',
   en_dispatch: 'En dispatch vers la direction',
   chez_direction: 'Chez le secrétariat de la direction',
   en_attente_validation_dg: 'En attente de validation DG',
@@ -54,6 +63,14 @@ export const STATUT_LABELS = {
   signe: 'Signé',
   enregistre: 'Enregistré',
 };
+
+/**
+ * Les quatre postes habilités à rédiger le projet de réponse (lot
+ * assistants) — voir config('courrier.circuit_transitions.complet.projet_a_rediger')
+ * côté backend. Indifféremment les uns des autres, aucune répartition par
+ * type de dossier (voir docs/questions-ont.md).
+ */
+export const POSTES_ASSISTANTS = ['assistant_protocole', 'assistant_1', 'assistant_2', 'assistant_dga'];
 
 export const TYPE_LABELS = {
   demande_stage: 'Demande de stage',
@@ -126,6 +143,9 @@ export const ACTION_PAR_POSTE = {
     { statutDepart: 'en_attente_avis_dg', endpoint: 'rendre-avis', libelle: 'Rendre un avis' },
     { statutDepart: 'en_attente_validation_dg', endpoint: 'valider-avant-diffusion', libelle: 'Valider avant diffusion' },
     { statutDepart: 'en_relecture', endpoint: 'signer', libelle: 'Signer' },
+    // Même signature, statut propre au circuit complet (lot assistants) —
+    // voir CourrierStatut::PROJET_A_VALIDER côté backend.
+    { statutDepart: 'projet_a_valider', endpoint: 'signer', libelle: 'Signer' },
   ],
   secretariat_1: [
     // Chemin par défaut depuis "recu" (voir "protocole" ci-dessus) : la
@@ -134,15 +154,19 @@ export const ACTION_PAR_POSTE = {
     { statutDepart: 'recu', necessiteAvisDg: true, endpoint: 'transmettre-tri', libelle: 'Transmettre au tri' },
     // C'est ici, et seulement ici, que le degré d'urgence est réellement
     // choisi (voir CourrierDetailPage.jsx) — jamais une simple transition
-    // en un clic comme les autres.
+    // en un clic comme les autres. Un degré normal part au classeur
+    // d'attente (voir l'entrée suivante), pas directement à la DG.
     { statutDepart: 'en_attente_tri', endpoint: 'transmettre-avis-dg', libelle: 'Transmettre à la DG pour avis' },
-    { statutDepart: 'projet_reponse_en_cours', endpoint: 'soumettre-projet-reponse', libelle: 'Soumettre le projet de réponse' },
+    // Lot assistants : le Secrétariat 01 ne rédige plus le projet de
+    // réponse (voir Poste::ASSISTANT_* côté backend) — il garde le tri et
+    // décide seul quand transmettre un dossier tenu au classeur.
+    { statutDepart: 'en_attente_classeur', endpoint: 'transmettre-depuis-classeur', libelle: 'Transmettre à la DG depuis le classeur' },
   ],
   secretariat_2: [
     { statutDepart: 'signe', endpoint: 'enregistrer', libelle: 'Enregistrer' },
     { statutDepart: 'recu', necessiteAvisDg: false, endpoint: 'enregistrer', libelle: 'Enregistrer (circuit court)' },
     // Lot 3 : un avis DG favorable sur un courrier déjà imputé arrive ici
-    // plutôt qu'en projet_reponse_en_cours (voir "dg" ci-dessus).
+    // plutôt qu'en projet_a_rediger (voir "dg" ci-dessus).
     { statutDepart: 'en_dispatch', endpoint: 'dispatcher-direction', libelle: 'Transmettre au secrétariat de la direction' },
   ],
 };

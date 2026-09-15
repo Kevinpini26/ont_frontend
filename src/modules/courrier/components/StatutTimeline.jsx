@@ -29,12 +29,18 @@ export function StatutTimeline({ statut, necessiteAvisDg = true, initieParDg = f
   // "en_attente_avis_dg", l'étape à laquelle le dossier va revenir — voir
   // constants.js.
   const enBouclage = statut === 'retour_reception';
+  // "en_attente_classeur" (lot assistants, degré normal) est un détour qui
+  // reconverge vers "en_attente_avis_dg" — jamais une position fixe non plus,
+  // même traitement que le bouclage ci-dessus.
+  const auClasseur = statut === 'en_attente_classeur';
   // "en_dispatch"/"chez_direction" (Lot 3, avis favorable + courrier
-  // imputé) ne rejoignent jamais projet_reponse_en_cours dans cette
+  // imputé) ne rejoignent jamais projet_a_rediger dans cette
   // frise : c'est la branche alternative empruntée à sa place — ancré sur
   // cette même position plutôt qu'absent de la frise.
   const estDispatche = statut === 'en_dispatch' || statut === 'chez_direction';
-  const indexCourant = etapes.indexOf(enBouclage ? 'en_attente_avis_dg' : estDispatche ? 'projet_reponse_en_cours' : statut);
+  const indexCourant = etapes.indexOf(
+    enBouclage || auClasseur ? 'en_attente_avis_dg' : estDispatche ? 'projet_a_rediger' : statut,
+  );
 
   return (
     <ol className="mb-6 flex flex-col gap-0 rounded-card border border-border bg-surface p-4 sm:flex-row sm:gap-0 sm:p-5">
@@ -78,6 +84,11 @@ export function StatutTimeline({ statut, necessiteAvisDg = true, initieParDg = f
               {courante && enBouclage && (
                 <p className="mt-0.5 text-xs font-medium text-ont-gold-700 dark:text-ont-gold-400">
                   Retour depuis un avis réservé — {STATUT_LABELS.retour_reception}
+                </p>
+              )}
+              {courante && auClasseur && (
+                <p className="mt-0.5 text-xs font-medium text-ont-gold-700 dark:text-ont-gold-400">
+                  Tenu au classeur d'attente — {STATUT_LABELS.en_attente_classeur}
                 </p>
               )}
               {courante && estDispatche && (
