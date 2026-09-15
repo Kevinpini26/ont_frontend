@@ -39,6 +39,9 @@ const CourrierDetailPage = lazy(() =>
 const CircuitQueuePage = lazy(() =>
   import('./modules/courrier/pages/CircuitQueuePage').then((m) => ({ default: m.CircuitQueuePage })),
 );
+const PosteDeTravailTriPage = lazy(() =>
+  import('./modules/courrier/pages/PosteDeTravailTriPage').then((m) => ({ default: m.PosteDeTravailTriPage })),
+);
 const CourrierCircuitDashboardPage = lazy(() =>
   import('./modules/courrier/pages/CourrierCircuitDashboardPage').then((m) => ({ default: m.CourrierCircuitDashboardPage })),
 );
@@ -181,6 +184,14 @@ function AppRoutes() {
           <Route element={<ProtectedRoute roles={[ROLES.AGENT_CIRCUIT_COURRIER]} />}>
             <Route path="/circuit/tableau-de-bord" element={<CourrierCircuitDashboardPage />} />
             <Route path="/circuit/:poste" element={<CircuitQueuePage />} />
+          </Route>
+
+          {/* Écran de tri (PosteDeTravail) — modèle des huit écrans de
+              travail du circuit (voir docs/questions-ont.md) : remplace
+              CircuitQueuePage pour le seul Secrétariat 01, un chemin
+              statique l'emportant sur ":poste" ci-dessus. */}
+          <Route element={<ProtectedRoute roles={[ROLES.AGENT_CIRCUIT_COURRIER]} postes={['secretariat_1']} />}>
+            <Route path="/circuit/secretariat_1" element={<PosteDeTravailTriPage />} />
           </Route>
 
           <Route element={<ProtectedRoute roles={[ROLES.AGENT_CIRCUIT_COURRIER]} postes={['dg']} />}>

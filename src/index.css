@@ -310,6 +310,26 @@ textarea {
   animation: entree-toast 200ms ease-out;
 }
 
+/* Panneau latéral coulissant (voir SlidePanel.jsx, PosteDeTravail) — glisse
+   depuis la droite en 180ms : une modale centrée retarde une saisie courte
+   (adresse, degré d'urgence, motif) derrière un fondu d'arrière-plan complet,
+   alors qu'un panneau qui glisse laisse deviner qu'on reste sur le même
+   dossier, juste à côté. */
+@keyframes entree-panneau-lateral {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-entree-panneau-lateral {
+  animation: entree-panneau-lateral 180ms ease-out;
+}
+
 /* Anneau qui pulse doucement autour de l'étape en cours (voir
    StatutTimeline.jsx) — un écho qui s'étend et s'efface, jamais un
    scintillement agressif : c'est l'écran regardé en démonstration. */
@@ -350,6 +370,7 @@ textarea {
   .animate-entree-modale,
   .animate-entree-fondu,
   .animate-entree-toast,
+  .animate-entree-panneau-lateral,
   .animate-anneau-pulse,
   .animate-apparition-badge {
     animation: none;

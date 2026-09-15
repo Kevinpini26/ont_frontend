@@ -1,4 +1,5 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { AlertTriangle, CheckCircle2, Info, X, XCircle } from 'lucide-react';
 import { useToastStore } from '../../store/toastStore';
 
@@ -29,11 +30,20 @@ const TONES = {
  */
 export function useToast() {
   const push = useToastStore((s) => s.push);
+  const pousserDiffere = useToastStore((s) => s.pousserDiffere);
   return {
     info: useCallback((message, options) => push({ tone: 'info', message, ...options }), [push]),
     success: useCallback((message, options) => push({ tone: 'success', message, ...options }), [push]),
     warning: useCallback((message, options) => push({ tone: 'warning', message, ...options }), [push]),
     error: useCallback((message, options) => push({ tone: 'error', message, duree: 6000, ...options }), [push]),
+    /**
+     * Toast à Annuler réel — voir toastStore.pousserDiffere : `executer` ne
+     * part que si `annulerDiffere` (le bouton "Annuler" rendu par
+     * ToastContainer) n'a pas été actionné avant l'expiration. Réservé aux
+     * actions réversibles — jamais la signature, le feu vert ou une
+     * suppression (confirmation explicite, sans Annuler).
+     */
+    differe: useCallback((message, options) => pousserDiffere({ tone: 'info', message, ...options }), [pousserDiffere]),
   };
 }
 
@@ -41,11 +51,37 @@ export function useToast() {
  * Monté une seule fois (voir AppLayout.jsx) — empile les notifications en
  * bas à droite, la plus récente en dernier. `aria-live="polite"` : annoncé
  * aux lecteurs d'écran sans interrompre ce qui est en cours de lecture,
- * contrairement à une alerte modale.
+ * contrairement à une alerte modale. Vide aussi la file d'actions différées
+ * (voir toastStore.viderActionsDifferees) sur beforeunload (fermeture/
+ * rechargement d'onglet — voir httpBeacon.js pour pourquoi keepalive plutôt
+ * que sendBeacon) et à chaque navigation interne (changement de route) :
+ * une action différée ne doit jamais rester en suspens plus longtemps que
+ * l'écran qui l'a annoncée.
  */
 export function ToastContainer() {
   const toasts = useToastStore((s) => s.toasts);
   const retirer = useToastStore((s) => s.retirer);
+  const annulerDiffere = useToastStore((s) => s.annulerDiffere);
+  const viderActionsDifferees = useToastStore((s) => s.viderActionsDifferees);
+  const location = useLocation();
+
+  useEffect(() => {
+    function surFermeture() {
+      useToastStore.getState().viderActionsDifferees();
+    }
+    window.addEventListener('beforeunload', surFermeture);
+    return () => window.removeEventListener('beforeunload', surFermeture);
+  }, []);
+
+  const premierRendu = useRef(true);
+  useEffect(() => {
+    if (premierRendu.current) {
+      premierRendu.current = false;
+      return;
+    }
+    viderActionsDifferees();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname]);
 
   if (toasts.length === 0) return null;
 
@@ -65,6 +101,15 @@ export function ToastContainer() {
           >
             <Icone size={18} className="mt-0.5 shrink-0" aria-hidden="true" />
             <p className="min-w-0 flex-1 break-words">{t.message}</p>
+            {t.annulable && (
+              <button
+                type="button"
+                onClick={() => annulerDiffere(t.id)}
+                className="shrink-0 rounded-field px-2 py-0.5 text-xs font-semibold underline decoration-2 underline-offset-2 hover:no-underline"
+              >
+                Annuler
+              </button>
+            )}
             <button
               type="button"
               onClick={() => retirer(t.id)}
