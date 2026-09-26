@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { listDocuments, uploadDocument } from '../api/stagiairesApi';
-import { ROLES } from '../../kernel/constants';
+import { estDirecteurDirection } from '../../kernel/constants';
 import { DOCUMENT_TYPE_LABELS } from '../constants';
 import { DocumentPreviewModal } from '../../../shared/components/DocumentPreviewModal';
 import { Card, CardBody, CardHeader } from '../../../shared/components/ui/Card';
@@ -15,7 +15,7 @@ export function DocumentsCard({ stagiaire, user }) {
   const [envoiDocument, setEnvoiDocument] = useState(false);
   const [documentApercu, setDocumentApercu] = useState(null);
 
-  const estDirectionAccueil = user.role === ROLES.RESPONSABLE_DIRECTION;
+  const estDirectionAccueil = estDirecteurDirection(user);
 
   async function chargerDocuments() {
     setDocuments(await listDocuments(stagiaire.id));

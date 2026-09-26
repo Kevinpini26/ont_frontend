@@ -1,7 +1,8 @@
 export const ROLES = {
   ADMINISTRATEUR: 'administrateur',
   AGENT_DFP: 'agent_dfp',
-  RESPONSABLE_DIRECTION: 'responsable_direction',
+  DIRECTEUR_DIRECTION: 'directeur_direction',
+  RESPONSABLE_DIRECTION: 'responsable_direction', // historique
   SECRETARIAT_DIRECTION: 'secretariat_direction',
   AGENT_CIRCUIT_COURRIER: 'agent_circuit_courrier',
 };
@@ -9,16 +10,22 @@ export const ROLES = {
 export const ROLE_LABELS = {
   [ROLES.ADMINISTRATEUR]: 'Administrateur',
   [ROLES.AGENT_DFP]: 'Agent DFP',
-  [ROLES.RESPONSABLE_DIRECTION]: 'Responsable de direction',
+  [ROLES.DIRECTEUR_DIRECTION]: 'Directeur de direction',
+  [ROLES.RESPONSABLE_DIRECTION]: 'Directeur de direction (rôle historique)',
   [ROLES.SECRETARIAT_DIRECTION]: 'Secrétariat de direction',
   [ROLES.AGENT_CIRCUIT_COURRIER]: 'Agent de circuit courrier',
 };
 
+export const ROLES_DIRECTEUR_DIRECTION = [ROLES.DIRECTEUR_DIRECTION, ROLES.RESPONSABLE_DIRECTION];
+export const ROLES_ATTRIBUABLES = Object.values(ROLES).filter((role) => role !== ROLES.RESPONSABLE_DIRECTION);
+
+export function estDirecteurDirection(user) {
+  return ROLES_DIRECTEUR_DIRECTION.includes(user?.role);
+}
+
 export const POSTES = {
   RECEPTION: 'reception',
-  PROTOCOLE: 'protocole',
   DGA: 'dga',
-  ASSISTANT_PROTOCOLE: 'assistant_protocole',
   ASSISTANT_1: 'assistant_1',
   ASSISTANT_2: 'assistant_2',
   ASSISTANT_DGA: 'assistant_dga',
@@ -29,9 +36,9 @@ export const POSTES = {
 
 export const POSTE_LABELS = {
   [POSTES.RECEPTION]: 'Réception',
-  [POSTES.PROTOCOLE]: 'Protocole',
+  protocole: 'Protocole (historique)',
   [POSTES.DGA]: 'Directeur Général Adjoint',
-  [POSTES.ASSISTANT_PROTOCOLE]: 'Assistant du Protocole (Ass.P)',
+  assistant_protocole: 'Assistant du Protocole (historique)',
   [POSTES.ASSISTANT_1]: 'Assistant 1 (Ass1)',
   [POSTES.ASSISTANT_2]: 'Assistant 2 (Ass2)',
   [POSTES.ASSISTANT_DGA]: 'Assistant du DGA (Ass.Dga)',

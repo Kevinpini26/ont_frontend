@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { definirObjectifs } from '../api/stagiairesApi';
-import { ROLES } from '../../kernel/constants';
+import { estDirecteurDirection } from '../../kernel/constants';
 import { Card, CardBody, CardHeader } from '../../../shared/components/ui/Card';
 import { Button } from '../../../shared/components/ui/Button';
 import { inputClass } from '../../../shared/components/ui/Field';
@@ -12,7 +12,7 @@ export function ObjectifsCard({ stagiaire, user, executer }) {
   const [envoi, setEnvoi] = useState(false);
 
   const peutDefinir =
-    user.role === ROLES.RESPONSABLE_DIRECTION &&
+    estDirecteurDirection(user) &&
     user.direction_id === stagiaire.direction?.id &&
     ['stage_en_cours', 'evaluation_en_cours'].includes(stagiaire.statut);
 

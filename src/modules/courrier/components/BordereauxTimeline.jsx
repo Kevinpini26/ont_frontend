@@ -25,9 +25,12 @@ export function BordereauxTimeline({ transitions }) {
               <li key={index} className="rounded-field border border-border p-3 text-sm">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <p className="text-text">
-                    <span className="font-medium">{t.statut_label}</span>
+                    <span className="font-medium">
+                      {t.ancien_statut ? `${t.ancien_statut} → ${t.nouveau_statut}` : t.statut_label}
+                    </span>
                     {' — transmis par '}
                     <span className="font-medium">{t.emetteur ?? 'Guichet public'}</span>
+                    {t.expediteur_poste && <span className="text-text-subtle"> ({t.expediteur_poste})</span>}
                     {t.destinataire && (
                       <>
                         {' → à l\'attention de '}
@@ -39,6 +42,8 @@ export function BordereauxTimeline({ transitions }) {
                     {new Date(t.created_at).toLocaleString('fr-FR')}
                   </span>
                 </div>
+
+                {t.instruction && <p className="mt-2 text-text-subtle">Instruction : {t.instruction}</p>}
 
                 {t.destinataire && (
                   <div className="mt-2">

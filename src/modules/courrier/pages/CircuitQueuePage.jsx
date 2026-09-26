@@ -108,8 +108,7 @@ export function CircuitQueuePage() {
   // Un même statut ("recu") peut correspondre à deux actions différentes
   // selon le circuit (court ou complet) : necessiteAvisDg, quand précisé
   // sur l'action, doit correspondre à celui du courrier pour qu'il
-  // apparaisse dans cette file — sinon (ex. "au_protocole", qui n'existe
-  // que dans un seul circuit) le statut seul suffit à filtrer.
+  // apparaisse dans cette file.
   const estActionnable = (courrier) =>
     actionsListe.some(
       (a) => a.statutDepart === courrier.statut && (a.necessiteAvisDg === undefined || a.necessiteAvisDg === courrier.necessite_avis_dg),

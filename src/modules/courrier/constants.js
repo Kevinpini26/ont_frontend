@@ -21,7 +21,6 @@
 export const STATUTS = [
   'recu',
   'en_attente_tri',
-  'au_protocole',
   'en_attente_avis_dg',
   'projet_a_rediger',
   'projet_a_valider',
@@ -48,7 +47,8 @@ export const STATUTS_INITIE_PAR_DG_SANS_VALIDATION = ['en_relecture', 'signe', '
 
 export const STATUT_LABELS = {
   recu: 'Reçu',
-  au_protocole: 'Au protocole',
+  brouillon_direction: 'Brouillon produit par une direction',
+  au_protocole: 'Au protocole (historique)',
   en_circuit_hierarchique: 'En circuit hiérarchique',
   en_attente_tri: 'En attente de tri',
   en_attente_classeur: "Au classeur d'attente",
@@ -57,6 +57,7 @@ export const STATUT_LABELS = {
   projet_a_rediger: 'Projet de réponse à rédiger',
   projet_a_valider: 'Projet en attente de validation',
   en_dispatch: 'En dispatch vers la direction',
+  dispatch_execute: 'Dispatch exécuté',
   chez_direction: 'Chez le secrétariat de la direction',
   en_attente_validation_dg: 'En attente de validation DG',
   en_relecture: 'En relecture',
@@ -70,7 +71,7 @@ export const STATUT_LABELS = {
  * côté backend. Indifféremment les uns des autres, aucune répartition par
  * type de dossier (voir docs/questions-ont.md).
  */
-export const POSTES_ASSISTANTS = ['assistant_protocole', 'assistant_1', 'assistant_2', 'assistant_dga'];
+export const POSTES_ASSISTANTS = ['assistant_1', 'assistant_2', 'assistant_dga'];
 
 export const TYPE_LABELS = {
   demande_stage: 'Demande de stage',
@@ -119,19 +120,10 @@ export const ORDRE_URGENCE = { tres_urgent: 0, urgent: 1, normal: 2 };
  * circuits indifféremment.
  */
 export const ACTION_PAR_POSTE = {
-  // La Réception crée le courrier (statut initial "recu") ET représente à
-  // la DG un dossier revenu "réservé" (voir representer-dg) — ce dernier
-  // est bien une vraie entrée de file, contrairement à la création qui
-  // reste un formulaire à part dans CircuitQueuePage.jsx.
+  // Un retour réservé repart obligatoirement vers SEC1, jamais directement
+  // vers la DG.
   reception: [
-    { statutDepart: 'retour_reception', endpoint: 'representer-dg', libelle: 'Représenter à la DG' },
-  ],
-  protocole: [
-    // Inatteignable en pratique tant que config('courrier.categories_protocole')
-    // reste vide côté backend (aucune catégorie ne l'exige) — conservé pour
-    // le jour où l'ONT confirme une catégorie concernée.
-    { statutDepart: 'recu', necessiteAvisDg: true, endpoint: 'transmettre-protocole', libelle: 'Transmettre au protocole' },
-    { statutDepart: 'au_protocole', endpoint: 'transmettre-au-tri-depuis-protocole', libelle: 'Transmettre au tri' },
+    { statutDepart: 'retour_reception', endpoint: 'transmettre-sec1', libelle: 'Transmettre à SEC1' },
   ],
   // La DGA n'agit réellement que lorsque la DG est marquée indisponible
   // (intérim) — garde dynamique appliquée côté backend
@@ -148,9 +140,8 @@ export const ACTION_PAR_POSTE = {
     { statutDepart: 'projet_a_valider', endpoint: 'signer', libelle: 'Signer' },
   ],
   secretariat_1: [
-    // Chemin par défaut depuis "recu" (voir "protocole" ci-dessus) : la
-    // Réception transmet directement au tri du Secrétariat 01, sans
-    // Protocole — le tri précède toujours la DG.
+    // La Réception remet le bordereau au Secrétariat 01. Après décharge,
+    // celui-ci place le dossier dans sa file de tri.
     { statutDepart: 'recu', necessiteAvisDg: true, endpoint: 'transmettre-tri', libelle: 'Transmettre au tri' },
     // C'est ici, et seulement ici, que le degré d'urgence est réellement
     // choisi (voir CourrierDetailPage.jsx) — jamais une simple transition
@@ -164,7 +155,6 @@ export const ACTION_PAR_POSTE = {
   ],
   secretariat_2: [
     { statutDepart: 'signe', endpoint: 'enregistrer', libelle: 'Enregistrer' },
-    { statutDepart: 'recu', necessiteAvisDg: false, endpoint: 'enregistrer', libelle: 'Enregistrer (circuit court)' },
     // Lot 3 : un avis DG favorable sur un courrier déjà imputé arrive ici
     // plutôt qu'en projet_a_rediger (voir "dg" ci-dessus).
     { statutDepart: 'en_dispatch', endpoint: 'dispatcher-direction', libelle: 'Transmettre au secrétariat de la direction' },

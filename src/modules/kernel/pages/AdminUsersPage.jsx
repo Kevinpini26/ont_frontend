@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { createUser, deleteUser, listUsers, revokeUserTokens, updateUser } from '../api/usersApi';
 import { listDirections } from '../api/directionsApi';
 import { updateDgDisponibilite } from '../api/dgDisponibiliteApi';
-import { ROLES, ROLE_LABELS, POSTES, POSTE_LABELS } from '../constants';
+import { ROLES, ROLES_ATTRIBUABLES, ROLE_LABELS, POSTES, POSTE_LABELS } from '../constants';
 import { SearchBar } from '../../../shared/components/SearchBar';
 import { ExportButtons } from '../../../shared/components/ExportButtons';
 import { PageHeader } from '../../../shared/components/ui/PageHeader';
@@ -31,7 +31,7 @@ const FORMULAIRE_VIDE = {
   name: '',
   email: '',
   password: '',
-  role: ROLES.RESPONSABLE_DIRECTION,
+  role: ROLES.DIRECTEUR_DIRECTION,
   poste: '',
   direction_id: '',
 };
@@ -75,6 +75,7 @@ export function AdminUsersPage() {
 
   const directionRequise = !ROLES_SANS_DIRECTION.includes(formulaire.role);
   const posteRequis = formulaire.role === ROLES.AGENT_CIRCUIT_COURRIER;
+  const directionsAttribuables = posteRequis ? directions : directions.filter((direction) => direction.est_operationnelle);
 
   async function soumettre(e) {
     e.preventDefault();
@@ -116,7 +117,7 @@ export function AdminUsersPage() {
       name: user.name,
       email: user.email,
       password: '',
-      role: user.role,
+      role: user.role === ROLES.RESPONSABLE_DIRECTION ? ROLES.DIRECTEUR_DIRECTION : user.role,
       poste: user.poste ?? '',
       direction_id: user.direction_id ?? '',
     });
@@ -204,7 +205,7 @@ export function AdminUsersPage() {
                 value={formulaire.role}
                 onChange={(e) => setFormulaire((f) => ({ ...f, role: e.target.value, poste: '', direction_id: '' }))}
               >
-                {Object.values(ROLES).map((r) => (
+                {ROLES_ATTRIBUABLES.map((r) => (
                   <option key={r} value={r}>
                     {ROLE_LABELS[r]}
                   </option>
@@ -243,7 +244,7 @@ export function AdminUsersPage() {
                   <option value="" disabled>
                     Choisir une direction
                   </option>
-                  {directions.map((d) => (
+                  {directionsAttribuables.map((d) => (
                     <option key={d.id} value={d.id}>
                       {d.code} — {d.nom}
                     </option>

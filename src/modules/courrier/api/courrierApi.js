@@ -25,6 +25,44 @@ export async function getCourrier(id, signal) {
   return data.data;
 }
 
+export async function getDossier(id, signal) {
+  const { data } = await apiClient.get(`/dossiers/${id}`, { signal });
+  return data.data;
+}
+
+export async function getRelationsDocumentaires(courrierId, signal) {
+  const { data } = await apiClient.get(`/courriers/${courrierId}/relations`, { signal });
+  return data.data;
+}
+
+export async function creerMission(courrierId, assistantId, instruction) {
+  const { data } = await apiClient.post(`/courriers/${courrierId}/missions`, { assistant_id: assistantId, instruction });
+  return data.data;
+}
+
+export async function listMesMissions(signal) {
+  const { data } = await apiClient.get('/missions-documentaires/mes-missions', { signal });
+  return data.data;
+}
+
+export async function prendreMissionEnCharge(id) {
+  const { data } = await apiClient.post(`/missions-documentaires/${id}/prendre-en-charge`);
+  return data.data;
+}
+
+export async function retournerMission(id, compteRendu, projetReponseContenu) {
+  const { data } = await apiClient.post(`/missions-documentaires/${id}/retourner`, {
+    compte_rendu: compteRendu,
+    projet_reponse_contenu: projetReponseContenu || undefined,
+  });
+  return data.data;
+}
+
+export async function annulerMission(id, motif) {
+  const { data } = await apiClient.post(`/missions-documentaires/${id}/annuler`, { motif });
+  return data.data;
+}
+
 /**
  * FormData (et non JSON) : nécessaire pour transporter piece_jointe. Le
  * contenu (document TipTap, un objet) est sérialisé en JSON — le backend le
@@ -80,24 +118,9 @@ export async function validerAvantDiffusion(id) {
   return data.data;
 }
 
-export async function transmettreProtocole(id) {
-  const { data } = await apiClient.post(`/courriers/${id}/transmettre-protocole`);
-  return data.data;
-}
-
-/**
- * Chemin par défaut depuis "recu" (voir transmettreProtocole, inatteignable
- * en pratique tant qu'aucune catégorie n'exige le Protocole) : la Réception
- * transmet directement au tri du Secrétariat 01.
- */
+/** Après remise par la Réception, le Secrétariat 01 ouvre la phase de tri. */
 export async function transmettreTri(id) {
   const { data } = await apiClient.post(`/courriers/${id}/transmettre-tri`);
-  return data.data;
-}
-
-/** Si le Protocole a malgré tout été emprunté, il transmet aussi au tri. */
-export async function transmettreAuTriDepuisProtocole(id) {
-  const { data } = await apiClient.post(`/courriers/${id}/transmettre-au-tri-depuis-protocole`);
   return data.data;
 }
 
@@ -111,9 +134,9 @@ export async function transmettreAvisDg(id, degreUrgence) {
   return data.data;
 }
 
-/** La Réception représente à la DG un dossier revenu "réservé" (tour+1). */
-export async function representerDg(id) {
-  const { data } = await apiClient.post(`/courriers/${id}/representer-dg`);
+/** La Réception remet à SEC1 un dossier revenu "réservé" (tour+1). */
+export async function transmettreSec1(id, instruction) {
+  const { data } = await apiClient.post(`/courriers/${id}/transmettre-sec1`, { instruction: instruction || undefined });
   return data.data;
 }
 
@@ -135,6 +158,68 @@ export async function dispatcherDirection(id) {
   const { data } = await apiClient.post(`/courriers/${id}/dispatcher-direction`);
   return data.data;
 }
+
+export async function deciderDispatch(id, destinations) {
+  const { data } = await apiClient.post(`/courriers/${id}/dispatchs`, { destinations });
+  return data.data;
+}
+
+export async function listCentreDispatch(params = {}) {
+  const { data } = await apiClient.get('/dispatchs/centre', { params });
+  return data.data;
+}
+
+export async function listBoiteDispatchDirection() {
+  const { data } = await apiClient.get('/dispatchs/boite-direction');
+  return data.data;
+}
+
+export async function executerDispatch(id, referenceTransmission, preuve) {
+  const formulaire = new FormData();
+  if (referenceTransmission) formulaire.append('reference_transmission', referenceTransmission);
+  if (preuve) formulaire.append('preuve', preuve);
+  const { data } = await apiClient.post(`/dispatchs/${id}/executer`, formulaire);
+  return data.data;
+}
+
+export async function accuserReceptionDispatch(id) {
+  const { data } = await apiClient.post(`/dispatchs/${id}/accuser-reception`);
+  return data.data;
+}
+
+export async function listTraitementsDirection() {
+  const { data } = await apiClient.get('/traitements-direction');
+  return data.data;
+}
+
+export async function transmettreTraitementDirecteur(id, note) {
+  const { data } = await apiClient.post(`/traitements-direction/${id}/transmettre-directeur`, { note: note || null });
+  return data.data;
+}
+
+export async function prendreTraitementEnCharge(id) {
+  const { data } = await apiClient.post(`/traitements-direction/${id}/prendre-en-charge`);
+  return data.data;
+}
+
+export async function deciderTraitementDirection(id, decision, commentaire) {
+  const { data } = await apiClient.post(`/traitements-direction/${id}/decision`, { decision, commentaire: commentaire || null });
+  return data.data;
+}
+
+export async function creerDocumentProduit(traitementId, objet, contenu) { const { data } = await apiClient.post(`/traitements-direction/${traitementId}/document-produit`, { objet, contenu }); return data.data; }
+export async function soumettreDocumentProduit(id, payload = {}) { const { data } = await apiClient.post(`/documents-produits-direction/${id}/soumettre`, payload); return data.data; }
+export async function demanderCorrectionDocumentProduit(id, motif) { const { data } = await apiClient.post(`/documents-produits-direction/${id}/demander-correction`, { motif }); return data.data; }
+export async function validerDocumentProduit(id) { const { data } = await apiClient.post(`/documents-produits-direction/${id}/valider`); return data.data; }
+export async function transmettreDocumentReception(id) { const { data } = await apiClient.post(`/documents-produits-direction/${id}/transmettre-reception`); return data.data; }
+export async function listDocumentsProduits() { const { data } = await apiClient.get('/documents-produits-direction'); return data.data; }
+export async function recevoirDocumentProduit(id) { const { data } = await apiClient.post(`/documents-produits-direction/${id}/recevoir`); return data.data; }
+export async function listClassementsDocuments(page = 1) { const { data } = await apiClient.get('/classements-documents', { params: { page } }); return data; }
+export async function classerDispatch(id, payload) { const { data } = await apiClient.post(`/dispatchs/${id}/classer`, payload); return data.data; }
+export async function archiverClassement(id, observation) { const { data } = await apiClient.post(`/classements-documents/${id}/archiver`, { observation }); return data.data; }
+export async function corrigerClassement(id, payload) { const { data } = await apiClient.post(`/classements-documents/${id}/corriger`, payload); return data.data; }
+export async function deciderArchivageDossier(id) { const { data } = await apiClient.post(`/dossiers/${id}/decision-archivage`); return data.data; }
+export async function archiverDossier(id) { const { data } = await apiClient.post(`/dossiers/${id}/archiver`); return data.data; }
 
 /**
  * Remplace l'ensemble des imputations du courrier (pas un ajout

@@ -1,5 +1,5 @@
 import { BarChart3, Building2, CalendarCheck, ClipboardList, Clock, FileClock, History, Inbox, LayoutDashboard, Mail, ScanLine, ScrollText, Settings, Target, Users } from 'lucide-react';
-import { ROLES } from '../modules/kernel/constants';
+import { estDirecteurDirection, ROLES } from '../modules/kernel/constants';
 
 /**
  * Sections de la sidebar par rôle : chaque agent ne voit que les entrées
@@ -56,13 +56,14 @@ export function navigationForUser(user) {
     ];
   }
 
-  if (user.role === ROLES.RESPONSABLE_DIRECTION) {
+  if (estDirecteurDirection(user)) {
     return [
       {
         title: 'Ma direction',
         items: [
           { label: 'Tableau de bord', to: '/direction/tableau-de-bord', icon: LayoutDashboard },
           { label: 'Courrier', to: '/direction/courrier', icon: Mail, countKey: 'courriers_recus' },
+          { label: 'Courriers à traiter', to: '/direction/courriers-a-traiter', icon: Inbox },
           { label: 'Stagiaires', to: '/direction/stagiaires', icon: Users },
         ],
       },
@@ -73,16 +74,32 @@ export function navigationForUser(user) {
     return [
       {
         title: 'Ma direction',
-        items: [{ label: 'Courrier', to: '/direction/courrier', icon: Mail, countKey: 'courriers_recus' }],
+        items: [
+          { label: 'Courrier', to: '/direction/courrier', icon: Mail, countKey: 'courriers_recus' },
+          { label: 'Courriers dispatchés', to: '/direction/courriers-recus', icon: Inbox },
+          { label: 'Documents de retour', to: '/direction/courriers-a-traiter', icon: ClipboardList },
+        ],
       },
     ];
   }
 
   if (user.role === ROLES.AGENT_CIRCUIT_COURRIER) {
+    // Un compte encore affecté à l'ancien poste reste lisible dans
+    // l'administration, mais ne reçoit plus aucun accès opérationnel.
+    if (['protocole', 'assistant_protocole'].includes(user.poste)) return [];
+
     const items = [
       { label: 'Ma file de traitement', to: `/circuit/${user.poste}`, icon: Inbox },
       { label: 'Tableau de bord', to: '/circuit/tableau-de-bord', icon: LayoutDashboard },
     ];
+
+    if (['assistant_1', 'assistant_2', 'assistant_dga'].includes(user.poste)) {
+      items[0] = { label: 'Mes missions', to: '/circuit/missions', icon: ClipboardList };
+    }
+    if (user.poste === 'secretariat_2') {
+      items[0] = { label: 'Centre de dispatch', to: '/circuit/centre-dispatch', icon: Inbox };
+      items.push({ label: 'Classement & archives', to: '/circuit/classement-archives', icon: FileClock });
+    }
 
     // La DG dispose en plus d'un espace consolidé transverse, distinct de
     // sa simple file de traitement.
@@ -103,6 +120,7 @@ export function navigationForUser(user) {
     // CourrierRattrapageNumerisationController::index() côté serveur.
     if (user.poste === 'reception') {
       items.push({ label: 'Documents à numériser', to: '/circuit/a-numeriser', icon: ScanLine });
+      items.push({ label: 'Documents internes reçus', to: '/circuit/documents-internes', icon: Mail });
     }
 
     // Lot C : la statistique de justesse du tri n'a de sens que pour

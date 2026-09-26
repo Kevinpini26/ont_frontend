@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { signerConventionDirection } from '../api/stagiairesApi';
-import { ROLES } from '../../kernel/constants';
+import { estDirecteurDirection } from '../../kernel/constants';
 import { DocumentPreviewModal } from '../../../shared/components/DocumentPreviewModal';
 import { Card, CardBody, CardHeader } from '../../../shared/components/ui/Card';
 import { Button } from '../../../shared/components/ui/Button';
@@ -10,7 +10,7 @@ export function ConventionCard({ stagiaire, user, executer }) {
   const [envoi, setEnvoi] = useState(false);
   const [apercuOuvert, setApercuOuvert] = useState(false);
   const peutSigner =
-    user.role === ROLES.RESPONSABLE_DIRECTION &&
+    estDirecteurDirection(user) &&
     user.direction_id === stagiaire.direction?.id &&
     !stagiaire.convention.signee_direction_at;
 

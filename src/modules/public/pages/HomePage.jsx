@@ -16,6 +16,7 @@ import { ADRESSE_PORTAIL, TELEPHONE_PORTAIL, HORAIRES_PORTAIL } from '../constan
 const DESTINATION_PAR_ROLE = {
   [ROLES.ADMINISTRATEUR]: '/admin/directions',
   [ROLES.AGENT_DFP]: '/stagiaires/dashboard',
+  [ROLES.DIRECTEUR_DIRECTION]: '/direction/tableau-de-bord',
   [ROLES.RESPONSABLE_DIRECTION]: '/direction/tableau-de-bord',
   [ROLES.SECRETARIAT_DIRECTION]: '/direction/courrier',
 };
@@ -200,9 +201,12 @@ export function HomePage() {
 
   if (user) {
     if (user.role === ROLES.AGENT_CIRCUIT_COURRIER) {
-      return <Navigate to={`/circuit/${user.poste}`} replace />;
+      // Un ancien compte Protocole reste identifiable par l'administration,
+      // mais n'est plus redirigé vers une file opérationnelle supprimée.
+      if (!['protocole', 'assistant_protocole'].includes(user.poste)) return <Navigate to={`/circuit/${user.poste}`} replace />;
+    } else {
+      return <Navigate to={DESTINATION_PAR_ROLE[user.role] ?? '/connexion'} replace />;
     }
-    return <Navigate to={DESTINATION_PAR_ROLE[user.role] ?? '/connexion'} replace />;
   }
 
   const urlItineraire = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ADRESSE_PORTAIL)}`;

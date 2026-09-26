@@ -20,13 +20,13 @@ function PageChangerMotDePasse() {
   return <p>Changer le mot de passe</p>;
 }
 
-function rendre({ initialEntries = ['/protege'], roles, postes } = {}) {
+function rendre({ initialEntries = ['/protege'], roles, postes, postesInterdits } = {}) {
   return render(
     <MemoryRouter initialEntries={initialEntries}>
       <Routes>
         <Route path="/connexion" element={<PageConnexion />} />
         <Route path="/" element={<PageAccueil />} />
-        <Route element={<ProtectedRoute roles={roles} postes={postes} />}>
+        <Route element={<ProtectedRoute roles={roles} postes={postes} postesInterdits={postesInterdits} />}>
           <Route path="/protege" element={<PageProtegee />} />
           <Route path="/changer-mot-de-passe" element={<PageChangerMotDePasse />} />
         </Route>
@@ -98,6 +98,30 @@ describe('ProtectedRoute', () => {
     rendre({ roles: ['agent_circuit_courrier'], postes: ['dg'] });
 
     expect(screen.getByText('Contenu protégé')).toBeInTheDocument();
+  });
+
+  test('redirige un utilisateur rattaché à un ancien poste interdit', () => {
+    useAuthStore.setState({
+      token: 'jeton',
+      user: { id: 1, role: 'agent_circuit_courrier', poste: 'protocole' },
+    });
+
+    rendre({ postesInterdits: ['protocole'] });
+
+    expect(screen.getByText('Accueil')).toBeInTheDocument();
+    expect(screen.queryByText('Contenu protégé')).not.toBeInTheDocument();
+  });
+
+  test("redirige aussi l'ancien assistant du protocole", () => {
+    useAuthStore.setState({
+      token: 'jeton',
+      user: { id: 1, role: 'agent_circuit_courrier', poste: 'assistant_protocole' },
+    });
+
+    rendre({ postesInterdits: ['protocole', 'assistant_protocole'] });
+
+    expect(screen.getByText('Accueil')).toBeInTheDocument();
+    expect(screen.queryByText('Contenu protégé')).not.toBeInTheDocument();
   });
 
   test('redirige vers le changement de mot de passe tant quil est imposé, même vers une route par ailleurs autorisée', () => {

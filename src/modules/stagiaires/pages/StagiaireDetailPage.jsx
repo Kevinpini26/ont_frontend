@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { getStagiaire } from '../api/stagiairesApi';
 import { useAuthStore } from '../../kernel/store/authStore';
-import { ROLES } from '../../kernel/constants';
+import { estDirecteurDirection, ROLES } from '../../kernel/constants';
 import { BadgeReussite } from '../components/BadgeReussite';
 import { ObjectifsCard } from '../components/ObjectifsCard';
 import { InformationsComplementairesCard } from '../components/InformationsComplementairesCard';
@@ -209,7 +209,7 @@ export function StagiaireDetailPage() {
 
         <div className="space-y-6">
           {user.role === ROLES.AGENT_DFP && <ActionsDfp stagiaire={stagiaire} executer={executer} />}
-          {user.role === ROLES.RESPONSABLE_DIRECTION && <ActionsDirection stagiaire={stagiaire} executer={executer} />}
+          {estDirecteurDirection(user) && <ActionsDirection stagiaire={stagiaire} executer={executer} />}
 
           <DureeStageCard stagiaire={stagiaire} user={user} executer={executer} />
 

@@ -7,17 +7,15 @@ import {
   enregistrer,
   getCourrier,
   imputer,
-  representerDg,
+  transmettreSec1,
   requalifierUrgence,
   rendreAvis,
   renvoyerAuTri,
   renvoyerPourCorrection,
   signer,
   soumettreProjetReponse,
-  transmettreAuTriDepuisProtocole,
   transmettreAvisDg,
   transmettreDepuisClasseur,
-  transmettreProtocole,
   transmettreTri,
   validerAvantDiffusion,
   validerRelecture,
@@ -29,6 +27,9 @@ import { StatutTimeline } from '../components/StatutTimeline';
 import { BordereauxTimeline } from '../components/BordereauxTimeline';
 import { AnnotationsPanel } from '../components/AnnotationsPanel';
 import { NumerisationPanel } from '../components/NumerisationPanel';
+import { DossierDocumentsPanel } from '../components/DossierDocumentsPanel';
+import { MissionsDocumentairesPanel } from '../components/MissionsDocumentairesPanel';
+import { DispatchDecisionPanel } from '../components/DispatchDecisionPanel';
 import { classificationAttendue } from '../utils/classification';
 import { TipTapEditor } from '../components/TipTapEditor';
 import {
@@ -117,6 +118,10 @@ export function CourrierDetailPage() {
         <BordereauxTimeline transitions={courrier.transitions} />
       </div>
 
+      <div className="mb-6">
+        <MissionsDocumentairesPanel courrier={courrier} user={user} onUpdate={setCourrier} />
+      </div>
+
       {erreur && <Alert tone="error" className="mb-6">{erreur}</Alert>}
 
       <div className="mb-6 space-y-6">
@@ -130,6 +135,28 @@ export function CourrierDetailPage() {
               <span className="font-medium text-text">Destination : </span>
               {courrier.direction_destination?.nom ?? 'Direction Générale'}
             </p>
+            {(courrier.numero_enregistrement || courrier.reference_documentaire || courrier.numero_depart) && (
+              <dl className="grid gap-2 rounded-field border border-border p-3 sm:grid-cols-3">
+                {courrier.numero_enregistrement && (
+                  <div>
+                    <dt className="text-xs text-text-subtle">Numéro d’enregistrement</dt>
+                    <dd className="font-medium text-text">{courrier.numero_enregistrement}</dd>
+                  </div>
+                )}
+                {courrier.reference_documentaire && (
+                  <div>
+                    <dt className="text-xs text-text-subtle">Référence documentaire</dt>
+                    <dd className="font-medium text-text">{courrier.reference_documentaire}</dd>
+                  </div>
+                )}
+                {courrier.numero_depart && (
+                  <div>
+                    <dt className="text-xs text-text-subtle">Numéro de départ</dt>
+                    <dd className="font-medium text-text">{courrier.numero_depart}</dd>
+                  </div>
+                )}
+              </dl>
+            )}
             {courrier.tour > 1 && (
               <Alert tone="warning">
                 Ce dossier boucle : {courrier.tour}ᵉ passage devant la Direction Générale.
@@ -290,6 +317,9 @@ export function CourrierDetailPage() {
         </Card>
 
         <NumerisationPanel courrier={courrier} />
+        <DossierDocumentsPanel courrier={courrier} />
+        <DispatchDecisionPanel courrier={courrier} user={user} onUpdate={setCourrier} />
+        {courrier.classement && <Card><CardHeader title="Classement"/><CardBody className="grid gap-2 text-sm md:grid-cols-2"><p>Statut : {courrier.classement.statut_label}</p><p>Cote : {courrier.classement.cote || 'Non renseignée'}</p><p>Emplacement : {courrier.classement.emplacement}</p><p>Classé par : {courrier.classement.classe_par} · {new Date(courrier.classement.classe_at).toLocaleString('fr-FR')}</p>{courrier.classement.archive_at&&<p>Archivé par : {courrier.classement.archive_par} · {new Date(courrier.classement.archive_at).toLocaleString('fr-FR')}</p>}</CardBody></Card>}
 
         {courrier.contenu && (
           <Card>
@@ -466,6 +496,7 @@ function ActionsCourrier({ courrier, user, executer }) {
   const [avisCommentaire, setAvisCommentaire] = useState('');
   const [motifReorientation, setMotifReorientation] = useState('');
   const [degreUrgenceTri, setDegreUrgenceTri] = useState('normal');
+  const [instructionTransmission, setInstructionTransmission] = useState('');
   const [relectureCommentaire, setRelectureCommentaire] = useState('');
   const [observationCorrection, setObservationCorrection] = useState('');
   const [noteTechnique, setNoteTechnique] = useState('');
@@ -540,40 +571,11 @@ function ActionsCourrier({ courrier, user, executer }) {
     );
   }
 
-  {
-    /* Chemin par défaut : la Réception transmet directement au tri, sans
-       Protocole — inatteignable en pratique tant qu'aucune catégorie
-       n'exige le Protocole (config('courrier.categories_protocole') vide). */
-  }
-  if (courrier.statut === 'recu' && courrier.necessite_avis_dg && user.poste === 'protocole') {
-    return (
-      <Card>
-        <CardBody>
-          <Button disabled={envoiEnCours} onClick={() => executerEtSuivre(() => transmettreProtocole(courrier.id))}>
-            Transmettre au protocole
-          </Button>
-        </CardBody>
-      </Card>
-    );
-  }
-
   if (courrier.statut === 'recu' && courrier.necessite_avis_dg && user.poste === 'secretariat_1') {
     return (
       <Card>
         <CardBody>
           <Button disabled={envoiEnCours} onClick={() => executerEtSuivre(() => transmettreTri(courrier.id))}>
-            Transmettre au tri
-          </Button>
-        </CardBody>
-      </Card>
-    );
-  }
-
-  if (courrier.statut === 'au_protocole' && user.poste === 'protocole') {
-    return (
-      <Card>
-        <CardBody>
-          <Button disabled={envoiEnCours} onClick={() => executerEtSuivre(() => transmettreAuTriDepuisProtocole(courrier.id))}>
             Transmettre au tri
           </Button>
         </CardBody>
@@ -623,10 +625,13 @@ function ActionsCourrier({ courrier, user, executer }) {
   if (courrier.statut === 'retour_reception' && user.poste === 'reception') {
     return (
       <Card>
-        <CardHeader title="Représenter à la DG" description="Ce dossier revient d'un avis réservé — représentez-le à la Direction Générale une fois le complément obtenu." />
-        <CardBody>
-          <Button disabled={envoiEnCours} onClick={() => executerEtSuivre(() => representerDg(courrier.id))}>
-            Représenter à la DG
+        <CardHeader title="Transmettre à SEC1" description="Ce dossier revient d'un avis réservé. La Réception le remet à SEC1 pour un nouveau tri avant toute présentation à la DG." />
+        <CardBody className="space-y-4">
+          <Field label="Instruction de transmission" htmlFor="instructionTransmission">
+            <textarea id="instructionTransmission" className={inputClass} maxLength={2000} value={instructionTransmission} onChange={(e) => setInstructionTransmission(e.target.value)} />
+          </Field>
+          <Button disabled={envoiEnCours} onClick={() => executerEtSuivre(() => transmettreSec1(courrier.id, instructionTransmission))}>
+            Transmettre à SEC1
           </Button>
         </CardBody>
       </Card>

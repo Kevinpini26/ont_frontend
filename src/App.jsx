@@ -5,7 +5,7 @@ import { ErrorBoundary } from './shared/components/ErrorBoundary';
 import { ProtectedRoute } from './shared/components/ProtectedRoute';
 import { LoadingBlock } from './shared/components/ui/Spinner';
 import { ToastContainer } from './shared/components/ui/Toast';
-import { ROLES } from './modules/kernel/constants';
+import { ROLES, ROLES_DIRECTEUR_DIRECTION } from './modules/kernel/constants';
 import { useThemeSync } from './shared/hooks/useThemeSync';
 
 // Chargées à la demande : aucune de ces pages ne doit alourdir le paquet
@@ -39,6 +39,14 @@ const CourrierDetailPage = lazy(() =>
 const CircuitQueuePage = lazy(() =>
   import('./modules/courrier/pages/CircuitQueuePage').then((m) => ({ default: m.CircuitQueuePage })),
 );
+const MissionsAssistantsPage = lazy(() =>
+  import('./modules/courrier/pages/MissionsAssistantsPage').then((m) => ({ default: m.MissionsAssistantsPage })),
+);
+const CentreDispatchPage = lazy(() => import('./modules/courrier/pages/CentreDispatchPage').then((m) => ({ default: m.CentreDispatchPage })));
+const BoiteDispatchDirectionPage = lazy(() => import('./modules/courrier/pages/BoiteDispatchDirectionPage').then((m) => ({ default: m.BoiteDispatchDirectionPage })));
+const TraitementsDirectionPage = lazy(() => import('./modules/courrier/pages/TraitementsDirectionPage').then((m) => ({ default: m.TraitementsDirectionPage })));
+const DocumentsInternesReceptionPage = lazy(() => import('./modules/courrier/pages/DocumentsInternesReceptionPage').then((m) => ({ default: m.DocumentsInternesReceptionPage })));
+const ClassementArchivesPage = lazy(() => import('./modules/courrier/pages/ClassementArchivesPage').then((m) => ({ default: m.ClassementArchivesPage })));
 const PosteDeTravailTriPage = lazy(() =>
   import('./modules/courrier/pages/PosteDeTravailTriPage').then((m) => ({ default: m.PosteDeTravailTriPage })),
 );
@@ -167,7 +175,7 @@ function AppRoutes() {
             <Route path="/admin/import-historique" element={<AdminImportHistoriquePage />} />
           </Route>
 
-          <Route element={<ProtectedRoute roles={[ROLES.RESPONSABLE_DIRECTION]} />}>
+          <Route element={<ProtectedRoute roles={ROLES_DIRECTEUR_DIRECTION} />}>
             <Route path="/direction/tableau-de-bord" element={<DirectionDashboardPage />} />
             <Route path="/direction/stagiaires" element={<DirectionStagiairesPage />} />
           </Route>
@@ -177,11 +185,15 @@ function AppRoutes() {
               n'a ni tableau de bord stagiaires ni droit d'initier un
               courrier (voir la garde peutEnvoyer dans
               DirectionCourrierWorkspace). */}
-          <Route element={<ProtectedRoute roles={[ROLES.RESPONSABLE_DIRECTION, ROLES.SECRETARIAT_DIRECTION]} />}>
+          <Route element={<ProtectedRoute roles={[...ROLES_DIRECTEUR_DIRECTION, ROLES.SECRETARIAT_DIRECTION]} />}>
             <Route path="/direction/courrier" element={<DirectionCourrierPage />} />
+            <Route path="/direction/courriers-a-traiter" element={<TraitementsDirectionPage />} />
+          </Route>
+          <Route element={<ProtectedRoute roles={[ROLES.SECRETARIAT_DIRECTION]} />}>
+            <Route path="/direction/courriers-recus" element={<BoiteDispatchDirectionPage />} />
           </Route>
 
-          <Route element={<ProtectedRoute roles={[ROLES.AGENT_CIRCUIT_COURRIER]} />}>
+          <Route element={<ProtectedRoute roles={[ROLES.AGENT_CIRCUIT_COURRIER]} postesInterdits={['protocole', 'assistant_protocole']} />}>
             <Route path="/circuit/tableau-de-bord" element={<CourrierCircuitDashboardPage />} />
             <Route path="/circuit/:poste" element={<CircuitQueuePage />} />
           </Route>
@@ -193,9 +205,17 @@ function AppRoutes() {
           <Route element={<ProtectedRoute roles={[ROLES.AGENT_CIRCUIT_COURRIER]} postes={['secretariat_1']} />}>
             <Route path="/circuit/secretariat_1" element={<PosteDeTravailTriPage />} />
           </Route>
+          <Route element={<ProtectedRoute roles={[ROLES.AGENT_CIRCUIT_COURRIER]} postes={['secretariat_2']} />}>
+            <Route path="/circuit/centre-dispatch" element={<CentreDispatchPage />} />
+            <Route path="/circuit/classement-archives" element={<ClassementArchivesPage />} />
+          </Route>
 
           <Route element={<ProtectedRoute roles={[ROLES.AGENT_CIRCUIT_COURRIER]} postes={['dg']} />}>
             <Route path="/circuit/espace-dg" element={<CourrierDgDashboardPage />} />
+          </Route>
+
+          <Route element={<ProtectedRoute roles={[ROLES.AGENT_CIRCUIT_COURRIER]} postes={['assistant_1', 'assistant_2', 'assistant_dga']} />}>
+            <Route path="/circuit/missions" element={<MissionsAssistantsPage />} />
           </Route>
 
           <Route element={<ProtectedRoute roles={[ROLES.AGENT_CIRCUIT_COURRIER]} postes={['secretariat_1']} />}>
@@ -204,6 +224,7 @@ function AppRoutes() {
 
           <Route element={<ProtectedRoute roles={[ROLES.AGENT_CIRCUIT_COURRIER]} postes={['reception']} />}>
             <Route path="/circuit/a-numeriser" element={<RattrapageNumerisationPage />} />
+            <Route path="/circuit/documents-internes" element={<DocumentsInternesReceptionPage />} />
           </Route>
 
           <Route element={<ProtectedRoute roles={[ROLES.AGENT_DFP]} />}>
@@ -222,14 +243,17 @@ function AppRoutes() {
               tableau), administrateur — la précision (qui peut vraiment
               agir) reste dans TableauRepartitionDetailPage, même principe
               que les fiches courrier/stagiaire ci-dessous. */}
-          <Route element={<ProtectedRoute roles={[ROLES.AGENT_DFP, ROLES.AGENT_CIRCUIT_COURRIER, ROLES.ADMINISTRATEUR]} />}>
+          <Route element={<ProtectedRoute roles={[ROLES.AGENT_DFP, ROLES.AGENT_CIRCUIT_COURRIER, ROLES.ADMINISTRATEUR]} postesInterdits={['protocole', 'assistant_protocole']} />}>
             <Route path="/tableaux-repartition" element={<TableauxRepartitionPage />} />
             <Route path="/tableaux-repartition/:id" element={<TableauRepartitionDetailPage />} />
           </Route>
 
-          <Route element={<ProtectedRoute />}>
+          <Route element={<ProtectedRoute postesInterdits={['protocole', 'assistant_protocole']} />}>
             <Route path="/courriers/:id" element={<CourrierDetailPage />} />
             <Route path="/stagiaires/:id" element={<StagiaireDetailPage />} />
+          </Route>
+
+          <Route element={<ProtectedRoute />}>
             <Route path="/changer-mot-de-passe" element={<ChangerMotDePassePage />} />
           </Route>
         </Route>

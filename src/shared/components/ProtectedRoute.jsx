@@ -1,7 +1,7 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../modules/kernel/store/authStore';
 
-export function ProtectedRoute({ roles, postes }) {
+export function ProtectedRoute({ roles, postes, postesInterdits }) {
   const user = useAuthStore((s) => s.user);
   const token = useAuthStore((s) => s.token);
   const location = useLocation();
@@ -22,6 +22,10 @@ export function ProtectedRoute({ roles, postes }) {
   }
 
   if (postes && !postes.includes(user.poste)) {
+    return <Navigate to="/" replace />;
+  }
+
+  if (postesInterdits?.includes(user.poste)) {
     return <Navigate to="/" replace />;
   }
 
