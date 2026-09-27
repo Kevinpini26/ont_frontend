@@ -126,6 +126,7 @@ export function navigationForUser(user) {
     // Lot C : la statistique de justesse du tri n'a de sens que pour
     // celui qui trie.
     if (user.poste === 'secretariat_1') {
+      items.push({ label: 'Instructions DG', to: '/circuit/instructions-dg', icon: ClipboardList });
       items.push({ label: 'Justesse du tri', to: '/circuit/justesse-tri', icon: Target });
     }
 

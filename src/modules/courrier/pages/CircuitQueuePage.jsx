@@ -9,6 +9,12 @@ import {
   initierCourrierDg,
   listCourriers,
 } from '../api/courrierApi';
+import {
+  annulerInstructionCourrierDg,
+  creerInstructionCourrierDg,
+  listInstructionsCourrierDg,
+  ouvrirInstructionCourrierDg,
+} from '../api/instructionCourrierDgApi';
 import { DocumentPreviewModal } from '../../../shared/components/DocumentPreviewModal';
 import { useRequete } from '../../../shared/hooks/useRequete';
 import { ACTION_PAR_POSTE, DEGRE_URGENCE_LABELS, ORDRE_URGENCE, STATUT_LABELS, TONE_URGENCE, TYPE_LABELS } from '../constants';
@@ -76,7 +82,7 @@ const FORMULAIRE_VIDE = {
   piece_jointe: null,
 };
 
-export function CircuitQueuePage() {
+export function CircuitQueuePage({ instructionsSeulement = false }) {
   const { poste: postePourUrl } = useParams();
   const user = useAuthStore((s) => s.user);
   // La liste d'actions dépend toujours du poste réel de l'utilisateur
@@ -94,6 +100,13 @@ export function CircuitQueuePage() {
   const [erreur, setErreur] = useState(null);
   const [envoiEnCours, setEnvoiEnCours] = useState(false);
   const [afficherFormulaireDg, setAfficherFormulaireDg] = useState(false);
+  const [instructionSelectionnee, setInstructionSelectionnee] = useState(null);
+  const [instructionDg, setInstructionDg] = useState('');
+  const [destinataireInstruction, setDestinataireInstruction] = useState('');
+  const [expirationInstruction, setExpirationInstruction] = useState('');
+  const [erreurInstruction, setErreurInstruction] = useState(null);
+  const [instructionEnCours, setInstructionEnCours] = useState(false);
+  const [pageInstructions, setPageInstructions] = useState(1);
   const [formulaireDg, setFormulaireDg] = useState(FORMULAIRE_DG_VIDE);
   const [contenuDg, setContenuDg] = useState('');
   const [directions, setDirections] = useState([]);
@@ -104,12 +117,22 @@ export function CircuitQueuePage() {
   const [bordereauEnCours, setBordereauEnCours] = useState(false);
   const [erreurBordereau, setErreurBordereau] = useState(null);
   const [apercuBordereau, setApercuBordereau] = useState(null);
+  const { donnees: instructionsReponse, recharger: rechargerInstructions } = useRequete(
+    (signal) => ['dg', 'secretariat_1'].includes(poste)
+      ? listInstructionsCourrierDg(pageInstructions, signal)
+      : Promise.resolve({ data: [] }),
+    [poste, pageInstructions],
+  );
+  const instructions = instructionsReponse?.meta && instructionsReponse.meta.current_page !== pageInstructions
+    ? [] : instructionsReponse?.data ?? [];
+  const dernierePageInstructions = instructionsReponse?.meta?.last_page ?? 1;
 
   useEffect(() => {
     if (poste === 'secretariat_1' && afficherFormulaireDg) {
       listDirections().then(setDirections);
       listAgentsCircuitCourrier().then(setAgents);
     }
+    if (poste === 'dg') listAgentsCircuitCourrier().then(setAgents);
   }, [poste, afficherFormulaireDg]);
 
   const actions = ACTION_PAR_POSTE[poste];
@@ -142,7 +165,7 @@ export function CircuitQueuePage() {
 
   // Tous les hooks doivent s'exécuter avant un retour anticipé (règles des
   // Hooks React) : cette redirection n'intervient qu'ensuite.
-  if (postePourUrl !== poste) {
+  if (instructionsSeulement ? poste !== 'secretariat_1' : postePourUrl !== poste) {
     return <Navigate to={`/circuit/${poste}`} replace />;
   }
 
@@ -193,10 +216,12 @@ export function CircuitQueuePage() {
 
   async function initierDg(e) {
     e.preventDefault();
+    if (!instructionSelectionnee?.active) return;
     setErreurDg(null);
     setEnvoiDgEnCours(true);
     try {
       await initierCourrierDg({
+        instruction_courrier_dg_id: instructionSelectionnee.id,
         direction_destination_id: formulaireDg.direction_destination_id,
         objet: formulaireDg.objet,
         projet_reponse_contenu: contenuDg,
@@ -207,11 +232,61 @@ export function CircuitQueuePage() {
       setFormulaireDg(FORMULAIRE_DG_VIDE);
       setContenuDg('');
       setAfficherFormulaireDg(false);
+      setInstructionSelectionnee(null);
+      await rechargerInstructions();
       await charger();
     } catch (err) {
       setErreurDg(err.response?.data?.message ?? "Échec de l'initiation du courrier.");
     } finally {
       setEnvoiDgEnCours(false);
+    }
+  }
+
+  async function preparerInstruction(id) {
+    setErreurInstruction(null);
+    try {
+      const instruction = await ouvrirInstructionCourrierDg(id);
+      if (!instruction.active) {
+        setErreurInstruction('Cette instruction DG n’est plus active.');
+        await rechargerInstructions();
+        return;
+      }
+      setInstructionSelectionnee(instruction);
+      setAfficherFormulaireDg(true);
+    } catch (err) {
+      setErreurInstruction(err.response?.data?.message ?? 'Instruction DG inaccessible.');
+    }
+  }
+
+  async function demanderInstruction(e) {
+    e.preventDefault();
+    setErreurInstruction(null);
+    setInstructionEnCours(true);
+    try {
+      await creerInstructionCourrierDg({
+        instruction: instructionDg,
+        ...(destinataireInstruction ? { destinataire_user_id: Number(destinataireInstruction) } : {}),
+        ...(expirationInstruction ? { expire_at: new Date(expirationInstruction).toISOString() } : {}),
+      });
+      setInstructionDg('');
+      setDestinataireInstruction('');
+      setExpirationInstruction('');
+      setPageInstructions(1);
+      await rechargerInstructions();
+    } catch (err) {
+      setErreurInstruction(err.response?.data?.message ?? 'Échec de la création de l’instruction.');
+    } finally {
+      setInstructionEnCours(false);
+    }
+  }
+
+  async function annulerInstruction(id) {
+    setErreurInstruction(null);
+    try {
+      await annulerInstructionCourrierDg(id);
+      await rechargerInstructions();
+    } catch (err) {
+      setErreurInstruction(err.response?.data?.message ?? 'Annulation impossible.');
     }
   }
 
@@ -249,20 +324,76 @@ export function CircuitQueuePage() {
 
   return (
     <div>
-      <PageHeader title={`File d'attente — ${STATUT_LABELS[statutsActionnables[0]] ?? poste}`} />
+      <PageHeader title={instructionsSeulement ? 'Instructions DG' : `File d'attente — ${STATUT_LABELS[statutsActionnables[0]] ?? poste}`} />
+
+      {poste === 'dg' && (
+        <Card className="mb-6">
+          <CardHeader title="Demander la préparation d'un courrier" description="Instruction préalable adressée au Secrétariat 01 pour un nouveau courrier, distincte d'une réponse à un courrier reçu." />
+          <CardBody>
+            {erreurInstruction && <Alert tone="error">{erreurInstruction}</Alert>}
+            <form onSubmit={demanderInstruction} className="space-y-4">
+              <Field label="Instruction" htmlFor="instruction_dg" required>
+                <textarea id="instruction_dg" className={inputClass} value={instructionDg} onChange={(e) => setInstructionDg(e.target.value)} required minLength={5} />
+              </Field>
+              <Field label="Destinataire SEC1 nominatif (facultatif)" htmlFor="destinataire_instruction">
+                <select id="destinataire_instruction" className={inputClass} value={destinataireInstruction} onChange={(e) => setDestinataireInstruction(e.target.value)}>
+                  <option value="">Tout agent SEC1 habilité</option>
+                  {agents.filter((a) => a.poste === 'secretariat_1').map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+                </select>
+              </Field>
+              <Field label="Expiration (facultative)" htmlFor="expiration_instruction">
+                <input id="expiration_instruction" type="datetime-local" className={inputClass} value={expirationInstruction} onChange={(e) => setExpirationInstruction(e.target.value)} />
+              </Field>
+              <Button type="submit" disabled={instructionEnCours || instructionDg.trim().length < 5}>Envoyer l'instruction à SEC1</Button>
+            </form>
+            {instructions.length > 0 && (
+              <div className="mt-5 space-y-2 border-t border-border pt-4">
+                <h4 className="font-medium">Instructions DG récentes</h4>
+                {instructions.map((instruction) => (
+                  <div key={instruction.id} className="flex items-center justify-between gap-3 text-sm">
+                    <span>{instruction.instruction} — {instruction.active ? 'Active' : 'Terminée'}</span>
+                    {instruction.active && <Button type="button" size="sm" variant="secondary" onClick={() => annulerInstruction(instruction.id)}>Annuler</Button>}
+                  </div>
+                ))}
+              </div>
+            )}
+            {dernierePageInstructions > 1 && (
+              <div className="mt-3 flex items-center justify-between text-xs text-text-muted">
+                <Button type="button" size="sm" variant="secondary" disabled={pageInstructions <= 1} onClick={() => setPageInstructions((p) => p - 1)}>Précédent</Button>
+                <span>Page {pageInstructions} sur {dernierePageInstructions}</span>
+                <Button type="button" size="sm" variant="secondary" disabled={pageInstructions >= dernierePageInstructions} onClick={() => setPageInstructions((p) => p + 1)}>Suivant</Button>
+              </div>
+            )}
+          </CardBody>
+        </Card>
+      )}
 
       {poste === 'secretariat_1' && (
         <Card className="mb-6">
-          <CardHeader
-            title="Courrier de la DG"
-            action={
-              <Button type="button" variant={afficherFormulaireDg ? 'secondary' : 'primary'} onClick={() => setAfficherFormulaireDg((v) => !v)}>
-                {afficherFormulaireDg ? 'Annuler' : 'Nouveau courrier de la DG'}
-              </Button>
-            }
-          />
+          <CardHeader title="Instructions DG" description="Préparez un nouveau courrier uniquement à partir d'une instruction active de la DG." />
+          <CardBody className="space-y-3">
+            {erreurInstruction && <Alert tone="error">{erreurInstruction}</Alert>}
+            {instructions.length === 0 && <p className="text-sm text-text-muted">Aucune instruction DG active.</p>}
+            {instructions.map((instruction) => (
+              <div key={instruction.id} className="flex items-center justify-between gap-3 border-b border-border pb-2 text-sm">
+                <span>{instruction.instruction}</span>
+                <Button type="button" size="sm" onClick={() => preparerInstruction(instruction.id)}>Préparer le courrier</Button>
+              </div>
+            ))}
+            {dernierePageInstructions > 1 && (
+              <div className="flex items-center justify-between text-xs text-text-muted">
+                <Button type="button" size="sm" variant="secondary" disabled={pageInstructions <= 1} onClick={() => setPageInstructions((p) => p - 1)}>Précédent</Button>
+                <span>Page {pageInstructions} sur {dernierePageInstructions}</span>
+                <Button type="button" size="sm" variant="secondary" disabled={pageInstructions >= dernierePageInstructions} onClick={() => setPageInstructions((p) => p + 1)}>Suivant</Button>
+              </div>
+            )}
+          </CardBody>
           {afficherFormulaireDg && (
             <CardBody className="space-y-4">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-medium">Instruction DG : {instructionSelectionnee?.instruction}</p>
+                <Button type="button" size="sm" variant="secondary" onClick={() => { setAfficherFormulaireDg(false); setInstructionSelectionnee(null); }}>Fermer</Button>
+              </div>
               {erreurDg && <Alert tone="error">{erreurDg}</Alert>}
               <form onSubmit={initierDg} className="space-y-4">
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -339,7 +470,7 @@ export function CircuitQueuePage() {
                   Nécessite la validation de la DG avant envoi
                 </label>
 
-                <Button type="submit" disabled={envoiDgEnCours || !formulaireDg.direction_destination_id || !formulaireDg.relecteur_id}>
+                <Button type="submit" disabled={envoiDgEnCours || !instructionSelectionnee?.active || !formulaireDg.direction_destination_id || !formulaireDg.relecteur_id}>
                   {envoiDgEnCours ? 'Envoi…' : 'Initier le courrier'}
                 </Button>
               </form>

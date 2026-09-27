@@ -204,6 +204,7 @@ function AppRoutes() {
               statique l'emportant sur ":poste" ci-dessus. */}
           <Route element={<ProtectedRoute roles={[ROLES.AGENT_CIRCUIT_COURRIER]} postes={['secretariat_1']} />}>
             <Route path="/circuit/secretariat_1" element={<PosteDeTravailTriPage />} />
+            <Route path="/circuit/instructions-dg" element={<CircuitQueuePage instructionsSeulement />} />
           </Route>
           <Route element={<ProtectedRoute roles={[ROLES.AGENT_CIRCUIT_COURRIER]} postes={['secretariat_2']} />}>
             <Route path="/circuit/centre-dispatch" element={<CentreDispatchPage />} />

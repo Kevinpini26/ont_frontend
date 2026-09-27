@@ -42,21 +42,24 @@ const RACCOURCIS_SPECIFIQUES = [
 export function PosteDeTravailTriPage() {
   const user = useAuthStore((s) => s.user);
   const toast = useToast();
+  const [pages, setPages] = useState({ nouveaux: 1, a_trier: 1, classeur: 1 });
 
   // Trois appels filtrés par statut, plutôt qu'un seul listCourriers({})
   // non filtré : /courriers pagine à 20 résultats triés par date de
   // création, tous statuts confondus — un dossier ancien resté à trier
   // serait invisible derrière des courriers plus récents déjà enregistrés.
-  // Reste lui-même limité à 20 par bannette (voir docs/questions-ont.md) :
-  // au-delà, une vraie pagination/défilement infini resterait à construire.
-  const { donnees: reponseNouveaux, recharger: rechargerNouveaux } = useRequete((signal) => listCourriers({ statut: 'recu' }, signal), []);
+  // Chaque bannette dispose désormais de sa propre pagination.
+  const { donnees: reponseNouveaux, recharger: rechargerNouveaux } = useRequete(
+    (signal) => listCourriers({ statut: 'recu', necessite_avis_dg: 1, page: pages.nouveaux }, signal),
+    [pages.nouveaux],
+  );
   const { donnees: reponseATrier, recharger: rechargerATrier } = useRequete(
-    (signal) => listCourriers({ statut: 'en_attente_tri' }, signal),
-    [],
+    (signal) => listCourriers({ statut: 'en_attente_tri', page: pages.a_trier }, signal),
+    [pages.a_trier],
   );
   const { donnees: reponseClasseur, recharger: rechargerClasseur } = useRequete(
-    (signal) => listCourriers({ statut: 'en_attente_classeur' }, signal),
-    [],
+    (signal) => listCourriers({ statut: 'en_attente_classeur', page: pages.classeur }, signal),
+    [pages.classeur],
   );
   const { donnees: enSouffranceListe, recharger: rechargerSouffrance } = useRequete((signal) => getCourriersEnSouffrance(signal), []);
 
@@ -94,14 +97,23 @@ export function PosteDeTravailTriPage() {
       // necessite_avis_dg exclut le circuit court (direction vers
       // direction, enregistré directement par le Secrétariat 02) — jamais
       // trié par le Secrétariat 01.
-      nouveaux: filtrer(reponseNouveaux?.data, (c) => c.necessite_avis_dg),
-      a_trier: filtrer(reponseATrier?.data),
-      classeur: filtrer(reponseClasseur?.data),
+      nouveaux: filtrer(reponseNouveaux?.meta?.current_page === pages.nouveaux ? reponseNouveaux.data : [], (c) => c.necessite_avis_dg),
+      a_trier: filtrer(reponseATrier?.meta?.current_page === pages.a_trier ? reponseATrier.data : []),
+      classeur: filtrer(reponseClasseur?.meta?.current_page === pages.classeur ? reponseClasseur.data : []),
     };
-  }, [reponseNouveaux, reponseATrier, reponseClasseur, enAttenteDepart]);
+  }, [reponseNouveaux, reponseATrier, reponseClasseur, enAttenteDepart, pages]);
 
-  const bannettes = BANNETTES_CONFIG.map((b) => ({ ...b, compte: parBannette[b.id].length }));
+  const reponses = { nouveaux: reponseNouveaux, a_trier: reponseATrier, classeur: reponseClasseur };
+  const bannettes = BANNETTES_CONFIG.map((b) => ({ ...b, compte: reponses[b.id]?.meta?.total ?? parBannette[b.id].length }));
   const dossiersBannetteActive = parBannette[etatTravail.bannette] ?? [];
+  const pageCourante = pages[etatTravail.bannette];
+  const dernierePage = reponses[etatTravail.bannette]?.meta?.last_page ?? 1;
+
+  function changerPage(page) {
+    setSelectionLot(new Set());
+    setEtatTravail((s) => ({ ...s, dossierId: null }));
+    setPages((s) => ({ ...s, [etatTravail.bannette]: page }));
+  }
 
   // Sélectionne un dossier valide dès que la bannette change ou que le
   // dossier précédemment sélectionné a quitté la file (traité, ou disparu
@@ -259,7 +271,7 @@ export function PosteDeTravailTriPage() {
   const actionsDossier = useMemo(() => {
     if (!dossierActif) return [];
     if (dossierActif.en_transit) {
-      return [{ label: 'Acquitter (a)', variant: 'primary', onTrigger: () => acquitter(dossierActif) }];
+      return [{ label: 'Confirmer la réception (a)', variant: 'primary', onTrigger: () => acquitter(dossierActif) }];
     }
     if (etatTravail.bannette === 'nouveaux') {
       return [{ label: 'Transmettre au tri', variant: 'primary', onTrigger: () => envoyerAuTri(dossierActif) }];
@@ -324,7 +336,8 @@ export function PosteDeTravailTriPage() {
         selectionLot={selectionLot}
         onBasculerLot={basculerLot}
         barreLot={
-          selectionLot.size > 0 && (
+          <>
+            {selectionLot.size > 0 && (
             <div className="flex flex-wrap items-center gap-2 border-b border-border bg-surface-sunken px-3 py-2.5">
               <span className="text-xs text-text-muted">{selectionLot.size} sélectionné(s)</span>
               <Button type="button" size="sm" disabled={bordereauEnCours} onClick={traiterLotEnBordereau}>
@@ -334,7 +347,13 @@ export function PosteDeTravailTriPage() {
                 Annuler
               </Button>
             </div>
-          )
+            )}
+            <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2 text-xs text-text-muted">
+              <Button type="button" size="sm" variant="secondary" disabled={pageCourante <= 1} onClick={() => changerPage(pageCourante - 1)}>Précédent</Button>
+              <span>Page {pageCourante} sur {dernierePage}</span>
+              <Button type="button" size="sm" variant="secondary" disabled={pageCourante >= dernierePage} onClick={() => changerPage(pageCourante + 1)}>Suivant</Button>
+            </div>
+          </>
         }
         detailDossier={
           dossierActif && (

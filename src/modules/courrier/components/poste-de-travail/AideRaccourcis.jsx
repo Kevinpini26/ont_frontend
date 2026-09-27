@@ -5,7 +5,7 @@ const RACCOURCIS_COMMUNS = [
   { touche: 'Entrée', description: 'Ouvrir le dossier sélectionné' },
   { touche: 'Échap', description: 'Fermer le panneau latéral' },
   { touche: '1 – 5', description: "Déclencher l'action correspondante de la barre d'actions" },
-  { touche: 'a', description: 'Acquitter (accuser réception)' },
+  { touche: 'a', description: 'Confirmer la réception' },
   { touche: 'Espace', description: 'Sélectionner pour un traitement par lot' },
   { touche: 's', description: 'Passer au dossier suivant après traitement' },
   { touche: '?', description: 'Afficher cette aide' },
