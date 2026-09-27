@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { annulerMission, creerMission, getCourrier, prendreMissionEnCharge, retournerMission } from '../api/courrierApi';
+import { annulerMission, creerMission, demanderPreparationReponse, getCourrier, prendreMissionEnCharge, retournerMission } from '../api/courrierApi';
 import { listAgentsCircuitCourrier } from '../../kernel/api/agentsApi';
 import { Card, CardBody, CardHeader } from '../../../shared/components/ui/Card';
 import { Button } from '../../../shared/components/ui/Button';
@@ -19,7 +19,7 @@ export function MissionsDocumentairesPanel({ courrier, user, onUpdate }) {
   const [motif, setMotif] = useState('');
   const [enCours, setEnCours] = useState(false);
   const missions = courrier.missions_documentaires ?? [];
-  const estAutorite = ['dg', 'dga'].includes(user.poste) && courrier.statut === 'en_attente_avis_dg';
+  const estAutorite = ['dg', 'dga'].includes(user.poste) && ['en_attente_avis_dg', 'dispatch_execute'].includes(courrier.statut);
 
   useEffect(() => {
     if (estAutorite) listAgentsCircuitCourrier().then((liste) => setAgents(liste.filter((a) => POSTES_ASSISTANTS[user.poste].includes(a.poste))));
@@ -84,7 +84,14 @@ export function MissionsDocumentairesPanel({ courrier, user, onUpdate }) {
             <Field label="Instruction" htmlFor="instructionMission" required>
               <textarea id="instructionMission" className={inputClass} maxLength={5000} value={instruction} onChange={(e) => setInstruction(e.target.value)} />
             </Field>
-            <Button disabled={enCours || !assistantId || !instruction.trim()} onClick={() => executer(() => creerMission(courrier.id, Number(assistantId), instruction))}>Confier la mission</Button>
+            <Button
+              disabled={enCours || !assistantId || !instruction.trim()}
+              onClick={() => executer(() => user.poste === 'dg'
+                ? demanderPreparationReponse(courrier.id, Number(assistantId), instruction)
+                : creerMission(courrier.id, Number(assistantId), instruction))}
+            >
+              {user.poste === 'dg' ? 'Préparer une réponse' : 'Confier la mission'}
+            </Button>
           </div>
         )}
       </CardBody>

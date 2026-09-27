@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { Clock, FileSignature, Send, Users } from 'lucide-react';
+import { ArrowRight, Clock, FileSignature, Send, Users } from 'lucide-react';
 import { getCourriersStatistiquesDg, listCourriers } from '../api/courrierApi';
 import { getDgDisponibilite, updateDgDisponibilite } from '../../kernel/api/dgDisponibiliteApi';
 import { getStagiairesAlertes, getStagiairesStatistiques } from '../../stagiaires/api/stagiairesApi';
@@ -15,6 +15,7 @@ import { PeriodSelector } from '../../../shared/components/ui/PeriodSelector';
 import { SkeletonChart, SkeletonStatCards } from '../../../shared/components/ui/Skeleton';
 import { Pagination } from '../../../shared/components/ui/Pagination';
 import { EmptyState } from '../../../shared/components/ui/EmptyState';
+import { FilterBar } from '../../../shared/components/ui/FilterBar';
 import {
   TableWrap,
   tableClass,
@@ -164,7 +165,7 @@ export function CourrierDgDashboardPage() {
   const evolution = useMemo(() => statsStagiaires?.evolution ?? [], [statsStagiaires]);
 
   return (
-    <div>
+    <div className="flex flex-col">
       <PageHeader
         title="Espace Direction Générale"
         description="Vue d'ensemble consolidée, toutes directions confondues."
@@ -219,7 +220,7 @@ export function CourrierDgDashboardPage() {
         <ZoneAlertes items={lignesAlertes} chargement={chargementAlertes} videTitre="Rien n'attend votre décision" />
       </div>
 
-      <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <div className="order-2 mt-6 grid grid-cols-1 gap-4 border-t border-border pt-6 lg:grid-cols-2">
         {statsChargement ? (
           <>
             <SkeletonChart />
@@ -233,7 +234,7 @@ export function CourrierDgDashboardPage() {
                 {evolution.length === 0 ? (
                   <EmptyState title="Aucun dossier sur cette période" />
                 ) : (
-                  <ResponsiveContainer width="100%" height={220}>
+                  <ResponsiveContainer width="100%" height={evolution.length <= 2 ? 170 : 220}>
                     <LineChart data={evolution} margin={{ left: -20, right: 16 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} vertical={false} />
                       <XAxis dataKey="periode" tick={AXIS_TICK} axisLine={false} tickLine={false} />
@@ -252,7 +253,7 @@ export function CourrierDgDashboardPage() {
                 {parDirection.length === 0 ? (
                   <EmptyState title="Aucun stagiaire actif pour le moment" />
                 ) : (
-                  <ResponsiveContainer width="100%" height={Math.max(180, parDirection.length * 40)}>
+                  <ResponsiveContainer width="100%" height={Math.max(150, Math.min(240, parDirection.length * 38))}>
                     <BarChart data={parDirection} layout="vertical" margin={{ left: 8, right: 16 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} horizontal={false} />
                       <XAxis type="number" allowDecimals={false} tick={AXIS_TICK} axisLine={false} tickLine={false} />
@@ -268,11 +269,11 @@ export function CourrierDgDashboardPage() {
         )}
       </div>
 
-      <Card>
-        <CardHeader title="Suivi des courriers" description="Toutes directions confondues" />
+      <Card className="order-1">
+        <CardHeader title="Suivi de l’activité courrier" description="Toutes directions confondues · consultation et traçabilité" />
         <CardBody>
-          <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <Field label="Statut" htmlFor="statut-dg">
+          <FilterBar>
+            <Field label="Filtrer par statut" htmlFor="statut-dg">
               <select id="statut-dg" className={inputClass} value={statutFiltre} onChange={(e) => setStatutFiltre(e.target.value)}>
                 <option value="">Tous</option>
                 {Object.entries(STATUT_LABELS).map(([valeur, libelle]) => (
@@ -282,7 +283,7 @@ export function CourrierDgDashboardPage() {
                 ))}
               </select>
             </Field>
-          </div>
+          </FilterBar>
 
           {!chargementTable && courriers.length === 0 ? (
             <EmptyState title="Aucun courrier ne correspond" />
@@ -312,8 +313,8 @@ export function CourrierDgDashboardPage() {
                         </td>
                         <td className={tdClass}>
                           <Link to={`/courriers/${c.id}`}>
-                            <Button type="button" variant="secondary" size="sm">
-                              Suivre
+                            <Button type="button" variant="ghost" size="sm">
+                              Suivre <ArrowRight size={14} />
                             </Button>
                           </Link>
                         </td>

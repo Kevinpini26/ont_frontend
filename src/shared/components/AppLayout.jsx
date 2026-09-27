@@ -11,6 +11,7 @@ import { ThemeSelector } from './ThemeSelector';
 import { UserMenu } from './UserMenu';
 import { CommandPalette } from './CommandPalette';
 import { RouteTransition } from './RouteTransition';
+import { UserAvatar } from './ui/UserAvatar';
 
 function FilDAriane({ user }) {
   const { section, label } = usePageTitle(user);
@@ -69,7 +70,7 @@ export function AppLayout() {
     <div className="flex min-h-svh bg-surface-sunken">
       <Sidebar user={user} onLogout={seDeconnecter} mobileOpen={mobileOpen} onCloseMobile={() => setMobileOpen(false)} />
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="app-workspace flex min-w-0 flex-1 flex-col">
         {sessionExpireBientot && (
           <div
             role="alert"
@@ -85,7 +86,7 @@ export function AppLayout() {
         {/* Pas de flou d'arrière-plan (contrairement à la maquette de départ) :
             une bordure basse nette suffit à détacher la barre du contenu qui
             défile dessous. */}
-        <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b border-border bg-surface px-4">
+        <header className="sticky top-0 z-10 flex h-[68px] items-center gap-4 border-b border-border bg-surface/95 px-4 backdrop-blur-sm sm:px-6">
           <button
             type="button"
             onClick={() => setMobileOpen(true)}
@@ -100,29 +101,27 @@ export function AppLayout() {
           <button
             type="button"
             onClick={() => setRechercheOuverte(true)}
-            className="mx-auto flex w-full max-w-sm items-center gap-2 rounded-field border border-border bg-surface-sunken px-3 py-1.5 text-sm text-text-subtle hover:border-border-strong"
+            className="mx-auto flex h-10 w-full max-w-md items-center gap-2 rounded-field border border-border bg-surface-sunken px-3 text-sm text-text-subtle transition-colors hover:border-ont-blue-300 hover:bg-surface"
           >
             <Search size={15} className="shrink-0" />
             <span className="flex-1 text-left">Rechercher…</span>
             <kbd className="hidden shrink-0 rounded border border-border bg-surface px-1.5 py-0.5 text-[11px] sm:block">Ctrl K</kbd>
           </button>
 
-          <div className="flex shrink-0 items-center gap-3">
-            <ThemeSelector />
-            <NotificationsBell />
+          <div className="flex shrink-0 items-center gap-2">
+            <div className="flex items-center gap-0.5 rounded-field border border-border bg-surface-sunken/70 p-0.5">
+              <ThemeSelector />
+              <NotificationsBell />
+            </div>
             <UserMenu
               user={user}
               onLogout={seDeconnecter}
-              trigger={
-                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-ont-blue-700 text-sm font-semibold text-white">
-                  {user.name.charAt(0).toUpperCase()}
-                </span>
-              }
+              trigger={<UserAvatar name={user.name} size="md" />}
             />
           </div>
         </header>
 
-        <main className="mx-auto w-full max-w-[1440px] flex-1 px-4 py-6 sm:px-6 lg:px-8">
+        <main className="mx-auto w-full max-w-[1520px] flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
           <RouteTransition>
             <Outlet />
           </RouteTransition>

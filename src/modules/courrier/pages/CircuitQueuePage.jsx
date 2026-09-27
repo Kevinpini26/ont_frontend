@@ -36,6 +36,7 @@ import {
 } from '../../../shared/components/ui/Table';
 import { TipTapEditor } from '../components/TipTapEditor';
 import { Inbox } from 'lucide-react';
+import { depotPublicDejaTransmis, messageErreurReception, peutReceptionnerBordereau } from '../utils/receptionCourrier';
 
 // theadClass (sticky top-14 z-[5]) recouvre visuellement l'unique ligne
 // dès que la file (filtrée par recherche ou peu fournie) tient sur un
@@ -56,6 +57,16 @@ const FORMULAIRE_DG_VIDE = {
 const FORMULAIRE_VIDE = {
   objet: '',
   type: 'correspondance_generale',
+  expediteur_externe_nom: '',
+  mode_reception: 'porteur',
+  date_courrier: '',
+  reference_expediteur: '',
+  qualite_expediteur: '',
+  expediteur_externe_email: '',
+  expediteur_externe_telephone: '',
+  nombre_annexes: '0',
+  degre_urgence: '',
+  niveau_confidentialite: 'ordinaire',
   candidat_nom: '',
   candidat_email: '',
   candidat_contact: '',
@@ -110,8 +121,11 @@ export function CircuitQueuePage() {
   // sur l'action, doit correspondre à celui du courrier pour qu'il
   // apparaisse dans cette file.
   const estActionnable = (courrier) =>
-    actionsListe.some(
-      (a) => a.statutDepart === courrier.statut && (a.necessiteAvisDg === undefined || a.necessiteAvisDg === courrier.necessite_avis_dg),
+    !depotPublicDejaTransmis(courrier) && actionsListe.some(
+      (a) =>
+        a.statutDepart === courrier.statut &&
+        (a.necessiteAvisDg === undefined || a.necessiteAvisDg === courrier.necessite_avis_dg) &&
+        (a.modeReception === undefined || a.modeReception === courrier.mode_reception),
     );
 
   const enAttente = useMemo(() => {
@@ -143,6 +157,20 @@ export function CircuitQueuePage() {
         objet: formulaire.objet,
         type: formulaire.type,
         piece_jointe: formulaire.piece_jointe,
+        mode_reception: formulaire.mode_reception,
+        date_courrier: formulaire.date_courrier,
+        reference_expediteur: formulaire.reference_expediteur,
+        qualite_expediteur: formulaire.qualite_expediteur,
+        nombre_annexes: formulaire.nombre_annexes,
+        degre_urgence: formulaire.degre_urgence,
+        niveau_confidentialite: formulaire.niveau_confidentialite,
+        ...(!estDemandeStage
+          ? {
+              expediteur_externe_nom: formulaire.expediteur_externe_nom,
+              expediteur_externe_email: formulaire.expediteur_externe_email,
+              expediteur_externe_telephone: formulaire.expediteur_externe_telephone,
+            }
+          : {}),
         ...(estDemandeStage
           ? {
               candidat_nom: formulaire.candidat_nom,
@@ -157,7 +185,7 @@ export function CircuitQueuePage() {
       setFormulaire(FORMULAIRE_VIDE);
       await charger();
     } catch (err) {
-      setErreur(err.response?.data?.message ?? "Échec de la création.");
+      setErreur(messageErreurReception(err));
     } finally {
       setEnvoiEnCours(false);
     }
@@ -322,7 +350,7 @@ export function CircuitQueuePage() {
 
       {poste === 'reception' && (
         <Card className="mb-6">
-          <CardHeader title="Nouveau courrier reçu" />
+          <CardHeader title="Enregistrer un courrier reçu" description="Courrier externe reçu physiquement par l'ONT" />
           <CardBody>
             {erreur && <Alert tone="error" className="mb-4">{erreur}</Alert>}
             <form onSubmit={creerCourrier} className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -335,12 +363,13 @@ export function CircuitQueuePage() {
                   required
                 />
               </Field>
-              <Field label="Type" htmlFor="type">
+              <Field label="Type" htmlFor="type" required>
                 <select
                   id="type"
                   className={inputClass}
                   value={formulaire.type}
                   onChange={(e) => setFormulaire((f) => ({ ...f, type: e.target.value }))}
+                  required
                 >
                   {Object.entries(TYPE_LABELS).map(([valeur, libelle]) => (
                     <option key={valeur} value={valeur}>
@@ -348,6 +377,52 @@ export function CircuitQueuePage() {
                     </option>
                   ))}
                 </select>
+              </Field>
+              {!estDemandeStage && (
+                <Field label="Expéditeur / organisation" htmlFor="expediteur_externe_nom" required>
+                  <input
+                    id="expediteur_externe_nom"
+                    className={inputClass}
+                    value={formulaire.expediteur_externe_nom}
+                    onChange={(e) => setFormulaire((f) => ({ ...f, expediteur_externe_nom: e.target.value }))}
+                    required
+                  />
+                </Field>
+              )}
+              <Field label="Mode de réception" htmlFor="mode_reception" required>
+                <select
+                  id="mode_reception"
+                  className={inputClass}
+                  value={formulaire.mode_reception}
+                  onChange={(e) => setFormulaire((f) => ({ ...f, mode_reception: e.target.value }))}
+                  required
+                >
+                  <option value="porteur">Porteur / dépôt physique</option>
+                  <option value="poste">Courrier postal</option>
+                  <option value="courriel">Courriel institutionnel</option>
+                </select>
+              </Field>
+              <Field label="Date du courrier" htmlFor="date_courrier">
+                <input id="date_courrier" type="date" className={inputClass} value={formulaire.date_courrier} onChange={(e) => setFormulaire((f) => ({ ...f, date_courrier: e.target.value }))} />
+              </Field>
+              <Field label="Référence de l'expéditeur" htmlFor="reference_expediteur">
+                <input id="reference_expediteur" className={inputClass} value={formulaire.reference_expediteur} onChange={(e) => setFormulaire((f) => ({ ...f, reference_expediteur: e.target.value }))} />
+              </Field>
+              <Field label="Qualité / fonction de l'expéditeur" htmlFor="qualite_expediteur">
+                <input id="qualite_expediteur" className={inputClass} value={formulaire.qualite_expediteur} onChange={(e) => setFormulaire((f) => ({ ...f, qualite_expediteur: e.target.value }))} />
+              </Field>
+              {!estDemandeStage && (
+                <>
+                  <Field label="E-mail" htmlFor="expediteur_externe_email">
+                    <input id="expediteur_externe_email" type="email" className={inputClass} value={formulaire.expediteur_externe_email} onChange={(e) => setFormulaire((f) => ({ ...f, expediteur_externe_email: e.target.value }))} />
+                  </Field>
+                  <Field label="Téléphone" htmlFor="expediteur_externe_telephone">
+                    <input id="expediteur_externe_telephone" type="tel" className={inputClass} value={formulaire.expediteur_externe_telephone} onChange={(e) => setFormulaire((f) => ({ ...f, expediteur_externe_telephone: e.target.value }))} />
+                  </Field>
+                </>
+              )}
+              <Field label="Nombre d'annexes" htmlFor="nombre_annexes">
+                <input id="nombre_annexes" type="number" min="0" className={inputClass} value={formulaire.nombre_annexes} onChange={(e) => setFormulaire((f) => ({ ...f, nombre_annexes: e.target.value }))} />
               </Field>
               <Field label="Document scanné" htmlFor="piece_jointe" required hint="Numérisation obligatoire du courrier physique reçu — PDF, JPG ou PNG, 5 Mo max.">
                 <input
@@ -421,6 +496,27 @@ export function CircuitQueuePage() {
                 </>
               )}
 
+              <fieldset className="space-y-4 rounded-card border border-border bg-surface-sunken p-4 sm:col-span-2 lg:col-span-3">
+                <legend className="px-2 text-sm font-semibold text-text">Informations complémentaires</legend>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <Field label="Degré d'urgence" htmlFor="degre_urgence">
+                    <select id="degre_urgence" className={inputClass} value={formulaire.degre_urgence} onChange={(e) => setFormulaire((f) => ({ ...f, degre_urgence: e.target.value }))}>
+                      <option value="">Sera déterminé par SEC1</option>
+                      <option value="normal">Normal</option>
+                      <option value="urgent">Urgent</option>
+                      <option value="tres_urgent">Très urgent</option>
+                    </select>
+                  </Field>
+                  <Field label="Confidentialité" htmlFor="niveau_confidentialite">
+                    <select id="niveau_confidentialite" className={inputClass} value={formulaire.niveau_confidentialite} onChange={(e) => setFormulaire((f) => ({ ...f, niveau_confidentialite: e.target.value }))}>
+                      <option value="ordinaire">Ordinaire</option>
+                      <option value="confidentiel">Confidentiel</option>
+                      <option value="secret">Secret</option>
+                    </select>
+                  </Field>
+                </div>
+              </fieldset>
+
               <div className="flex items-end">
                 <Button type="submit" disabled={envoiEnCours || !formulaire.piece_jointe}>
                   {envoiEnCours ? 'Enregistrement…' : 'Enregistrer la réception'}
@@ -481,7 +577,7 @@ export function CircuitQueuePage() {
                       // la DG ne peut jamais actionner avec succès.
                       const dechargeNonPertinentePourCePoste =
                         poste === 'dg' && (c.statut === 'en_relecture' || c.statut === 'projet_a_valider');
-                      const enTransitPourCePoste = c.en_transit && !dechargeNonPertinentePourCePoste;
+                      const enTransitPourCePoste = peutReceptionnerBordereau(c, user) && !dechargeNonPertinentePourCePoste;
 
                       return (
                         <tr key={c.id} className={trHoverClass}>
@@ -495,7 +591,7 @@ export function CircuitQueuePage() {
                               />
                             )}
                           </td>
-                          <td className={`${tdClassPremiere} whitespace-nowrap`}>{c.numero_accuse_reception}</td>
+                          <td className={`${tdClassPremiere} whitespace-nowrap`}>{c.numero_enregistrement ?? c.numero_accuse_reception}</td>
                           <td className={`${tdClass} max-w-[16rem] truncate`} title={c.objet}>{c.objet}</td>
                           <td className={tdClass}>{TYPE_LABELS[c.type]}</td>
                           <td className={tdClass}>
@@ -506,7 +602,11 @@ export function CircuitQueuePage() {
                             )}
                           </td>
                           <td className={tdClass}>
-                            {enTransitPourCePoste ? (
+                            {poste === 'reception' && c.statut === 'recu' && c.mode_reception === 'depot_en_ligne' ? (
+                              <Badge tone={c.numero_enregistrement ? 'success' : 'warning'}>
+                                {c.numero_enregistrement ? 'Enregistré — à transmettre' : 'À enregistrer'}
+                              </Badge>
+                            ) : enTransitPourCePoste ? (
                               <Badge tone="warning">En transit</Badge>
                             ) : (
                               <Badge tone="info">{STATUT_LABELS[c.statut]}</Badge>
@@ -515,7 +615,7 @@ export function CircuitQueuePage() {
                           <td className={tdClass}>
                             {enTransitPourCePoste ? (
                               <Button type="button" size="sm" variant="secondary" onClick={() => accuserReceptionEtRecharger(c.id)}>
-                                Accuser réception
+                                Confirmer la réception
                               </Button>
                             ) : (
                               <Link to={`/courriers/${c.id}`}>

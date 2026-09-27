@@ -11,6 +11,8 @@ import { StatCard } from '../../../shared/components/ui/StatCard';
 import { EmptyState } from '../../../shared/components/ui/EmptyState';
 import { SkeletonChart, SkeletonLines, SkeletonStatCards } from '../../../shared/components/ui/Skeleton';
 import { CHART_COLORS } from '../../../shared/chartColors';
+import { InstitutionBanner } from '../../../shared/components/InstitutionBanner';
+import { useAuthStore } from '../../kernel/store/authStore';
 
 const AXIS_TICK = { fill: CHART_COLORS.axisTick, fontSize: 11 };
 
@@ -62,6 +64,7 @@ function ListeCourriers({ courriers, chargement }) {
  * dossiers "en transit") reste sur CircuitQueuePage.
  */
 export function CourrierCircuitDashboardPage() {
+  const user = useAuthStore((s) => s.user);
   const [stats, setStats] = useState(null);
   const [chargement, setChargement] = useState(true);
   const [enregistres, setEnregistres] = useState([]);
@@ -87,7 +90,13 @@ export function CourrierCircuitDashboardPage() {
 
   return (
     <div>
-      <PageHeader title="Tableau de bord du circuit courrier" description="Volumétrie et délais de traitement, toutes directions confondues." />
+      <PageHeader title={`Bonjour, ${user?.name?.split(' ')[0] ?? 'collègue'}`} description="Voici l’état de l’activité documentaire et des files de traitement." />
+
+      <InstitutionBanner
+        className="mb-6"
+        title="Notre patrimoine, une responsabilité à transmettre."
+        description="Le système documentaire de l’ONT garantit la continuité, la traçabilité et la conservation de chaque décision institutionnelle."
+      />
 
       {chargement || !stats ? (
         <>
@@ -130,7 +139,7 @@ export function CourrierCircuitDashboardPage() {
                 {stats.en_cours_total === 0 ? (
                   <EmptyState title="Aucun courrier en cours" description="Toutes les files d'attente sont vides pour le moment." />
                 ) : (
-                  <ResponsiveContainer width="100%" height={280}>
+                  <ResponsiveContainer width="100%" height={Math.max(160, Math.min(280, stats.par_statut.length * 42))}>
                     <BarChart data={stats.par_statut} layout="vertical" margin={{ left: 8, right: 16 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} horizontal={false} />
                       <XAxis type="number" allowDecimals={false} tick={AXIS_TICK} axisLine={false} tickLine={false} />
@@ -152,7 +161,7 @@ export function CourrierCircuitDashboardPage() {
                     description="Le délai moyen apparaît dès qu'un courrier a franchi au moins deux étapes du circuit."
                   />
                 ) : (
-                  <ResponsiveContainer width="100%" height={280}>
+                  <ResponsiveContainer width="100%" height={Math.max(160, Math.min(280, stats.temps_moyen_par_etape.length * 42))}>
                     <BarChart data={stats.temps_moyen_par_etape} layout="vertical" margin={{ left: 8, right: 16 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} horizontal={false} />
                       <XAxis type="number" unit="h" tick={AXIS_TICK} axisLine={false} tickLine={false} />

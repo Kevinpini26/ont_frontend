@@ -1,6 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { listMesMissions, prendreMissionEnCharge, retournerMission } from '../api/courrierApi';
+import {
+  creerProjetReponseMission,
+  listMesMissions,
+  prendreMissionEnCharge,
+  retournerMission,
+  sauvegarderProjetReponseMission,
+  soumettreProjetReponseMission,
+} from '../api/courrierApi';
+import { TipTapEditor } from '../components/TipTapEditor';
 import { PageHeader } from '../../../shared/components/ui/PageHeader';
 import { Card, CardBody } from '../../../shared/components/ui/Card';
 import { Button } from '../../../shared/components/ui/Button';
@@ -8,6 +16,70 @@ import { Badge } from '../../../shared/components/ui/Badge';
 import { EmptyState } from '../../../shared/components/ui/EmptyState';
 import { Field, inputClass } from '../../../shared/components/ui/Field';
 import { LoadingBlock } from '../../../shared/components/ui/Spinner';
+
+const contenuVide = { type: 'doc', content: [{ type: 'paragraph' }] };
+
+function ProjetReponseMission({ mission, disabled, executer }) {
+  const projet = mission.projet_courrier;
+  const [objet, setObjet] = useState(projet?.objet ?? `Réponse à : ${mission.courrier?.objet ?? ''}`);
+  const [destinataireNom, setDestinataireNom] = useState(projet?.destinataire_externe_nom ?? mission.courrier?.expediteur_externe_nom ?? '');
+  const [destinataireEmail, setDestinataireEmail] = useState(projet?.destinataire_externe_email ?? mission.courrier?.expediteur_externe_email ?? '');
+  const [contenu, setContenu] = useState(projet?.projet_reponse_contenu ?? contenuVide);
+
+  if (mission.statut !== 'en_cours') return null;
+
+  const payload = {
+    objet,
+    destinataire_externe_nom: destinataireNom,
+    destinataire_externe_email: destinataireEmail || null,
+    projet_reponse_contenu: contenu,
+  };
+
+  return (
+    <div className="mt-4 space-y-3 border-t border-border pt-4">
+      {projet?.projet_renvoi_observation && (
+        <p className="rounded-field bg-warning-subtle p-3 text-sm text-warning-strong">
+          Correction demandée : {projet.projet_renvoi_observation}
+        </p>
+      )}
+      <Field label="Objet de la réponse" required>
+        <input className={inputClass} value={objet} onChange={(event) => setObjet(event.target.value)} />
+      </Field>
+      <div className="grid gap-3 md:grid-cols-2">
+        <Field label="Destinataire institutionnel" required>
+          <input className={inputClass} value={destinataireNom} onChange={(event) => setDestinataireNom(event.target.value)} />
+        </Field>
+        <Field label="E-mail du destinataire">
+          <input type="email" className={inputClass} value={destinataireEmail} onChange={(event) => setDestinataireEmail(event.target.value)} />
+        </Field>
+      </div>
+      <Field label="Projet de réponse" required>
+        <TipTapEditor content={contenu} onChange={setContenu} />
+      </Field>
+      <div className="flex flex-wrap gap-2">
+        {!projet ? (
+          <Button disabled={disabled || !objet.trim() || !destinataireNom.trim()} onClick={() => executer(() => creerProjetReponseMission(mission.id, payload))}>
+            Créer le brouillon D
+          </Button>
+        ) : projet.statut === 'projet_a_rediger' ? (
+          <>
+            <Button variant="secondary" disabled={disabled || !objet.trim() || !destinataireNom.trim()} onClick={() => executer(() => sauvegarderProjetReponseMission(mission.id, payload))}>
+              Sauvegarder le brouillon
+            </Button>
+            <Button disabled={disabled || !objet.trim() || !destinataireNom.trim()} onClick={() => executer(async () => {
+              await sauvegarderProjetReponseMission(mission.id, payload);
+              await soumettreProjetReponseMission(mission.id, contenu);
+            })}>
+              Soumettre à la relecture
+            </Button>
+          </>
+        ) : (
+          <p className="text-sm text-text-subtle">Projet soumis au relecteur institutionnel.</p>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export function MissionsAssistantsPage() {
   const [missions, setMissions] = useState(null);
@@ -50,10 +122,15 @@ export function MissionsAssistantsPage() {
                   <Badge tone={mission.statut === 'retournee' ? 'success' : mission.statut === 'annulee' ? 'neutral' : 'warning'}>{mission.statut_label}</Badge>
                 </div>
                 <p><span className="font-medium">Instruction :</span> {mission.instruction}</p>
+                {mission.type === 'preparation_reponse' && (
+                  <p className="text-sm text-text-subtle">Projet officiel D — relecteur déterminé automatiquement lors de la soumission.</p>
+                )}
                 {mission.compte_rendu && <p><span className="font-medium">Compte rendu :</span> {mission.compte_rendu}</p>}
                 {mission.statut === 'assignee' && <Button disabled={enCours} onClick={() => executer(() => prendreMissionEnCharge(mission.id))}>Prendre en charge</Button>}
                 {mission.statut === 'en_cours' && (
-                  <div className="space-y-2">
+                  mission.type === 'preparation_reponse' ? (
+                    <ProjetReponseMission mission={mission} disabled={enCours} executer={executer} />
+                  ) : <div className="space-y-2">
                     <Field label="Compte rendu" htmlFor={`compte-rendu-${mission.id}`} required>
                       <textarea id={`compte-rendu-${mission.id}`} className={inputClass} value={retours[mission.id] ?? ''} onChange={(e) => setRetours((r) => ({ ...r, [mission.id]: e.target.value }))} />
                     </Field>

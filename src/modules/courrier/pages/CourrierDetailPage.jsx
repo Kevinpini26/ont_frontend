@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Eye } from 'lucide-react';
+import { Building2, CalendarDays, Eye, Hash, Route } from 'lucide-react';
 import {
   accuserReception,
   dispatcherDirection,
@@ -40,6 +40,7 @@ import {
   TONE_URGENCE,
   MENTION_IMPUTATION_LABELS,
   POSTES_ASSISTANTS,
+  STATUT_LABELS,
 } from '../constants';
 import { listDirections } from '../../kernel/api/directionsApi';
 import { PageHeader } from '../../../shared/components/ui/PageHeader';
@@ -81,7 +82,12 @@ export function CourrierDetailPage() {
           courrier.numero_enregistrement ? ` · Enregistré sous ${courrier.numero_enregistrement}` : ''
         }${courrier.cote_classement ? ` · Cote ${courrier.cote_classement}` : ''} · ${TYPE_LABELS[courrier.type]}`}
         action={
-          courrier.pdf_disponible && (
+          <>
+            <Badge tone="info">{STATUT_LABELS[courrier.statut] ?? courrier.statut}</Badge>
+            {courrier.mode_reception === 'depot_en_ligne' && !courrier.numero_enregistrement && (
+              <Badge tone="warning">À enregistrer</Badge>
+            )}
+            {courrier.pdf_disponible && (
             <Button
               type="button"
               variant="secondary"
@@ -96,7 +102,8 @@ export function CourrierDetailPage() {
               <Eye size={18} />
               Voir le PDF signé
             </Button>
-          )
+            )}
+          </>
         }
       />
 
@@ -106,25 +113,40 @@ export function CourrierDetailPage() {
         </div>
       )}
 
-      <StatutTimeline
-        statut={courrier.statut}
-        necessiteAvisDg={courrier.necessite_avis_dg}
-        initieParDg={courrier.initie_par_dg}
-        validationDgRequise={courrier.validation_dg_requise}
-        transitions={courrier.transitions}
-      />
+      <div className="mb-5 grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_300px]">
+        <div className="min-w-0">
+          <StatutTimeline
+            statut={courrier.statut}
+            necessiteAvisDg={courrier.necessite_avis_dg}
+            initieParDg={courrier.initie_par_dg}
+            validationDgRequise={courrier.validation_dg_requise}
+            transitions={courrier.transitions}
+          />
+        </div>
+        <Card className="xl:sticky xl:top-[88px]">
+          <CardHeader title="Repères du dossier" />
+          <CardBody>
+            <dl className="space-y-4 text-sm">
+              <div className="flex gap-3"><Hash size={17} className="mt-0.5 shrink-0 text-ont-blue-600" /><div><dt className="text-xs text-text-subtle">Référence</dt><dd className="mt-0.5 font-semibold text-text">{courrier.reference_documentaire ?? courrier.numero_accuse_reception}</dd></div></div>
+              <div className="flex gap-3"><Building2 size={17} className="mt-0.5 shrink-0 text-ont-blue-600" /><div><dt className="text-xs text-text-subtle">Destination</dt><dd className="mt-0.5 font-medium text-text">{courrier.direction_destination?.nom ?? 'Direction Générale'}</dd></div></div>
+              <div className="flex gap-3"><Route size={17} className="mt-0.5 shrink-0 text-ont-blue-600" /><div><dt className="text-xs text-text-subtle">Cycle décisionnel</dt><dd className="mt-0.5 font-medium text-text">Cycle {courrier.cycle_courant ?? courrier.tour ?? 1}</dd></div></div>
+              <div className="flex gap-3"><CalendarDays size={17} className="mt-0.5 shrink-0 text-ont-blue-600" /><div><dt className="text-xs text-text-subtle">Dernière activité</dt><dd className="mt-0.5 font-medium text-text">{courrier.updated_at ? new Date(courrier.updated_at).toLocaleString('fr-FR') : '—'}</dd></div></div>
+            </dl>
+          </CardBody>
+        </Card>
+      </div>
 
-      <div className="mb-6">
+      <div className="mb-5">
         <BordereauxTimeline transitions={courrier.transitions} />
       </div>
 
-      <div className="mb-6">
+      <div className="mb-5">
         <MissionsDocumentairesPanel courrier={courrier} user={user} onUpdate={setCourrier} />
       </div>
 
       {erreur && <Alert tone="error" className="mb-6">{erreur}</Alert>}
 
-      <div className="mb-6 space-y-6">
+      <div className="mb-5 space-y-5">
         <Card>
           <CardHeader title="Informations" />
           <CardBody className="space-y-3 text-sm">
@@ -135,9 +157,14 @@ export function CourrierDetailPage() {
               <span className="font-medium text-text">Destination : </span>
               {courrier.direction_destination?.nom ?? 'Direction Générale'}
             </p>
-            {(courrier.numero_enregistrement || courrier.reference_documentaire || courrier.numero_depart) && (
+            {(courrier.mode_reception === 'depot_en_ligne' || courrier.numero_enregistrement || courrier.reference_documentaire || courrier.numero_depart) && (
               <dl className="grid gap-2 rounded-field border border-border p-3 sm:grid-cols-3">
-                {courrier.numero_enregistrement && (
+                {courrier.mode_reception === 'depot_en_ligne' && !courrier.numero_enregistrement ? (
+                  <div>
+                    <dt className="text-xs text-text-subtle">Numéro d’enregistrement</dt>
+                    <dd className="font-medium text-warning">Non enregistré</dd>
+                  </div>
+                ) : courrier.numero_enregistrement && (
                   <div>
                     <dt className="text-xs text-text-subtle">Numéro d’enregistrement</dt>
                     <dd className="font-medium text-text">{courrier.numero_enregistrement}</dd>
@@ -505,10 +532,10 @@ function ActionsCourrier({ courrier, user, executer }) {
   const [dgIndisponible, setDgIndisponible] = useState(false);
 
   useEffect(() => {
-    if (courrier.statut === 'projet_a_rediger' && POSTES_ASSISTANTS.includes(user.poste)) {
+    if (courrier.sens !== 'sortant' && courrier.statut === 'projet_a_rediger' && POSTES_ASSISTANTS.includes(user.poste)) {
       listAgentsCircuitCourrier().then(setAgents);
     }
-  }, [courrier.statut, user.poste]);
+  }, [courrier.sens, courrier.statut, user.poste]);
 
   useEffect(() => {
     if (courrier.statut === 'en_attente_avis_dg' && user.poste === 'dga') {
@@ -522,6 +549,7 @@ function ActionsCourrier({ courrier, user, executer }) {
   // déterminé côté serveur par la nature du courrier et rejeté s'il ne
   // correspond pas (voir classificationAttendue()).
   const classification = classificationAttendue(courrier);
+  const estDepotPublicRecu = courrier.statut === 'recu' && courrier.mode_reception === 'depot_en_ligne';
 
   async function executerEtSuivre(action) {
     setEnvoiEnCours(true);
@@ -530,6 +558,49 @@ function ActionsCourrier({ courrier, user, executer }) {
     } finally {
       setEnvoiEnCours(false);
     }
+  }
+
+  if (estDepotPublicRecu && user.poste === 'reception' && !courrier.numero_enregistrement) {
+    return (
+      <Card>
+        <CardHeader title="Enregistrer le dépôt" description="Attribuez le numéro institutionnel avant toute transmission à SEC1." />
+        <CardBody className="space-y-4">
+          <Field label="Classification">
+            <Badge tone="warning">{CLASSIFICATION_LABELS[classification]}</Badge>
+          </Field>
+          <Field label="Accusé de réception du partenaire" htmlFor="accuseReceptionPartenaireDepot">
+            <input
+              id="accuseReceptionPartenaireDepot"
+              className={inputClass}
+              value={accuseReceptionPartenaire}
+              onChange={(e) => setAccuseReceptionPartenaire(e.target.value)}
+            />
+          </Field>
+          <Button
+            disabled={envoiEnCours || !accuseReceptionPartenaire.trim()}
+            onClick={() => executerEtSuivre(() => enregistrer(courrier.id, classification, noteTechnique, accuseReceptionPartenaire))}
+          >
+            Enregistrer
+          </Button>
+        </CardBody>
+      </Card>
+    );
+  }
+
+  if (estDepotPublicRecu && user.poste === 'reception' && courrier.numero_enregistrement) {
+    return (
+      <Card>
+        <CardHeader title="Transmettre à SEC1" description={`Dépôt enregistré sous ${courrier.numero_enregistrement}. Il peut maintenant entrer dans le circuit administratif.`} />
+        <CardBody className="space-y-4">
+          <Field label="Instruction de transmission" htmlFor="instructionTransmissionInitiale">
+            <textarea id="instructionTransmissionInitiale" className={inputClass} maxLength={2000} value={instructionTransmission} onChange={(e) => setInstructionTransmission(e.target.value)} />
+          </Field>
+          <Button disabled={envoiEnCours} onClick={() => executerEtSuivre(() => transmettreSec1(courrier.id, instructionTransmission))}>
+            Transmettre à SEC1
+          </Button>
+        </CardBody>
+      </Card>
+    );
   }
 
   // Tant que le bordereau qui a amené ce dossier à son statut actuel n'est
@@ -552,10 +623,10 @@ function ActionsCourrier({ courrier, user, executer }) {
     if (eligiblePourDecharge) {
       return (
         <Card>
-          <CardHeader title="Accuser réception" description="Ce dossier vous a été transmis et attend votre décharge avant que vous puissiez agir dessus." />
+          <CardHeader title="Confirmer la réception" description="Ce dossier vous a été transmis et attend votre décharge avant que vous puissiez agir dessus." />
           <CardBody>
             <Button disabled={envoiEnCours} onClick={() => executerEtSuivre(() => accuserReception(courrier.id))}>
-              Accuser réception
+              Confirmer la réception
             </Button>
           </CardBody>
         </Card>
@@ -733,7 +804,7 @@ function ActionsCourrier({ courrier, user, executer }) {
     );
   }
 
-  if (courrier.statut === 'projet_a_rediger' && POSTES_ASSISTANTS.includes(user.poste)) {
+  if (courrier.sens !== 'sortant' && courrier.statut === 'projet_a_rediger' && POSTES_ASSISTANTS.includes(user.poste)) {
     return (
       <Card>
         <CardHeader title="Rédiger le projet de réponse" />

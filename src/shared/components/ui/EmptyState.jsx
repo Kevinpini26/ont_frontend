@@ -1,13 +1,14 @@
-import { AntilopeSilhouette } from './AntilopeSilhouette';
+import { Inbox } from 'lucide-react';
 
 export function EmptyState({ icon, title, description, action }) {
   return (
-    <div className="relative flex flex-col items-center justify-center gap-2 overflow-hidden rounded-card border border-dashed border-border-strong px-6 py-12 text-center">
-      <AntilopeSilhouette className="pointer-events-none absolute inset-0 m-auto h-40 w-40 text-text-subtle opacity-[0.08]" />
-      <div className="relative">
-        {icon && <div className="mb-1 text-3xl text-text-subtle">{icon}</div>}
-        <p className="text-sm font-medium text-text-muted">{title}</p>
-        {description && <p className="max-w-sm text-sm text-text-subtle">{description}</p>}
+    <div className="flex flex-col items-center justify-center rounded-card border border-dashed border-border-strong bg-surface-sunken/35 px-5 py-8 text-center">
+      <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-field border border-border bg-surface text-text-subtle">
+        {icon ?? <Inbox size={17} aria-hidden="true" />}
+      </div>
+      <div>
+        <p className="text-sm font-semibold text-text-muted">{title}</p>
+        {description && <p className="mt-1 max-w-sm text-xs leading-relaxed text-text-subtle">{description}</p>}
         {action && <div className="mt-2">{action}</div>}
       </div>
     </div>

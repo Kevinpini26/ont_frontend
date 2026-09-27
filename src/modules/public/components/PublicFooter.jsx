@@ -25,7 +25,7 @@ const LIENS_NAVIGATION = [
 export function PublicFooter() {
   return (
     <footer className="border-t border-ont-blue-900 bg-ont-blue-950">
-      <div className="mx-auto grid w-full max-w-7xl grid-cols-1 gap-10 px-4 py-12 sm:grid-cols-2 sm:px-6 lg:grid-cols-4 lg:px-8">
+      <div className="mx-auto grid w-full max-w-7xl grid-cols-1 gap-8 px-4 py-10 sm:grid-cols-2 sm:px-6 lg:grid-cols-[1.15fr_0.75fr_1.1fr_1.35fr] lg:gap-10 lg:px-8">
         <div>
           <div className="mb-3 flex items-center gap-2.5">
             <OntLogo className="h-9 w-9 shrink-0" />
@@ -91,7 +91,7 @@ export function PublicFooter() {
         </div>
       </div>
 
-      <div className="border-t border-ont-blue-900 px-4 py-5 text-center text-xs text-ont-blue-300">
+      <div className="border-t border-white/10 px-4 py-4 text-center text-xs text-ont-blue-300">
         © {new Date().getFullYear()} Office National du Tourisme — République Démocratique du Congo. Tous droits réservés.
       </div>
     </footer>

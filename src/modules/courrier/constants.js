@@ -123,6 +123,7 @@ export const ACTION_PAR_POSTE = {
   // Un retour réservé repart obligatoirement vers SEC1, jamais directement
   // vers la DG.
   reception: [
+    { statutDepart: 'recu', modeReception: 'depot_en_ligne', endpoint: 'enregistrer', libelle: 'Enregistrer le dépôt' },
     { statutDepart: 'retour_reception', endpoint: 'transmettre-sec1', libelle: 'Transmettre à SEC1' },
   ],
   // La DGA n'agit réellement que lorsque la DG est marquée indisponible

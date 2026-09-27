@@ -20,9 +20,10 @@ export function BordereauxTimeline({ transitions }) {
         {transitions.length === 0 ? (
           <EmptyState title="Aucun bordereau pour le moment" />
         ) : (
-          <ol className="space-y-3">
+          <ol className="relative ml-2 space-y-0 border-l border-border-strong">
             {transitions.map((t, index) => (
-              <li key={index} className="rounded-field border border-border p-3 text-sm">
+              <li key={index} className="relative ml-5 border-b border-border py-4 text-sm last:border-b-0 first:pt-0 last:pb-0">
+                <span className="absolute -left-[1.72rem] top-5 h-3 w-3 rounded-full border-2 border-surface bg-ont-blue-500 ring-1 ring-border-strong first:top-1" aria-hidden="true" />
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <p className="text-text">
                     <span className="font-medium">

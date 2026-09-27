@@ -6,6 +6,7 @@ import { OntLogo } from './ui/OntLogo';
 import { UserMenu } from './UserMenu';
 import { useSidebarCounts } from '../hooks/useSidebarCounts';
 import { useFocusTrap } from '../hooks/useFocusTrap';
+import { UserAvatar } from './ui/UserAvatar';
 
 const BADGE_TONES = {
   danger: 'bg-ont-red-500 text-white',
@@ -96,27 +97,30 @@ export function Sidebar({ user, onLogout, mobileOpen, onCloseMobile }) {
 
     return (
       <div className="flex h-full flex-col">
-        <div className={`flex items-center gap-2.5 border-b border-ont-blue-900 py-5 ${plie ? 'justify-center px-3' : 'px-5'}`}>
-          <OntLogo className="h-10 w-10 shrink-0" />
+        <div className={`flex min-h-[84px] items-center gap-3 border-b border-white/10 ${plie ? 'justify-center px-3' : 'px-5'}`}>
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-card bg-white p-1 shadow-sm">
+            <OntLogo className="h-9 w-9" />
+          </span>
           {!plie && (
             <div className="min-w-0">
-              <p className="truncate font-heading text-sm font-semibold text-white">Office National du Tourisme</p>
-              <p className="text-xs text-ont-blue-300">Système d'information</p>
+              <p className="font-heading text-[13px] font-semibold uppercase leading-tight tracking-[0.04em] text-white">Office National</p>
+              <p className="font-heading text-[13px] font-semibold uppercase leading-tight tracking-[0.04em] text-white">du Tourisme</p>
+              <p className="mt-1 text-[10px] font-medium uppercase tracking-[0.12em] text-ont-gold-300">R. D. Congo</p>
             </div>
           )}
         </div>
 
-        <nav ref={navRef} className="relative flex-1 overflow-y-auto px-3 py-4">
+        <nav ref={navRef} className="relative flex-1 overflow-y-auto px-3 py-5">
           <span
             aria-hidden="true"
-            className="absolute left-0 w-[3px] rounded-full bg-ont-gold-400 transition-[top,height] duration-150 ease-out"
+            className="absolute left-0 w-1 rounded-r-full bg-ont-gold-400 transition-[top,height] duration-150 ease-out"
             style={railStyle}
           />
 
           {sections.map((section, index) => (
             <div key={section.title} className={`pb-3 pt-3 first:pt-0 ${index > 0 ? 'border-t border-ont-blue-900/50' : ''}`}>
               {!plie && (
-                <p className="mb-2 px-2 text-2xs font-semibold uppercase tracking-[0.08em] text-ont-blue-400">{section.title}</p>
+                <p className="mb-2 px-2 text-2xs font-semibold uppercase tracking-[0.14em] text-ont-blue-300/80">{section.title}</p>
               )}
               <ul className="space-y-1">
                 {section.items.map((item) => {
@@ -128,11 +132,11 @@ export function Sidebar({ user, onLogout, mobileOpen, onCloseMobile }) {
                         onClick={onCloseMobile}
                         title={plie ? item.label : undefined}
                         aria-label={plie ? item.label : undefined}
-                        className={`flex items-center gap-2.5 rounded-field px-3 py-2 text-sm font-medium transition-colors ${plie ? 'justify-center' : 'min-w-0'} ${
-                          active ? 'bg-ont-blue-800 text-white' : 'text-ont-blue-100 hover:bg-ont-blue-900 hover:text-white'
+                        className={`flex min-h-10 items-center gap-3 rounded-field px-3 py-2 text-sm font-medium transition-colors ${plie ? 'justify-center' : 'min-w-0'} ${
+                          active ? 'bg-white/10 text-white ring-1 ring-inset ring-white/10' : 'text-blue-100/85 hover:bg-white/[0.06] hover:text-white'
                         }`}
                       >
-                        <item.icon size={20} className="shrink-0" />
+                        <item.icon size={18} strokeWidth={active ? 2.2 : 1.8} className={active ? 'shrink-0 text-ont-gold-300' : 'shrink-0'} />
                         {!plie && <span className="truncate">{item.label}</span>}
                         {!plie && item.countKey && <BadgeCompteur compteur={compteurs[item.countKey]} />}
                       </NavLink>
@@ -152,17 +156,10 @@ export function Sidebar({ user, onLogout, mobileOpen, onCloseMobile }) {
             panelClassName="bottom-full mb-2"
             trigger={
               plie ? (
-                <span
-                  title={user.name}
-                  className="flex h-9 w-9 items-center justify-center rounded-full bg-ont-blue-800 text-sm font-semibold text-white hover:bg-ont-blue-700"
-                >
-                  {user.name.charAt(0).toUpperCase()}
-                </span>
+                <UserAvatar name={user.name} size="md" className="hover:bg-ont-blue-700" />
               ) : (
                 <span className="flex w-full items-center gap-2.5 rounded-field px-1 py-1 text-left hover:bg-ont-blue-900">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-ont-blue-800 text-sm font-semibold text-white">
-                    {user.name.charAt(0).toUpperCase()}
-                  </span>
+                  <UserAvatar name={user.name} size="md" />
                   <span className="min-w-0">
                     <span className="block truncate text-sm font-medium text-white">{user.name}</span>
                     <span className="block truncate text-xs text-ont-blue-300">{user.role_label}</span>
@@ -181,8 +178,8 @@ export function Sidebar({ user, onLogout, mobileOpen, onCloseMobile }) {
       {/* Sidebar fixe (desktop) — fond ont-blue foncé + texte clair : reste
           plus lisible qu'un fond clair vu la densité de la nav et cohérent
           avec le reste de l'interface, majoritairement en thème sombre. */}
-      <aside className={`relative hidden shrink-0 bg-ont-blue-950 transition-[width] duration-150 lg:block ${repliee ? 'w-18' : 'w-64'}`}>
-        <div className={`fixed h-svh transition-[width] duration-150 ${repliee ? 'w-18' : 'w-64'}`}>{contenu(true)}</div>
+      <aside className={`relative hidden shrink-0 bg-[#071e36] transition-[width] duration-150 lg:block ${repliee ? 'w-18' : 'w-[272px]'}`}>
+        <div className={`fixed h-svh border-r border-white/5 bg-[#071e36] transition-[width] duration-150 ${repliee ? 'w-18' : 'w-[272px]'}`}>{contenu(true)}</div>
 
         <button
           type="button"
@@ -205,7 +202,7 @@ export function Sidebar({ user, onLogout, mobileOpen, onCloseMobile }) {
             role="dialog"
             aria-modal="true"
             aria-label="Menu de navigation"
-            className="absolute inset-y-0 left-0 w-64 bg-ont-blue-950 shadow-raised"
+            className="absolute inset-y-0 left-0 w-[272px] bg-[#071e36] shadow-raised"
           >
             {contenu(false)}
           </aside>

@@ -43,7 +43,12 @@ export function StatutTimeline({ statut, necessiteAvisDg = true, initieParDg = f
   );
 
   return (
-    <ol className="mb-6 flex flex-col gap-0 rounded-card border border-border bg-surface p-4 sm:flex-row sm:gap-0 sm:p-5">
+    <section className="rounded-card border border-border bg-surface shadow-[0_1px_2px_rgb(15_23_42/0.025)]">
+      <div className="border-b border-border px-5 py-4">
+        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-ont-blue-700 dark:text-ont-blue-300">Circuit actuel</p>
+        <h2 className="mt-1 font-heading text-section-title font-semibold text-text">Progression du courrier</h2>
+      </div>
+      <ol className="flex flex-col gap-0 p-4 sm:flex-row sm:gap-0 sm:p-5">
       {etapes.map((s, index) => {
         const franchie = index < indexCourant;
         const courante = index === indexCourant;
@@ -63,9 +68,6 @@ export function StatutTimeline({ statut, necessiteAvisDg = true, initieParDg = f
                       : 'bg-surface-sunken text-text-subtle ring-1 ring-inset ring-border-strong'
                 }`}
               >
-                {courante && (
-                  <span aria-hidden="true" className="animate-anneau-pulse absolute inset-0 rounded-full ring-2 ring-ont-gold-400" />
-                )}
                 {franchie ? <Check size={15} aria-hidden="true" /> : index + 1}
               </span>
               {!dernier && (
@@ -108,6 +110,7 @@ export function StatutTimeline({ statut, necessiteAvisDg = true, initieParDg = f
           </li>
         );
       })}
-    </ol>
+      </ol>
+    </section>
   );
 }

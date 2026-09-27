@@ -35,13 +35,13 @@ export function StatCard({ label, value, hint, icon, tone = 'primary', variation
   return (
     <Composant
       to={to}
-      className={`block rounded-card border border-border bg-surface p-5 transition-[transform,box-shadow] ${
-        to ? 'hover:-translate-y-0.5 hover:shadow-card' : ''
+      className={`group block h-full min-h-[126px] rounded-card border border-border bg-surface p-4 shadow-[0_1px_2px_rgb(15_23_42/0.025)] transition-[transform,box-shadow,border-color] ${
+        to ? 'hover:-translate-y-0.5 hover:border-ont-blue-200 hover:shadow-card' : ''
       }`}
     >
       <div className="flex items-start gap-4">
         {icon && (
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-ont-blue-50 text-ont-blue-700 dark:bg-ont-blue-950/40 dark:text-ont-blue-300">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-field border border-ont-blue-100 bg-ont-blue-50 text-ont-blue-700 transition-colors group-hover:bg-ont-blue-100 dark:border-ont-blue-900 dark:bg-ont-blue-950/40 dark:text-ont-blue-300">
             {icon}
           </div>
         )}
@@ -63,7 +63,7 @@ export function StatCard({ label, value, hint, icon, tone = 'primary', variation
               </span>
             )}
           </div>
-          {hint && <p className="mt-0.5 text-label text-text-subtle">{hint}</p>}
+          {hint && <p className="mt-0.5 line-clamp-2 text-[11px] leading-snug text-text-subtle">{hint}</p>}
         </div>
       </div>
     </Composant>

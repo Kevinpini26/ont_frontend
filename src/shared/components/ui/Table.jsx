@@ -62,7 +62,7 @@ export const tableClass = 'w-full min-w-full text-left text-sm';
 // plutôt que sur le <thead>), recouvrant la ou les premières lignes dès
 // qu'un tableau est court — pas un cas limite, un défaut structurel de
 // TableWrap qu'aucune combinaison overflow-y (auto/hidden/clip) ne corrige.
-export const theadClass = 'border-b border-border bg-surface text-label font-semibold uppercase tracking-wide text-text-subtle';
+export const theadClass = 'border-b border-border bg-surface-sunken/80 text-label font-semibold uppercase tracking-[0.06em] text-text-subtle';
 export const thClass = 'px-4 py-3 font-semibold whitespace-nowrap';
 // Colonnes de nombres/dates : alignées à droite, chiffres à chasse fixe
 // pour que les lignes successives restent verticalement comparables.
@@ -76,7 +76,7 @@ export const tdClassChiffre = `${tdClass} text-right tabular-nums`;
 // Première colonne : en gras et dans la couleur de texte principale
 // (`text-text`, pas `text-muted`) — sert d'ancre visuelle à la ligne.
 export const tdClassPremiere = `${tdClass} font-semibold text-text`;
-export const trHoverClass = 'hover:bg-surface-sunken';
+export const trHoverClass = 'transition-colors hover:bg-ont-blue-50/60 dark:hover:bg-ont-blue-950/20';
 
 /**
  * En-tête de colonne cliquable avec indicateur de tri visuel — ↑/↓ pour la

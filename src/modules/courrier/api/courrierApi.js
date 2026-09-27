@@ -40,6 +40,31 @@ export async function creerMission(courrierId, assistantId, instruction) {
   return data.data;
 }
 
+export async function demanderPreparationReponse(courrierId, assistantId, instruction) {
+  const { data } = await apiClient.post(`/courriers/${courrierId}/demander-preparation-reponse`, {
+    assistant_id: assistantId,
+    instruction,
+  });
+  return data.data;
+}
+
+export async function creerProjetReponseMission(missionId, payload) {
+  const { data } = await apiClient.post(`/missions-documentaires/${missionId}/projet-reponse`, payload);
+  return data;
+}
+
+export async function sauvegarderProjetReponseMission(missionId, payload) {
+  const { data } = await apiClient.patch(`/missions-documentaires/${missionId}/projet-reponse`, payload);
+  return data.data;
+}
+
+export async function soumettreProjetReponseMission(missionId, projetReponseContenu) {
+  const { data } = await apiClient.post(`/missions-documentaires/${missionId}/projet-reponse/soumettre`, {
+    projet_reponse_contenu: projetReponseContenu,
+  });
+  return data.data;
+}
+
 export async function listMesMissions(signal) {
   const { data } = await apiClient.get('/missions-documentaires/mes-missions', { signal });
   return data.data;

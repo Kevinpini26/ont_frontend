@@ -143,10 +143,10 @@
 
 :root {
   --surface: #ffffff;
-  --surface-sunken: #f1f5f9;
+  --surface-sunken: #f4f7fa;
   --surface-raised: #ffffff;
-  --border: #e2e8f0;
-  --border-strong: #cbd5e1;
+  --border: #e5eaf0;
+  --border-strong: #cbd5df;
   /* Contrastes sur --surface (blanc) : text 17,9 / muted 7,6 / subtle 4,76 —
      subtle porte donc de l'information (horodatages, libellés d'axes, aide),
      pas seulement du décoratif. */
@@ -182,10 +182,43 @@ html.dark {
 
 body {
   @apply bg-surface-sunken text-text antialiased;
+  letter-spacing: -0.006em;
 }
 
 #root {
   min-height: 100svh;
+}
+
+/* Trame très discrète inspirée du vocabulaire cartographique du portail ONT.
+   Elle donne une profondeur institutionnelle à la zone de travail sans
+   introduire d'image décorative ou concurrencer les données. */
+.app-workspace {
+  background-image:
+    radial-gradient(circle at 85% 0%, rgb(35 133 241 / 0.035), transparent 28rem),
+    linear-gradient(rgb(15 23 42 / 0.008) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(15 23 42 / 0.008) 1px, transparent 1px);
+  background-size: auto, 48px 48px, 48px 48px;
+}
+
+.institution-banner {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    linear-gradient(105deg, rgb(7 30 54 / 0.98), rgb(12 69 132 / 0.88)),
+    url('/kinshasa-fleuve-congo.webp') center 56% / cover;
+}
+
+.institution-banner::after {
+  position: absolute;
+  inset: auto -5rem -7rem auto;
+  z-index: -1;
+  width: 17rem;
+  height: 17rem;
+  border: 1px solid rgb(254 208 77 / 0.26);
+  border-radius: 9999px;
+  box-shadow: 0 0 0 2.5rem rgb(254 208 77 / 0.05), 0 0 0 5rem rgb(255 255 255 / 0.035);
+  content: '';
 }
 
 /* Champs de formulaire natifs : mêmes réglages fins (accent color, calendrier

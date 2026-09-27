@@ -87,7 +87,7 @@ function ServiceCard({ service, indisponible, index }) {
     <div
       ref={ref}
       style={style}
-      className={`group overflow-hidden rounded-card border border-border bg-white shadow-card transition-all duration-300 hover:-translate-y-1 hover:shadow-raised ${className}`}
+      className={`group overflow-hidden rounded-card border border-border bg-white shadow-[0_1px_2px_rgb(15_23_42/0.03)] transition-[transform,border-color,box-shadow] duration-200 hover:-translate-y-0.5 hover:border-ont-blue-200 hover:shadow-card ${className}`}
     >
       <div className={`h-[3px] w-full ${accent.liseré}`} aria-hidden="true" />
       <div className="p-6">
@@ -221,7 +221,7 @@ export function HomePage() {
           — un titre qui passe sur trois lignes en 360px de large ne doit
           jamais être coupé. Grille asymétrique 7/5, jamais 6/6. */}
       <section className="bg-white">
-        <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-10 px-4 py-20 sm:px-6 lg:grid-cols-12 lg:gap-12 lg:px-8 lg:py-28">
+        <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-9 px-4 py-14 sm:px-6 sm:py-16 lg:grid-cols-12 lg:gap-12 lg:px-8 lg:py-20">
           <div className="lg:col-span-7">
             <p className="mb-4 inline-block rounded-full bg-ont-blue-950/5 px-3 py-1 text-xs font-semibold tracking-wide text-ont-gold-800 uppercase">
               République Démocratique du Congo — Office National du Tourisme
@@ -229,7 +229,7 @@ export function HomePage() {
             <h1 className="mb-5 font-heading font-bold text-text text-hero">
               L'Office National du Tourisme structure et promeut le <span className="text-ont-blue-600">tourisme congolais</span>
             </h1>
-            <p className="mb-8 max-w-lg text-lg text-text-muted">
+            <p className="mb-7 max-w-xl text-base leading-relaxed text-text-muted sm:text-lg">
               Ce portail est votre point de contact administratif avec l'Office : déposez une demande de stage, transmettez un
               courrier, ou suivez l'état d'un dossier déjà déposé.
             </p>
@@ -261,7 +261,7 @@ export function HomePage() {
 
           <div className="lg:col-span-5">
             <div className="lg:relative">
-              <div className="overflow-hidden rounded-[24px] border border-border shadow-raised">
+              <div className="overflow-hidden rounded-modal border border-border shadow-card">
                 <picture>
                   <source srcSet="/kinshasa-fleuve-congo.webp" type="image/webp" />
                   <img
@@ -271,7 +271,7 @@ export function HomePage() {
                     height={900}
                     loading="eager"
                     decoding="async"
-                    className="aspect-4/3 w-full object-cover lg:aspect-3/4"
+                    className="aspect-4/3 w-full object-cover lg:aspect-[4/4.5]"
                   />
                 </picture>
                 <div className="pointer-events-none absolute inset-0 bg-ont-blue-700/10" aria-hidden="true" />
@@ -296,9 +296,9 @@ export function HomePage() {
       {/* Le bloc "je fais ma démarche" se tient d'un seul morceau : services,
           comment ça marche, pièces à préparer, questions fréquentes — tout
           en fond blanc ou surface-sunken, avant le contenu institutionnel. */}
-      <section className="bg-white py-16 lg:py-22">
+      <section className="bg-white py-12 lg:py-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="mb-10 max-w-2xl">
+          <div className="mb-8 max-w-2xl">
             <h2 className="mb-3 font-heading text-2xl font-bold text-text">Nos services numériques</h2>
             <p className="text-text-subtle">
               Trois démarches disponibles en ligne, sans avoir à vous déplacer au siège de l'Office.
@@ -317,9 +317,9 @@ export function HomePage() {
         </div>
       </section>
 
-      <section className="bg-surface-sunken py-16 lg:py-22">
+      <section className="bg-surface-sunken py-12 lg:py-16">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-          <div className="mb-12 max-w-2xl">
+          <div className="mb-8 max-w-2xl">
             <h2 className="mb-3 font-heading text-2xl font-bold text-text">Comment ça marche</h2>
             {/* text-muted, pas text-subtle : directement sur bg-surface-sunken,
                 où text-subtle tombe à 4,34 de contraste — sous les 4,5 requis. */}
@@ -329,9 +329,9 @@ export function HomePage() {
         </div>
       </section>
 
-      <section ref={preparer.ref} style={preparer.style} className={`bg-white py-16 lg:py-22 ${preparer.className}`}>
+      <section ref={preparer.ref} style={preparer.style} className={`bg-white py-12 lg:py-16 ${preparer.className}`}>
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-          <div className="mb-10 max-w-2xl">
+          <div className="mb-8 max-w-2xl">
             <h2 className="mb-3 font-heading text-2xl font-bold text-text">Ce que vous devez préparer</h2>
             <p className="text-text-subtle">Un dossier complet dès le premier dépôt évite les allers-retours.</p>
           </div>
@@ -359,9 +359,9 @@ export function HomePage() {
         </div>
       </section>
 
-      <section ref={faq.ref} style={faq.style} className={`bg-surface-sunken py-16 lg:py-22 ${faq.className}`}>
+      <section ref={faq.ref} style={faq.style} className={`bg-surface-sunken py-12 lg:py-16 ${faq.className}`}>
         <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
-          <div className="mb-10 text-center">
+          <div className="mb-8 text-center">
             <h2 className="mb-3 font-heading text-2xl font-bold text-text">Questions fréquentes</h2>
           </div>
           <div className="rounded-card border border-border bg-white px-6">
@@ -372,8 +372,8 @@ export function HomePage() {
 
       {/* Contenu institutionnel : directions et contact, après le bloc démarche. */}
       <section className="bg-white">
-        <div ref={directions.ref} style={directions.style} className={`mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-22 ${directions.className}`}>
-          <div className="mb-10 max-w-2xl">
+        <div ref={directions.ref} style={directions.style} className={`mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16 ${directions.className}`}>
+          <div className="mb-8 max-w-2xl">
             <h2 className="mb-3 font-heading text-2xl font-bold text-text">Les huit directions de l'ONT</h2>
             <p className="text-text-subtle">
               L'Office est organisé en huit directions centrales, chacune responsable d'un volet de sa mission.
@@ -394,7 +394,7 @@ export function HomePage() {
         <div
           ref={contact.ref}
           style={contact.style}
-          className={`mx-auto grid max-w-7xl grid-cols-1 gap-10 px-4 py-16 sm:px-6 lg:grid-cols-12 lg:px-8 lg:py-22 ${contact.className}`}
+          className={`mx-auto grid max-w-7xl grid-cols-1 items-center gap-6 px-4 py-12 sm:px-6 lg:grid-cols-12 lg:px-8 lg:py-14 ${contact.className}`}
         >
           <div className="lg:col-span-7">
             <h2 className="mb-3 font-heading text-2xl font-bold text-text">Contact et accès</h2>
