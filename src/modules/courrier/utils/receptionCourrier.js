@@ -36,3 +36,13 @@ export function depotPublicDejaTransmis(courrier) {
     (courrier.transitions ?? []).some((transition) => transition.destinataire_poste === 'secretariat_1')
   );
 }
+
+export function identiteCourrier(courrier) {
+  return (
+    courrier?.numero_enregistrement ??
+    courrier?.reference_documentaire ??
+    courrier?.numero_depart ??
+    courrier?.numero_accuse_reception ??
+    `Courrier #${courrier?.id ?? '—'}`
+  );
+}

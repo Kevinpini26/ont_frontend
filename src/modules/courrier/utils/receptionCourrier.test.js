@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { depotPublicDejaTransmis, messageErreurReception, peutReceptionnerBordereau } from './receptionCourrier';
+import { depotPublicDejaTransmis, identiteCourrier, messageErreurReception, peutReceptionnerBordereau } from './receptionCourrier';
 
 describe('réception des courriers', () => {
   it('réserve la décharge au destinataire réel du bordereau', () => {
@@ -20,6 +20,10 @@ describe('réception des courriers', () => {
         transitions: [{ destinataire_poste: 'secretariat_1' }],
       }),
     ).toBe(true);
+  });
+
+  it('privilégie le numéro institutionnel d’un courrier physique sans AR public', () => {
+    expect(identiteCourrier({ id: 8, numero_accuse_reception: null, numero_enregistrement: 'ONT/2026/0008' })).toBe('ONT/2026/0008');
   });
 
   it('traduit les erreurs sans exposer de détails techniques', () => {

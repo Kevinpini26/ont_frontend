@@ -7,6 +7,7 @@ import { Card, CardBody } from '../../../shared/components/ui/Card';
 import { Button } from '../../../shared/components/ui/Button';
 import { EmptyState } from '../../../shared/components/ui/EmptyState';
 import { TableWrap, tableClass, theadClass, thClass, tbodyClass, tdClass, tdClassPremiere, trHoverClass, SkeletonRows } from '../../../shared/components/ui/Table';
+import { identiteCourrier } from '../utils/receptionCourrier';
 
 /**
  * Liste de rattrapage (Réception/administrateur) des courriers enregistrés
@@ -50,7 +51,7 @@ export function RattrapageNumerisationPage() {
                   ) : (
                     courriers.map((c) => (
                       <tr key={c.id} className={trHoverClass}>
-                        <td className={tdClassPremiere}>{c.numero_accuse_reception}</td>
+                        <td className={tdClassPremiere}>{identiteCourrier(c)}</td>
                         <td className={tdClass}>{c.objet}</td>
                         <td className={tdClass}>{c.direction_origine?.nom ?? c.expediteur_externe_nom ?? '—'}</td>
                         <td className={tdClass}>{new Date(c.created_at).toLocaleDateString('fr-FR')}</td>

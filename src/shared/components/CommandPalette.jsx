@@ -6,6 +6,7 @@ import { pagesPourUtilisateur } from '../navigation';
 import { listCourriers } from '../../modules/courrier/api/courrierApi';
 import { listStagiaires } from '../../modules/stagiaires/api/stagiairesApi';
 import { useFocusTrap } from '../hooks/useFocusTrap';
+import { identiteCourrier } from '../../modules/courrier/utils/receptionCourrier';
 
 const DELAI_DEBOUNCE_MS = 250;
 const LONGUEUR_MIN_RECHERCHE_DISTANTE = 2;
@@ -93,7 +94,7 @@ export function CommandPalette({ open, onClose }) {
         key: `courrier-${c.id}`,
         to: `/courriers/${c.id}`,
         titre: c.objet,
-        sousTitre: `${c.numero_accuse_reception} · ${c.statut_label}`,
+        sousTitre: `${identiteCourrier(c)} · ${c.statut_label}`,
       })),
       ...stagiaires.map((s) => ({
         type: 'stagiaire',

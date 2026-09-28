@@ -50,6 +50,7 @@ import { Badge } from '../../../shared/components/ui/Badge';
 import { LoadingBlock } from '../../../shared/components/ui/Spinner';
 import { DocumentPreviewModal } from '../../../shared/components/DocumentPreviewModal';
 import { useRequete } from '../../../shared/hooks/useRequete';
+import { identiteCourrier } from '../utils/receptionCourrier';
 
 export function CourrierDetailPage() {
   const { id } = useParams();
@@ -82,9 +83,9 @@ export function CourrierDetailPage() {
     <div>
       <PageHeader
         title={courrier.objet}
-        description={`${courrier.numero_accuse_reception}${
-          courrier.numero_enregistrement ? ` · Enregistré sous ${courrier.numero_enregistrement}` : ''
-        }${courrier.cote_classement ? ` · Cote ${courrier.cote_classement}` : ''} · ${TYPE_LABELS[courrier.type]}`}
+        description={`${identiteCourrier(courrier)}${
+          courrier.cote_classement ? ` · Cote ${courrier.cote_classement}` : ''
+        } · ${TYPE_LABELS[courrier.type]}`}
         action={
           <>
             <Badge tone="info">{STATUT_LABELS[courrier.statut] ?? courrier.statut}</Badge>
@@ -99,7 +100,7 @@ export function CourrierDetailPage() {
                 setApercu({
                   title: 'Courrier signé',
                   url: `/courriers/${courrier.id}/pdf`,
-                  downloadFilename: `courrier-${courrier.numero_accuse_reception}.pdf`,
+                  downloadFilename: `courrier-${identiteCourrier(courrier)}.pdf`,
                 })
               }
             >
@@ -131,7 +132,7 @@ export function CourrierDetailPage() {
           <CardHeader title="Repères du dossier" />
           <CardBody>
             <dl className="space-y-4 text-sm">
-              <div className="flex gap-3"><Hash size={17} className="mt-0.5 shrink-0 text-ont-blue-600" /><div><dt className="text-xs text-text-subtle">Référence</dt><dd className="mt-0.5 font-semibold text-text">{courrier.reference_documentaire ?? courrier.numero_accuse_reception}</dd></div></div>
+              <div className="flex gap-3"><Hash size={17} className="mt-0.5 shrink-0 text-ont-blue-600" /><div><dt className="text-xs text-text-subtle">Référence</dt><dd className="mt-0.5 font-semibold text-text">{identiteCourrier(courrier)}</dd></div></div>
               <div className="flex gap-3"><Building2 size={17} className="mt-0.5 shrink-0 text-ont-blue-600" /><div><dt className="text-xs text-text-subtle">Destination</dt><dd className="mt-0.5 font-medium text-text">{courrier.direction_destination?.nom ?? 'Direction Générale'}</dd></div></div>
               <div className="flex gap-3"><Route size={17} className="mt-0.5 shrink-0 text-ont-blue-600" /><div><dt className="text-xs text-text-subtle">Cycle décisionnel</dt><dd className="mt-0.5 font-medium text-text">Cycle {courrier.cycle_courant ?? courrier.tour ?? 1}</dd></div></div>
               <div className="flex gap-3"><CalendarDays size={17} className="mt-0.5 shrink-0 text-ont-blue-600" /><div><dt className="text-xs text-text-subtle">Dernière activité</dt><dd className="mt-0.5 font-medium text-text">{courrier.updated_at ? new Date(courrier.updated_at).toLocaleString('fr-FR') : '—'}</dd></div></div>

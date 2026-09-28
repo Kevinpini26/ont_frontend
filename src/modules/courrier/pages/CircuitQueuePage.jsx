@@ -43,7 +43,7 @@ import {
 } from '../../../shared/components/ui/Table';
 import { TipTapEditor } from '../components/TipTapEditor';
 import { Inbox } from 'lucide-react';
-import { depotPublicDejaTransmis, messageErreurReception, peutReceptionnerBordereau } from '../utils/receptionCourrier';
+import { depotPublicDejaTransmis, identiteCourrier, messageErreurReception, peutReceptionnerBordereau } from '../utils/receptionCourrier';
 
 // theadClass (sticky top-14 z-[5]) recouvre visuellement l'unique ligne
 // dès que la file (filtrée par recherche ou peu fournie) tient sur un
@@ -154,7 +154,7 @@ export function CircuitQueuePage({ instructionsSeulement = false }) {
     const terme = recherche.trim().toLowerCase();
     return courriers
       .filter(estActionnable)
-      .filter((c) => !terme || c.objet.toLowerCase().includes(terme) || c.numero_accuse_reception.toLowerCase().includes(terme))
+      .filter((c) => !terme || c.objet.toLowerCase().includes(terme) || identiteCourrier(c).toLowerCase().includes(terme))
       // Le degré d'urgence pilote l'ordre d'affichage : très urgent en
       // tête, puis urgent, puis normal, puis non encore trié en dernier
       // (voir ORDRE_URGENCE) — jamais un blocage, juste une priorité.
@@ -720,11 +720,11 @@ export function CircuitQueuePage({ instructionsSeulement = false }) {
                                 type="checkbox"
                                 checked={selection.includes(c.id)}
                                 onChange={() => basculerSelection(c.id)}
-                                aria-label={`Sélectionner ${c.numero_accuse_reception}`}
+                                aria-label={`Sélectionner ${identiteCourrier(c)}`}
                               />
                             )}
                           </td>
-                          <td className={`${tdClassPremiere} whitespace-nowrap`}>{c.numero_enregistrement ?? c.numero_accuse_reception}</td>
+                          <td className={`${tdClassPremiere} whitespace-nowrap`}>{identiteCourrier(c)}</td>
                           <td className={`${tdClass} max-w-[16rem] truncate`} title={c.objet}>{c.objet}</td>
                           <td className={tdClass}>{TYPE_LABELS[c.type]}</td>
                           <td className={tdClass}>
