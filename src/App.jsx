@@ -26,6 +26,7 @@ const AdminDirectionsPage = lazy(() =>
   import('./modules/kernel/pages/AdminDirectionsPage').then((m) => ({ default: m.AdminDirectionsPage })),
 );
 const AdminUsersPage = lazy(() => import('./modules/kernel/pages/AdminUsersPage').then((m) => ({ default: m.AdminUsersPage })));
+const AdminDelegationsPostePage = lazy(() => import('./modules/kernel/pages/AdminDelegationsPostePage').then((m) => ({ default: m.AdminDelegationsPostePage })));
 const AdminAuditLogPage = lazy(() =>
   import('./modules/kernel/pages/AdminAuditLogPage').then((m) => ({ default: m.AdminAuditLogPage })),
 );
@@ -172,6 +173,7 @@ function AppRoutes() {
           <Route element={<ProtectedRoute roles={[ROLES.ADMINISTRATEUR]} />}>
             <Route path="/admin/directions" element={<AdminDirectionsPage />} />
             <Route path="/admin/utilisateurs" element={<AdminUsersPage />} />
+            <Route path="/admin/delegations" element={<AdminDelegationsPostePage />} />
             <Route path="/admin/journal-audit" element={<AdminAuditLogPage />} />
             <Route path="/admin/rapports" element={<AdminRapportsPage />} />
             <Route path="/admin/import-historique" element={<AdminImportHistoriquePage />} />
@@ -215,7 +217,7 @@ function AppRoutes() {
             <Route path="/circuit/classement-archives" element={<ClassementArchivesPage />} />
           </Route>
 
-          <Route element={<ProtectedRoute roles={[ROLES.AGENT_CIRCUIT_COURRIER]} postes={['dg']} />}>
+          <Route element={<ProtectedRoute roles={[ROLES.AGENT_CIRCUIT_COURRIER]} postes={['dg']} postesNatifs={['dg']} />}>
             <Route path="/circuit/espace-dg" element={<CourrierDgDashboardPage />} />
           </Route>
 

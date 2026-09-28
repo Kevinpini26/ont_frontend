@@ -1,7 +1,7 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../modules/kernel/store/authStore';
 
-export function ProtectedRoute({ roles, postes, postesInterdits }) {
+export function ProtectedRoute({ roles, postes, postesInterdits, postesNatifs }) {
   const user = useAuthStore((s) => s.user);
   const token = useAuthStore((s) => s.token);
   const location = useLocation();
@@ -17,15 +17,19 @@ export function ProtectedRoute({ roles, postes, postesInterdits }) {
     return <Navigate to="/changer-mot-de-passe" replace />;
   }
 
-  if (roles && !roles.includes(user.role)) {
+  const delegationDg = user.poste_delegue === 'dg';
+  if (roles && !roles.includes(user.role) && !(delegationDg && roles.includes('agent_circuit_courrier'))) {
     return <Navigate to="/" replace />;
   }
 
-  if (postes && !postes.includes(user.poste)) {
+  if (postes && !postes.includes(user.poste) && !(delegationDg && postes.includes('dg'))) {
     return <Navigate to="/" replace />;
   }
 
   if (postesInterdits?.includes(user.poste)) {
+    return <Navigate to="/" replace />;
+  }
+  if (postesNatifs && !postesNatifs.includes(user.poste)) {
     return <Navigate to="/" replace />;
   }
 

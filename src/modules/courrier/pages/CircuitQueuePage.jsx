@@ -85,10 +85,8 @@ const FORMULAIRE_VIDE = {
 export function CircuitQueuePage({ instructionsSeulement = false }) {
   const { poste: postePourUrl } = useParams();
   const user = useAuthStore((s) => s.user);
-  // La liste d'actions dépend toujours du poste réel de l'utilisateur
-  // connecté, jamais du paramètre d'URL (qui ne sert qu'à la navigation) :
-  // naviguer vers la file d'un autre poste ne donne accès à aucune action.
-  const poste = user.poste;
+  // Le poste DG délégué provient de /auth/me, jamais du paramètre d'URL.
+  const poste = user.poste_delegue === 'dg' ? 'dg' : user.poste;
   const {
     donnees: courriersReponse,
     chargement,

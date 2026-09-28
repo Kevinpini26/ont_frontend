@@ -20,13 +20,13 @@ function PageChangerMotDePasse() {
   return <p>Changer le mot de passe</p>;
 }
 
-function rendre({ initialEntries = ['/protege'], roles, postes, postesInterdits } = {}) {
+function rendre({ initialEntries = ['/protege'], roles, postes, postesInterdits, postesNatifs } = {}) {
   return render(
     <MemoryRouter initialEntries={initialEntries}>
       <Routes>
         <Route path="/connexion" element={<PageConnexion />} />
         <Route path="/" element={<PageAccueil />} />
-        <Route element={<ProtectedRoute roles={roles} postes={postes} postesInterdits={postesInterdits} />}>
+        <Route element={<ProtectedRoute roles={roles} postes={postes} postesInterdits={postesInterdits} postesNatifs={postesNatifs} />}>
           <Route path="/protege" element={<PageProtegee />} />
           <Route path="/changer-mot-de-passe" element={<PageChangerMotDePasse />} />
         </Route>
@@ -98,6 +98,15 @@ describe('ProtectedRoute', () => {
     rendre({ roles: ['agent_circuit_courrier'], postes: ['dg'] });
 
     expect(screen.getByText('Contenu protégé')).toBeInTheDocument();
+  });
+
+  test('autorise la file DG sous delegation sans ouvrir les pages reservees au titulaire', () => {
+    useAuthStore.setState({ token: 'jeton', user: { id: 2, role: 'directeur_direction', poste: null, poste_delegue: 'dg' } });
+    const file = rendre({ roles: ['agent_circuit_courrier'], postes: ['dg'] });
+    expect(screen.getByText('Contenu protégé')).toBeInTheDocument();
+    file.unmount();
+    rendre({ roles: ['agent_circuit_courrier'], postes: ['dg'], postesNatifs: ['dg'] });
+    expect(screen.getByText('Accueil')).toBeInTheDocument();
   });
 
   test('redirige un utilisateur rattaché à un ancien poste interdit', () => {

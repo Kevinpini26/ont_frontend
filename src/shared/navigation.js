@@ -9,6 +9,12 @@ import { estDirecteurDirection, ROLES } from '../modules/kernel/constants';
  */
 export function navigationForUser(user) {
   if (!user) return [];
+  if (user.poste_delegue === 'dg' && user.poste !== 'dg') {
+    return [
+      ...navigationForUser({ ...user, poste_delegue: null }),
+      { title: 'Délégation DG', items: [{ label: 'File DG', to: '/circuit/dg', icon: Inbox }] },
+    ];
+  }
 
   if (user.role === ROLES.ADMINISTRATEUR) {
     return [
@@ -17,6 +23,7 @@ export function navigationForUser(user) {
         items: [
           { label: 'Directions', to: '/admin/directions', icon: Building2 },
           { label: 'Utilisateurs', to: '/admin/utilisateurs', icon: Users },
+          { label: 'Délégations', to: '/admin/delegations', icon: Users },
           { label: "Journal d'audit", to: '/admin/journal-audit', icon: ScrollText },
           { label: 'Rapports', to: '/admin/rapports', icon: LayoutDashboard },
           { label: "Import d'historique", to: '/admin/import-historique', icon: History },
@@ -83,13 +90,14 @@ export function navigationForUser(user) {
     ];
   }
 
-  if (user.role === ROLES.AGENT_CIRCUIT_COURRIER) {
+  if (user.role === ROLES.AGENT_CIRCUIT_COURRIER || user.poste_delegue === 'dg') {
+    const poste = user.poste_delegue === 'dg' ? 'dg' : user.poste;
     // Un compte encore affecté à l'ancien poste reste lisible dans
     // l'administration, mais ne reçoit plus aucun accès opérationnel.
-    if (['protocole', 'assistant_protocole'].includes(user.poste)) return [];
+    if (['protocole', 'assistant_protocole'].includes(poste)) return [];
 
     const items = [
-      { label: 'Ma file de traitement', to: `/circuit/${user.poste}`, icon: Inbox },
+      { label: 'Ma file de traitement', to: `/circuit/${poste}`, icon: Inbox },
       { label: 'Tableau de bord', to: '/circuit/tableau-de-bord', icon: LayoutDashboard },
     ];
 
@@ -105,7 +113,7 @@ export function navigationForUser(user) {
 
     // La DG dispose en plus d'un espace consolidé transverse, distinct de
     // sa simple file de traitement.
-    if (user.poste === 'dg') {
+    if (poste === 'dg') {
       items.push({ label: 'Espace Direction Générale', to: '/circuit/espace-dg', icon: Building2 });
     }
 

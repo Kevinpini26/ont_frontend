@@ -7,7 +7,6 @@ import {
   enregistrer,
   envoyerCourrier,
   getCourrier,
-  imputer,
   transmettreSec1,
   requalifierUrgence,
   rendreAvis,
@@ -39,11 +38,9 @@ import {
   CLASSIFICATION_LABELS,
   DEGRE_URGENCE_LABELS,
   TONE_URGENCE,
-  MENTION_IMPUTATION_LABELS,
   POSTES_ASSISTANTS,
   STATUT_LABELS,
 } from '../constants';
-import { listDirections } from '../../kernel/api/directionsApi';
 import { PageHeader } from '../../../shared/components/ui/PageHeader';
 import { Card, CardBody, CardHeader } from '../../../shared/components/ui/Card';
 import { Button } from '../../../shared/components/ui/Button';
@@ -56,7 +53,8 @@ import { useRequete } from '../../../shared/hooks/useRequete';
 
 export function CourrierDetailPage() {
   const { id } = useParams();
-  const user = useAuthStore((s) => s.user);
+  const userCompte = useAuthStore((s) => s.user);
+  const user = userCompte?.poste_delegue === 'dg' ? { ...userCompte, poste: 'dg' } : userCompte;
 
   const { donnees: courrier, setDonnees: setCourrier, chargement } = useRequete((signal) => getCourrier(id, signal), [id]);
   const [erreur, setErreur] = useState(null);
@@ -191,7 +189,7 @@ export function CourrierDetailPage() {
               </Alert>
             )}
             <PanneauUrgence courrier={courrier} user={user} executer={executer} />
-            <PanneauImputation courrier={courrier} user={user} executer={executer} />
+            <PanneauImputation courrier={courrier} />
             {courrier.avis_dg && (
               <p className="text-text-muted">
                 <span className="font-medium text-text">Avis DG : </span>
@@ -441,77 +439,14 @@ function PanneauUrgence({ courrier, user, executer }) {
   );
 }
 
-/**
- * Lot 3 : l'imputation (direction principale + mention) route le courrier
- * sans jamais clore le circuit — voir CourrierPolicy::imputer(), ouverte à
- * tout poste du circuit central, pas seulement la DG (question ouverte,
- * voir docs/questions-ont.md). Toujours visible, pas seulement à
- * en_attente_avis_dg : imputer() n'est pas gardé par statut côté backend.
- * Une seule direction principale ici (pas de copies) : suffit à déclencher
- * le dispatch (Lot 3), une gestion complète des copies reste à ajouter si
- * le besoin se confirme.
- */
-function PanneauImputation({ courrier, user, executer }) {
-  const [directions, setDirections] = useState([]);
-  const [directionId, setDirectionId] = useState('');
-  const [mention, setMention] = useState('pour_attribution');
-  const [envoiEnCours, setEnvoiEnCours] = useState(false);
-
-  const peutImputer = user.role === 'agent_circuit_courrier' || user.role === 'administrateur';
-
-  useEffect(() => {
-    if (peutImputer) {
-      listDirections().then(setDirections);
-    }
-  }, [peutImputer]);
-
-  if (!peutImputer) return null;
-
+/** Lecture des imputations antérieures ; une nouvelle orientation passe par le dispatch. */
+function PanneauImputation({ courrier }) {
   const principale = courrier.imputations?.find((i) => i.est_principale);
-
-  async function soumettre(e) {
-    e.preventDefault();
-    setEnvoiEnCours(true);
-    try {
-      await executer(() => imputer(courrier.id, directionId, mention));
-      setDirectionId('');
-    } finally {
-      setEnvoiEnCours(false);
-    }
-  }
-
+  if (!principale) return null;
   return (
     <div className="flex flex-wrap items-center gap-3">
-      <span className="font-medium text-text">Imputation : </span>
-      {principale ? (
-        <Badge tone="info">
-          {principale.direction?.nom} — {principale.mention_label}
-        </Badge>
-      ) : (
-        <span className="text-text-subtle">Aucune</span>
-      )}
-      <form onSubmit={soumettre} className="flex flex-wrap items-center gap-2">
-        <select className={`${inputClass} w-auto`} value={directionId} onChange={(e) => setDirectionId(e.target.value)}>
-          <option value="" disabled>
-            Direction…
-          </option>
-          {directions.map((d) => (
-            <option key={d.id} value={d.id}>
-              {d.code} — {d.nom}
-            </option>
-          ))}
-        </select>
-        <select className={`${inputClass} w-auto`} value={mention} onChange={(e) => setMention(e.target.value)}>
-          {Object.entries(MENTION_IMPUTATION_LABELS).map(([valeur, libelle]) => (
-            <option key={valeur} value={valeur}>
-              {libelle}
-            </option>
-          ))}
-        </select>
-        <Button type="submit" size="sm" variant="secondary" disabled={!directionId || envoiEnCours}>
-          {principale ? 'Remplacer' : 'Imputer'}
-        </Button>
-      </form>
+      <span className="font-medium text-text">Imputation historique :</span>
+      <Badge tone="info">{principale.direction?.nom} — {principale.mention_label}</Badge>
     </div>
   );
 }
@@ -905,13 +840,12 @@ export function ActionsCourrier({ courrier, user, executer }) {
     );
   }
 
-  if ((courrier.statut === 'en_relecture' || courrier.statut === 'projet_a_valider') && user.poste === 'dg') {
+  const missionReponse = courrier.missions_documentaires?.find((mission) => mission.projet_courrier_id === courrier.id);
+  if ((courrier.statut === 'en_relecture' || courrier.statut === 'projet_a_valider') && user.poste === 'dg'
+    && courrier.relecture_validee_at && (!missionReponse || missionReponse.statut === 'retournee')) {
     return (
       <Card>
         <CardBody className="space-y-4">
-          {!courrier.relecture_validee_at && (
-            <Alert tone="error">La relecture n'a pas encore été validée par le relecteur désigné : la signature sera refusée.</Alert>
-          )}
           <Button variant="gold" disabled={envoiEnCours} onClick={() => executerEtSuivre(() => signer(courrier.id))}>
             Signer
           </Button>
