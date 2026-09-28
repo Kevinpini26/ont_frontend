@@ -16,7 +16,7 @@ export function DispatchDecisionPanel({ courrier, user, onUpdate }) {
 
   useEffect(() => { listDirections().then(setDirections); }, []);
 
-  const peutDecider = courrier.peut_ouvrir_nouveau_cycle && ['dg', 'dga'].includes(user.poste);
+  const peutDecider = courrier.peut_ouvrir_nouveau_cycle && Boolean(user.source_autorite_dg);
   if (!peutDecider && !(courrier.dispatchs?.length > 0)) return null;
 
   function modifier(index, cle, valeur) {

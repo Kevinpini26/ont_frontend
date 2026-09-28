@@ -6,12 +6,14 @@ import { Badge } from '../../../shared/components/ui/Badge';
 import { Alert } from '../../../shared/components/ui/Alert';
 import { Button } from '../../../shared/components/ui/Button';
 import { useAuthStore } from '../../kernel/store/authStore';
+import { useDgAutorite } from '../../kernel/hooks/useDgAutorite';
 
 export function DossierDocumentsPanel({ courrier }) {
   const [dossier, setDossier] = useState(null);
   const [relations, setRelations] = useState([]);
   const [erreur, setErreur] = useState(null);
   const user = useAuthStore((state) => state.user);
+  const sourceAutoriteDg = useDgAutorite();
 
   async function actualiserDossier(action) {
     try {
@@ -47,7 +49,7 @@ export function DossierDocumentsPanel({ courrier }) {
       <CardHeader title={`Dossier #${courrier.dossier_id}`} description="Regroupement documentaire" />
       <CardBody className="space-y-4">
         {erreur && <Alert tone="error">{erreur}</Alert>}
-        {dossier && <div className="flex flex-wrap items-center gap-2"><Badge tone={dossier.statut_archivage === 'archive' ? 'success' : 'neutral'}>{dossier.statut_archivage}</Badge>{dossier.statut_archivage === 'actif' && ['dg', 'dga'].includes(user?.poste) && <Button onClick={() => actualiserDossier(() => deciderArchivageDossier(dossier.id))}>Décider l’archivage</Button>}{dossier.statut_archivage === 'a_archiver' && user?.poste === 'secretariat_2' && <Button onClick={() => actualiserDossier(() => archiverDossier(dossier.id))}>Archiver le dossier</Button>}</div>}
+        {dossier && <div className="flex flex-wrap items-center gap-2"><Badge tone={dossier.statut_archivage === 'archive' ? 'success' : 'neutral'}>{dossier.statut_archivage}</Badge>{dossier.statut_archivage === 'actif' && sourceAutoriteDg && <Button onClick={() => actualiserDossier(() => deciderArchivageDossier(dossier.id))}>Décider l’archivage</Button>}{dossier.statut_archivage === 'a_archiver' && user?.poste === 'secretariat_2' && <Button onClick={() => actualiserDossier(() => archiverDossier(dossier.id))}>Archiver le dossier</Button>}</div>}
         {dossier?.documents?.length > 0 && (
           <div className="space-y-2">
             {dossier.documents.map((document) => (

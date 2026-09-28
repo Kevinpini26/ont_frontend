@@ -217,7 +217,7 @@ function AppRoutes() {
             <Route path="/circuit/classement-archives" element={<ClassementArchivesPage />} />
           </Route>
 
-          <Route element={<ProtectedRoute roles={[ROLES.AGENT_CIRCUIT_COURRIER]} postes={['dg']} postesNatifs={['dg']} />}>
+          <Route element={<ProtectedRoute roles={[ROLES.AGENT_CIRCUIT_COURRIER]} postes={['dg']} autoriteDg />}>
             <Route path="/circuit/espace-dg" element={<CourrierDgDashboardPage />} />
           </Route>
 

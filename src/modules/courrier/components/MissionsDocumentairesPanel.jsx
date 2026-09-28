@@ -19,7 +19,8 @@ export function MissionsDocumentairesPanel({ courrier, user, onUpdate }) {
   const [motif, setMotif] = useState('');
   const [enCours, setEnCours] = useState(false);
   const missions = courrier.missions_documentaires ?? [];
-  const estAutorite = ['dg', 'dga'].includes(user.poste) && ['en_attente_avis_dg', 'dispatch_execute'].includes(courrier.statut);
+  const estAutorite = (user.poste === 'dga' || (user.poste === 'dg' && user.source_autorite_dg))
+    && ['en_attente_avis_dg', 'dispatch_execute'].includes(courrier.statut);
 
   useEffect(() => {
     if (estAutorite) listAgentsCircuitCourrier().then((liste) => setAgents(liste.filter((a) => POSTES_ASSISTANTS[user.poste].includes(a.poste))));

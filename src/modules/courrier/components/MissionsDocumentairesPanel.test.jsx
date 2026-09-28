@@ -31,7 +31,7 @@ describe('décision DG de préparer une réponse', () => {
     render(
       <MissionsDocumentairesPanel
         courrier={{ id: 42, statut: 'en_attente_avis_dg', missions_documentaires: [] }}
-        user={{ id: 1, poste: 'dg' }}
+        user={{ id: 1, poste: 'dg', source_autorite_dg: 'titulaire' }}
         onUpdate={vi.fn()}
       />,
     );

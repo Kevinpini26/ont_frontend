@@ -1,8 +1,12 @@
-import { afterEach, beforeEach, describe, expect, test } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { ProtectedRoute } from './ProtectedRoute';
 import { useAuthStore } from '../../modules/kernel/store/authStore';
+
+vi.mock('../../modules/kernel/hooks/useDgAutorite', () => ({
+  useDgAutorite: () => useAuthStore((state) => state.user?.source_autorite_dg ?? null),
+}));
 
 function PageProtegee() {
   return <p>Contenu protégé</p>;
@@ -101,12 +105,24 @@ describe('ProtectedRoute', () => {
   });
 
   test('autorise la file DG sous delegation sans ouvrir les pages reservees au titulaire', () => {
-    useAuthStore.setState({ token: 'jeton', user: { id: 2, role: 'directeur_direction', poste: null, poste_delegue: 'dg' } });
+    useAuthStore.setState({ token: 'jeton', user: { id: 2, role: 'directeur_direction', poste: null, poste_delegue: 'dg', source_autorite_dg: 'delegation' } });
     const file = rendre({ roles: ['agent_circuit_courrier'], postes: ['dg'] });
     expect(screen.getByText('Contenu protégé')).toBeInTheDocument();
     file.unmount();
     rendre({ roles: ['agent_circuit_courrier'], postes: ['dg'], postesNatifs: ['dg'] });
     expect(screen.getByText('Accueil')).toBeInTheDocument();
+  });
+
+  test('refuse une délégation DG suspendue pendant l’intérim', () => {
+    useAuthStore.setState({ token: 'jeton', user: { id: 2, role: 'directeur_direction', poste: null, poste_delegue: 'dg', source_autorite_dg: null } });
+    rendre({ roles: ['agent_circuit_courrier'], postes: ['dg'] });
+    expect(screen.getByText('Accueil')).toBeInTheDocument();
+  });
+
+  test('ouvre les actions DG au DGA intérimaire sans poste DG natif', () => {
+    useAuthStore.setState({ token: 'jeton', user: { id: 3, role: 'agent_circuit_courrier', poste: 'dga', source_autorite_dg: 'interim_dga' } });
+    rendre({ roles: ['agent_circuit_courrier'], postes: ['dg'] });
+    expect(screen.getByText('Contenu protégé')).toBeInTheDocument();
   });
 
   test('redirige un utilisateur rattaché à un ancien poste interdit', () => {

@@ -21,7 +21,7 @@ import {
   validerRelecture,
 } from '../api/courrierApi';
 import { listAgentsCircuitCourrier } from '../../kernel/api/agentsApi';
-import { getDgDisponibilite } from '../../kernel/api/dgDisponibiliteApi';
+import { useDgAutorite } from '../../kernel/hooks/useDgAutorite';
 import { useAuthStore } from '../../kernel/store/authStore';
 import { StatutTimeline } from '../components/StatutTimeline';
 import { BordereauxTimeline } from '../components/BordereauxTimeline';
@@ -54,7 +54,12 @@ import { useRequete } from '../../../shared/hooks/useRequete';
 export function CourrierDetailPage() {
   const { id } = useParams();
   const userCompte = useAuthStore((s) => s.user);
-  const user = userCompte?.poste_delegue === 'dg' ? { ...userCompte, poste: 'dg' } : userCompte;
+  const sourceAutoriteDg = useDgAutorite();
+  const user = {
+    ...userCompte,
+    poste: sourceAutoriteDg ? 'dg' : userCompte?.poste === 'dg' ? 'dg_inactif' : userCompte?.poste,
+    source_autorite_dg: sourceAutoriteDg ?? null,
+  };
 
   const { donnees: courrier, setDonnees: setCourrier, chargement } = useRequete((signal) => getCourrier(id, signal), [id]);
   const [erreur, setErreur] = useState(null);
@@ -466,19 +471,11 @@ export function ActionsCourrier({ courrier, user, executer }) {
   const [accuseReceptionPartenaire, setAccuseReceptionPartenaire] = useState('');
   const [modeExpedition, setModeExpedition] = useState(courrier.destinataire_externe_email ? 'courriel' : 'poste');
   const [envoiEnCours, setEnvoiEnCours] = useState(false);
-  const [dgIndisponible, setDgIndisponible] = useState(false);
-
   useEffect(() => {
     if (courrier.sens !== 'sortant' && courrier.statut === 'projet_a_rediger' && POSTES_ASSISTANTS.includes(user.poste)) {
       listAgentsCircuitCourrier().then(setAgents);
     }
   }, [courrier.sens, courrier.statut, user.poste]);
-
-  useEffect(() => {
-    if (courrier.statut === 'en_attente_avis_dg' && user.poste === 'dga') {
-      getDgDisponibilite().then((disponible) => setDgIndisponible(!disponible));
-    }
-  }, [courrier.statut, user.poste]);
 
   const estRelecteurDesigne = courrier.relecteur?.id === user.id;
 
@@ -671,13 +668,13 @@ export function ActionsCourrier({ courrier, user, executer }) {
   // La DG rend l'avis normalement ; la DGA ne le peut que si la DG est
   // marquée indisponible (intérim, voir GET /dg-disponibilite) — sinon la
   // DGA ne voit aucune action ici, cohérent avec le blocage 422 côté serveur.
-  if (courrier.statut === 'en_attente_avis_dg' && (user.poste === 'dg' || (user.poste === 'dga' && dgIndisponible))) {
+  if (courrier.statut === 'en_attente_avis_dg' && user.source_autorite_dg) {
     return (
       <div className="space-y-6">
         <Card>
           <CardHeader title="Rendre un avis" />
           <CardBody className="space-y-4">
-            {user.poste === 'dga' && (
+            {user.source_autorite_dg === 'interim_dga' && (
               <Alert tone="info">Vous intervenez en intérim de la DG, actuellement marquée indisponible.</Alert>
             )}
             <Field label="Avis" htmlFor="avis">

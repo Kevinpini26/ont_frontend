@@ -1,9 +1,12 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../modules/kernel/store/authStore';
+import { useDgAutorite } from '../../modules/kernel/hooks/useDgAutorite';
 
-export function ProtectedRoute({ roles, postes, postesInterdits, postesNatifs }) {
+export function ProtectedRoute({ roles, postes, postesInterdits, postesNatifs, autoriteDg = false }) {
   const user = useAuthStore((s) => s.user);
   const token = useAuthStore((s) => s.token);
+  const verifierAutoriteDg = autoriteDg || user?.poste_delegue === 'dg';
+  const sourceAutoriteDg = useDgAutorite(verifierAutoriteDg);
   const location = useLocation();
 
   if (!token || !user) {
@@ -17,12 +20,18 @@ export function ProtectedRoute({ roles, postes, postesInterdits, postesNatifs })
     return <Navigate to="/changer-mot-de-passe" replace />;
   }
 
-  const delegationDg = user.poste_delegue === 'dg';
+  if (verifierAutoriteDg && sourceAutoriteDg === undefined) return null;
+
+  const delegationDg = Boolean(sourceAutoriteDg);
   if (roles && !roles.includes(user.role) && !(delegationDg && roles.includes('agent_circuit_courrier'))) {
     return <Navigate to="/" replace />;
   }
 
   if (postes && !postes.includes(user.poste) && !(delegationDg && postes.includes('dg'))) {
+    return <Navigate to="/" replace />;
+  }
+
+  if (autoriteDg && !sourceAutoriteDg) {
     return <Navigate to="/" replace />;
   }
 

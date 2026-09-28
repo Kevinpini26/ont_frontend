@@ -28,6 +28,9 @@ vi.mock('../../../shared/hooks/useRequete', () => ({
 vi.mock('../../kernel/store/authStore', () => ({
   useAuthStore: (selecteur) => selecteur({ user: contexte.user }),
 }));
+vi.mock('../../kernel/hooks/useDgAutorite', () => ({
+  useDgAutorite: () => (contexte.user.poste === 'dg' ? 'titulaire' : null),
+}));
 vi.mock('../../kernel/api/agentsApi', () => ({ listAgentsCircuitCourrier: vi.fn().mockResolvedValue([{ id: 3, poste: 'assistant_1', name: 'Relecteur', poste_label: 'Assistant 1' }]) }));
 vi.mock('../../kernel/api/directionsApi', () => ({ listDirections: vi.fn().mockResolvedValue([{ id: 5, nom: 'Direction test' }]) }));
 vi.mock('../components/TipTapEditor', () => ({ TipTapEditor: () => <div>Éditeur</div> }));

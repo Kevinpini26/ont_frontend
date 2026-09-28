@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { ArrowRight, Clock, FileSignature, Send, Users } from 'lucide-react';
 import { getCourriersStatistiquesDg, listCourriers } from '../api/courrierApi';
-import { getDgDisponibilite, updateDgDisponibilite } from '../../kernel/api/dgDisponibiliteApi';
+import { DgInterimManagement } from '../../kernel/components/DgInterimManagement';
 import { getStagiairesAlertes, getStagiairesStatistiques } from '../../stagiaires/api/stagiairesApi';
 import { PageHeader } from '../../../shared/components/ui/PageHeader';
 import { Card, CardBody, CardHeader } from '../../../shared/components/ui/Card';
@@ -64,26 +64,10 @@ export function CourrierDgDashboardPage() {
   const [meta, setMeta] = useState(null);
   const [chargementTable, setChargementTable] = useState(true);
 
-  const [disponible, setDisponible] = useState(true);
-  const [envoiDisponibilite, setEnvoiDisponibilite] = useState(false);
-
   const [alertesStagiaires, setAlertesStagiaires] = useState(null);
   const [attenteAvisDg, setAttenteAvisDg] = useState([]);
   const [attenteRelecture, setAttenteRelecture] = useState([]);
   const [chargementAlertes, setChargementAlertes] = useState(true);
-
-  useEffect(() => {
-    getDgDisponibilite().then(setDisponible);
-  }, []);
-
-  async function basculerDisponibilite() {
-    setEnvoiDisponibilite(true);
-    try {
-      setDisponible(await updateDgDisponibilite(!disponible));
-    } finally {
-      setEnvoiDisponibilite(false);
-    }
-  }
 
   useEffect(() => {
     setStatsChargement(true);
@@ -171,14 +155,12 @@ export function CourrierDgDashboardPage() {
         description="Vue d'ensemble consolidée, toutes directions confondues."
         action={
           <div className="flex items-center gap-3">
-            <Badge tone={disponible ? 'success' : 'warning'}>{disponible ? 'Disponible' : 'Indisponible — DGA en intérim'}</Badge>
-            <Button type="button" variant="secondary" size="sm" disabled={envoiDisponibilite} onClick={basculerDisponibilite}>
-              {disponible ? 'Me marquer indisponible' : 'Me marquer disponible'}
-            </Button>
             <PeriodSelector value={periode} onChange={setPeriode} />
           </div>
         }
       />
+
+      <div className="mb-6"><DgInterimManagement /></div>
 
       {statsChargement ? (
         <SkeletonStatCards />

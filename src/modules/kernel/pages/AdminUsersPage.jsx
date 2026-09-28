@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createUser, deleteUser, listUsers, revokeUserTokens, updateUser } from '../api/usersApi';
 import { listDirections } from '../api/directionsApi';
-import { updateDgDisponibilite } from '../api/dgDisponibiliteApi';
+import { DgInterimManagement } from '../components/DgInterimManagement';
 import { ROLES, ROLES_ATTRIBUABLES, ROLE_LABELS, POSTES, POSTE_LABELS } from '../constants';
 import { SearchBar } from '../../../shared/components/SearchBar';
 import { ExportButtons } from '../../../shared/components/ExportButtons';
@@ -135,11 +135,6 @@ export function AdminUsersPage() {
     charger();
   }
 
-  async function basculerDisponibiliteDg(user) {
-    await updateDgDisponibilite(!user.dg_disponible);
-    await charger();
-  }
-
   async function revoquer(user) {
     const ok = await confirm({
       title: 'Révoquer toutes les sessions actives ?',
@@ -156,6 +151,8 @@ export function AdminUsersPage() {
   return (
     <div>
       <PageHeader title="Gestion des comptes et des rôles" description="Création des comptes agents et contrôle des accès." />
+
+      <div className="mb-6"><DgInterimManagement /></div>
 
       {message && <Alert tone="success" className="mb-4">{message}</Alert>}
 
@@ -325,11 +322,6 @@ export function AdminUsersPage() {
                           <Button type="button" variant="secondary" size="sm" onClick={() => commencerEdition(u)}>
                             Modifier
                           </Button>
-                          {u.poste === 'dg' && (
-                            <Button type="button" variant="secondary" size="sm" onClick={() => basculerDisponibiliteDg(u)}>
-                              {u.dg_disponible ? 'Marquer indisponible' : 'Marquer disponible'}
-                            </Button>
-                          )}
                           <Button type="button" variant="secondary" size="sm" onClick={() => revoquer(u)}>
                             Révoquer jetons
                           </Button>

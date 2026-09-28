@@ -7,6 +7,7 @@ import { UserMenu } from './UserMenu';
 import { useSidebarCounts } from '../hooks/useSidebarCounts';
 import { useFocusTrap } from '../hooks/useFocusTrap';
 import { UserAvatar } from './ui/UserAvatar';
+import { useDgAutorite } from '../../modules/kernel/hooks/useDgAutorite';
 
 const BADGE_TONES = {
   danger: 'bg-ont-red-500 text-white',
@@ -48,7 +49,8 @@ function BadgeCompteur({ compteur }) {
 }
 
 export function Sidebar({ user, onLogout, mobileOpen, onCloseMobile }) {
-  const sections = navigationForUser(user);
+  const sourceAutoriteDg = useDgAutorite(user?.poste === 'dga' || user?.poste_delegue === 'dg');
+  const sections = navigationForUser({ ...user, poste_delegue: sourceAutoriteDg ? 'dg' : null });
   const compteurs = useSidebarCounts(user);
   const tiroirRef = useFocusTrap(mobileOpen);
   const { pathname } = useLocation();

@@ -20,6 +20,7 @@ import { useRequete } from '../../../shared/hooks/useRequete';
 import { ACTION_PAR_POSTE, DEGRE_URGENCE_LABELS, ORDRE_URGENCE, STATUT_LABELS, TONE_URGENCE, TYPE_LABELS } from '../constants';
 import { SearchBar } from '../../../shared/components/SearchBar';
 import { useAuthStore } from '../../kernel/store/authStore';
+import { useDgAutorite } from '../../kernel/hooks/useDgAutorite';
 import { listAgentsCircuitCourrier } from '../../kernel/api/agentsApi';
 import { listDirections } from '../../kernel/api/directionsApi';
 import { PageHeader } from '../../../shared/components/ui/PageHeader';
@@ -85,8 +86,8 @@ const FORMULAIRE_VIDE = {
 export function CircuitQueuePage({ instructionsSeulement = false }) {
   const { poste: postePourUrl } = useParams();
   const user = useAuthStore((s) => s.user);
-  // Le poste DG délégué provient de /auth/me, jamais du paramètre d'URL.
-  const poste = user.poste_delegue === 'dg' ? 'dg' : user.poste;
+  const sourceAutoriteDg = useDgAutorite();
+  const poste = sourceAutoriteDg ? 'dg' : user.poste === 'dg' ? 'dg_inactif' : user.poste;
   const {
     donnees: courriersReponse,
     chargement,
@@ -163,6 +164,9 @@ export function CircuitQueuePage({ instructionsSeulement = false }) {
 
   // Tous les hooks doivent s'exécuter avant un retour anticipé (règles des
   // Hooks React) : cette redirection n'intervient qu'ensuite.
+  if (poste === 'dg_inactif') {
+    return <Alert tone="info">La file DG est temporairement confiée au DGA intérimaire.</Alert>;
+  }
   if (instructionsSeulement ? poste !== 'secretariat_1' : postePourUrl !== poste) {
     return <Navigate to={`/circuit/${poste}`} replace />;
   }

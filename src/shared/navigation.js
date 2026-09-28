@@ -12,7 +12,10 @@ export function navigationForUser(user) {
   if (user.poste_delegue === 'dg' && user.poste !== 'dg') {
     return [
       ...navigationForUser({ ...user, poste_delegue: null }),
-      { title: 'Délégation DG', items: [{ label: 'File DG', to: '/circuit/dg', icon: Inbox }] },
+      { title: 'Autorité DG', items: [
+        { label: 'File DG', to: '/circuit/dg', icon: Inbox },
+        { label: 'Espace Direction Générale', to: '/circuit/espace-dg', icon: Building2 },
+      ] },
     ];
   }
 

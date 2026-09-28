@@ -5,7 +5,7 @@ import { DispatchDecisionPanel } from './DispatchDecisionPanel';
 vi.mock('../api/courrierApi', () => ({ deciderDispatch: vi.fn() }));
 vi.mock('../../kernel/api/directionsApi', () => ({ listDirections: vi.fn().mockResolvedValue([]) }));
 
-const user = { id: 1, poste: 'dg' };
+const user = { id: 1, poste: 'dg', source_autorite_dg: 'titulaire' };
 const dispatchs = [
   { id: 1, cycle: 1, type_destination_label: 'Direction', direction: { nom: 'DMC' }, statut: 'execute', statut_label: 'Exécuté', traitement_direction: { recu_secretariat_at: '2026-01-01', statut_label: 'Terminé' } },
   { id: 2, cycle: 2, type_destination_label: 'Classement', statut: 'execute', statut_label: 'Exécuté' },
