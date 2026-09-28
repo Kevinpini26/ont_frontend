@@ -197,7 +197,7 @@ function AppRoutes() {
             <Route path="/direction/courriers-recus" element={<BoiteDispatchDirectionPage />} />
           </Route>
 
-          <Route element={<ProtectedRoute roles={[ROLES.AGENT_CIRCUIT_COURRIER]} postesInterdits={['protocole', 'assistant_protocole']} />}>
+          <Route element={<ProtectedRoute roles={[ROLES.AGENT_CIRCUIT_COURRIER]} postesInterdits={['protocole', 'assistant_protocole', 'assistant_dga']} />}>
             <Route path="/circuit/tableau-de-bord" element={<CourrierCircuitDashboardPage />} />
             <Route path="/circuit/:poste" element={<CircuitQueuePage />} />
           </Route>

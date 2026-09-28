@@ -99,10 +99,11 @@ export function navigationForUser(user) {
     // l'administration, mais ne reçoit plus aucun accès opérationnel.
     if (['protocole', 'assistant_protocole'].includes(poste)) return [];
 
-    const items = [
-      { label: 'Ma file de traitement', to: `/circuit/${poste}`, icon: Inbox },
-      { label: 'Tableau de bord', to: '/circuit/tableau-de-bord', icon: LayoutDashboard },
-    ];
+    const items = [{ label: 'Ma file de traitement', to: `/circuit/${poste}`, icon: Inbox }];
+
+    if (poste !== 'assistant_dga') {
+      items.push({ label: 'Tableau de bord', to: '/circuit/tableau-de-bord', icon: LayoutDashboard });
+    }
 
     if (['assistant_1', 'assistant_2', 'assistant_dga'].includes(user.poste)) {
       items[0] = { label: 'Mes missions', to: '/circuit/missions', icon: ClipboardList };
