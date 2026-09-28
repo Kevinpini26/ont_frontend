@@ -16,6 +16,7 @@ import { Badge } from '../../../shared/components/ui/Badge';
 import { EmptyState } from '../../../shared/components/ui/EmptyState';
 import { Field, inputClass } from '../../../shared/components/ui/Field';
 import { LoadingBlock } from '../../../shared/components/ui/Spinner';
+import { Alert } from '../../../shared/components/ui/Alert';
 
 const contenuVide = { type: 'doc', content: [{ type: 'paragraph' }] };
 
@@ -58,7 +59,7 @@ function ProjetReponseMission({ mission, disabled, executer }) {
       </Field>
       <div className="flex flex-wrap gap-2">
         {!projet ? (
-          <Button disabled={disabled || !objet.trim() || !destinataireNom.trim()} onClick={() => executer(() => creerProjetReponseMission(mission.id, payload))}>
+          <Button disabled={disabled || !objet.trim() || !destinataireNom.trim()} onClick={() => executer(() => creerProjetReponseMission(mission.id, payload), 'Le brouillon D a été créé.')}>
             Créer le brouillon D
           </Button>
         ) : projet.statut === 'projet_a_rediger' ? (
@@ -85,18 +86,30 @@ export function MissionsAssistantsPage() {
   const [missions, setMissions] = useState(null);
   const [retours, setRetours] = useState({});
   const [enCours, setEnCours] = useState(false);
+  const [erreur, setErreur] = useState(null);
+  const [succes, setSucces] = useState(null);
 
   async function charger() {
     setMissions(await listMesMissions());
   }
 
-  useEffect(() => { charger(); }, []);
+  useEffect(() => {
+    charger().catch((err) => {
+      setErreur(err.response?.data?.message ?? 'Chargement des missions impossible.');
+      setMissions([]);
+    });
+  }, []);
 
-  async function executer(action) {
+  async function executer(action, messageSucces = null) {
+    setErreur(null);
+    setSucces(null);
     setEnCours(true);
     try {
       await action();
       await charger();
+      setSucces(messageSucces);
+    } catch (err) {
+      setErreur(err.response?.data?.message ?? 'Action impossible.');
     } finally {
       setEnCours(false);
     }
@@ -107,6 +120,8 @@ export function MissionsAssistantsPage() {
   return (
     <div>
       <PageHeader title="Mes missions documentaires" description="Travaux confiés par la DG ou la DGA autour d'un document existant." />
+      {erreur && <Alert tone="error" className="mb-4">{erreur}</Alert>}
+      {succes && <Alert tone="success" className="mb-4">{succes}</Alert>}
       {missions.length === 0 ? <EmptyState title="Aucune mission reçue" /> : (
         <div className="space-y-4">
           {missions.map((mission) => (
