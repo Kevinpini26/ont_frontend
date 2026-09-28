@@ -7,6 +7,7 @@ import { Alert } from '../../../shared/components/ui/Alert';
 import { Button } from '../../../shared/components/ui/Button';
 import { useAuthStore } from '../../kernel/store/authStore';
 import { useDgAutorite } from '../../kernel/hooks/useDgAutorite';
+import { libelleReferenceDocument } from '../utils/receptionCourrier';
 
 export function DossierDocumentsPanel({ courrier }) {
   const [dossier, setDossier] = useState(null);
@@ -58,15 +59,7 @@ export function DossierDocumentsPanel({ courrier }) {
                   <Link className="font-medium text-ont-blue-700 hover:underline dark:text-ont-blue-300" to={`/courriers/${document.id}`}>
                     {document.objet}
                   </Link>
-                  <p className="text-text-muted">
-                    {document.reference_documentaire
-                      ? `Réf. ${document.reference_documentaire}`
-                      : document.numero_enregistrement
-                        ? `Enreg. ${document.numero_enregistrement}`
-                        : document.numero_depart
-                          ? `Départ ${document.numero_depart}`
-                          : `Accusé ${document.numero_accuse_reception}`}
-                  </p>
+                  <p className="text-text-muted">{libelleReferenceDocument(document)}</p>
                 </div>
                 <Badge tone={document.id === courrier.id ? 'info' : 'neutral'}>{document.statut_label}</Badge>
               </div>

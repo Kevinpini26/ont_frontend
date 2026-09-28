@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import {
   creerProjetReponseMission,
   listMesMissions,
+  listProjetsReponseARelire,
   prendreMissionEnCharge,
   retournerMission,
   sauvegarderProjetReponseMission,
@@ -84,19 +85,27 @@ function ProjetReponseMission({ mission, disabled, executer }) {
 
 export function MissionsAssistantsPage() {
   const [missions, setMissions] = useState(null);
+  const [projetsARevoir, setProjetsARevoir] = useState(null);
+  const [onglet, setOnglet] = useState('missions');
   const [retours, setRetours] = useState({});
   const [enCours, setEnCours] = useState(false);
   const [erreur, setErreur] = useState(null);
   const [succes, setSucces] = useState(null);
 
   async function charger() {
-    setMissions(await listMesMissions());
+    const [missionsChargees, projetsCharges] = await Promise.all([
+      listMesMissions(),
+      listProjetsReponseARelire(),
+    ]);
+    setMissions(missionsChargees);
+    setProjetsARevoir(projetsCharges);
   }
 
   useEffect(() => {
     charger().catch((err) => {
       setErreur(err.response?.data?.message ?? 'Chargement des missions impossible.');
       setMissions([]);
+      setProjetsARevoir([]);
     });
   }, []);
 
@@ -115,14 +124,22 @@ export function MissionsAssistantsPage() {
     }
   }
 
-  if (!missions) return <LoadingBlock />;
+  if (!missions || !projetsARevoir) return <LoadingBlock />;
 
   return (
     <div>
       <PageHeader title="Mes missions documentaires" description="Travaux confiés par la DG ou la DGA autour d'un document existant." />
       {erreur && <Alert tone="error" className="mb-4">{erreur}</Alert>}
       {succes && <Alert tone="success" className="mb-4">{succes}</Alert>}
-      {missions.length === 0 ? <EmptyState title="Aucune mission reçue" /> : (
+      <div className="mb-4 flex flex-wrap gap-2" role="tablist" aria-label="Travaux assistants">
+        <Button type="button" size="sm" variant={onglet === 'missions' ? 'primary' : 'secondary'} role="tab" aria-selected={onglet === 'missions'} onClick={() => setOnglet('missions')}>
+          Mes missions ({missions.length})
+        </Button>
+        <Button type="button" size="sm" variant={onglet === 'relecture' ? 'primary' : 'secondary'} role="tab" aria-selected={onglet === 'relecture'} onClick={() => setOnglet('relecture')}>
+          Projets à relire ({projetsARevoir.length})
+        </Button>
+      </div>
+      {onglet === 'missions' && (missions.length === 0 ? <EmptyState title="Aucune mission reçue" /> : (
         <div className="space-y-4">
           {missions.map((mission) => (
             <Card key={mission.id}>
@@ -156,7 +173,32 @@ export function MissionsAssistantsPage() {
             </Card>
           ))}
         </div>
-      )}
+      ))}
+      {onglet === 'relecture' && (projetsARevoir.length === 0 ? <EmptyState title="Aucun projet à relire" description="Les projets soumis par l’autre assistant apparaîtront ici." /> : (
+        <div className="space-y-4">
+          {projetsARevoir.map((projet) => (
+            <Card key={projet.id}>
+              <CardBody className="space-y-3">
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div>
+                    <p className="font-semibold">{projet.objet}</p>
+                    <p className="text-sm text-text-subtle">
+                      Courrier source : {projet.courrier_origine?.numero_enregistrement ?? projet.courrier_origine?.numero_accuse_reception ?? `#${projet.en_reponse_a_courrier_id}`}
+                      {' · '}Dossier #{projet.dossier_id}
+                    </p>
+                  </div>
+                  <Badge tone="warning">Relecture requise</Badge>
+                </div>
+                <p className="text-sm"><span className="font-medium">Rédacteur :</span> {projet.createur?.name ?? 'Non renseigné'}</p>
+                <p className="text-sm text-text-subtle">Soumis le {new Date(projet.updated_at).toLocaleString('fr-FR')} · {projet.statut_label}</p>
+                <Link to={`/courriers/${projet.id}`} className="inline-flex rounded-button bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary-hover">
+                  Examiner le projet
+                </Link>
+              </CardBody>
+            </Card>
+          ))}
+        </div>
+      ))}
     </div>
   );
 }

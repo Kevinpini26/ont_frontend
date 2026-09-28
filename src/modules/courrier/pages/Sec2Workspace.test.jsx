@@ -73,6 +73,68 @@ describe('Poste SEC2', () => {
     await waitFor(() => expect(envoyerCourrier).toHaveBeenCalledWith(9, { destinataire_externe_nom: 'Partenaire', destinataire_externe_email: 'partenaire@example.test', mode_expedition: 'courriel' }));
   });
 
+  test('la DG voit un bouton de signature explicite pour une réponse validée', () => {
+    afficher(<ActionsCourrier
+      courrier={{
+        id: 99,
+        statut: 'projet_a_valider',
+        sens: 'sortant',
+        relecture_validee_at: '2026-09-28T22:51:39Z',
+        numero_depart: null,
+        signe_at: null,
+        pdf_disponible: false,
+        projet_reponse_contenu: { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Texte final de la réponse' }] }] },
+        destinataire_externe_nom: 'Partenaire',
+        relecteur: { id: 2, name: 'DG2' },
+        missions_documentaires: [],
+      }}
+      user={{ id: 1, poste: 'dg' }}
+      executer={vi.fn((action) => action())}
+    />);
+
+    expect(screen.getByRole('button', { name: 'Signer la réponse' })).toBeInTheDocument();
+  });
+
+  test.each(['assistant_1', 'assistant_2', 'secretariat_1', 'secretariat_2'])(
+    '%s ne voit pas le bouton de signature pour un projet relu',
+    (poste) => {
+      afficher(<ActionsCourrier
+        courrier={{
+          id: 99,
+          statut: 'projet_a_valider',
+          sens: 'sortant',
+          relecture_validee_at: '2026-09-28T22:51:39Z',
+          numero_depart: null,
+          signe_at: null,
+          pdf_disponible: false,
+          relecteur: { id: 2, name: 'DG2' },
+          missions_documentaires: [],
+        }}
+        user={{ id: 3, poste }}
+        executer={vi.fn((action) => action())}
+      />);
+
+      expect(screen.queryByRole('button', { name: 'Signer la réponse' })).not.toBeInTheDocument();
+    },
+  );
+
+  test('un D déjà envoyé ne présente plus la signature à la DG', () => {
+    afficher(<ActionsCourrier
+      courrier={{
+        id: 99,
+        statut: 'envoye',
+        sens: 'sortant',
+        numero_depart: '2026-D0099',
+        signe_at: '2026-09-28T22:51:39Z',
+        pdf_disponible: true,
+      }}
+      user={{ id: 1, poste: 'dg' }}
+      executer={vi.fn((action) => action())}
+    />);
+
+    expect(screen.queryByRole('button', { name: 'Signer la réponse' })).not.toBeInTheDocument();
+  });
+
   test('le détail classement ne propose pas le bouton historique de dispatch', () => {
     afficher(<ActionsCourrier courrier={{ id: 9, statut: 'en_dispatch', dispatchs: [{ type_destination: 'classement', statut: 'en_attente' }] }} user={{ id: 1, poste: 'secretariat_2' }} executer={vi.fn()} />);
     expect(screen.getByRole('link', { name: 'Classer' })).toBeInTheDocument();

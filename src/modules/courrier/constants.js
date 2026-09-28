@@ -55,13 +55,14 @@ export const STATUT_LABELS = {
   retour_reception: 'Retour à la Réception',
   en_attente_avis_dg: "En attente d'avis DG",
   projet_a_rediger: 'Projet de réponse à rédiger',
-  projet_a_valider: 'Projet en attente de validation',
+  projet_a_valider: 'Projet prêt à signer',
   en_dispatch: 'En dispatch vers la direction',
   dispatch_execute: 'Dispatch exécuté',
   chez_direction: 'Chez le secrétariat de la direction',
   en_attente_validation_dg: 'En attente de validation DG',
   en_relecture: 'En relecture',
   signe: 'Signé',
+  envoye: 'Envoyé',
   enregistre: 'Enregistré',
 };
 

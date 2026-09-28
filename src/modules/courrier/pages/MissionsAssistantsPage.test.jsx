@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { MissionsAssistantsPage } from './MissionsAssistantsPage';
-import { creerProjetReponseMission, listMesMissions } from '../api/courrierApi';
+import { creerProjetReponseMission, listMesMissions, listProjetsReponseARelire } from '../api/courrierApi';
 
 const contenuSaisi = {
   type: 'doc',
@@ -28,6 +28,7 @@ const mission = {
 vi.mock('../api/courrierApi', () => ({
   creerProjetReponseMission: vi.fn(),
   listMesMissions: vi.fn(),
+  listProjetsReponseARelire: vi.fn(),
   prendreMissionEnCharge: vi.fn(),
   retournerMission: vi.fn(),
   sauvegarderProjetReponseMission: vi.fn(),
@@ -44,6 +45,7 @@ function afficher() {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  listProjetsReponseARelire.mockResolvedValue([]);
 });
 
 describe('création du brouillon D depuis une mission DG', () => {
@@ -73,5 +75,38 @@ describe('création du brouillon D depuis une mission DG', () => {
 
     await waitFor(() => expect(screen.getByText('Le brouillon D a été créé.')).toBeInTheDocument());
     expect(screen.getByRole('button', { name: 'Sauvegarder le brouillon' })).toBeInTheDocument();
+  });
+
+  test('distingue les projets nominativement soumis à la relecture et mène vers leur détail', async () => {
+    listMesMissions.mockResolvedValue([mission]);
+    listProjetsReponseARelire.mockResolvedValue([{
+      id: 43,
+      objet: 'Réponse officielle',
+      statut: 'projet_a_valider',
+      statut_label: 'Projet en attente de validation',
+      dossier_id: 6,
+      en_reponse_a_courrier_id: 12,
+      courrier_origine: { id: 12, numero_enregistrement: '2026-0005' },
+      createur: { id: 6, name: 'Assistant DG1' },
+      updated_at: '2026-10-01T08:00:00Z',
+    }]);
+    afficher();
+
+    await screen.findByRole('tab', { name: 'Mes missions (1)' });
+    expect(screen.getByRole('tab', { name: 'Projets à relire (1)' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('tab', { name: 'Projets à relire (1)' }));
+
+    expect(await screen.findByText('Réponse officielle')).toBeInTheDocument();
+    expect(screen.getByText('Rédacteur :')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Examiner le projet' })).toHaveAttribute('href', '/courriers/43');
+  });
+
+  test('affiche une bannette de relecture vide sans masquer les missions', async () => {
+    listMesMissions.mockResolvedValue([]);
+    afficher();
+
+    await screen.findByRole('tab', { name: 'Projets à relire (0)' });
+    fireEvent.click(screen.getByRole('tab', { name: 'Projets à relire (0)' }));
+    expect(await screen.findByText('Aucun projet à relire')).toBeInTheDocument();
   });
 });

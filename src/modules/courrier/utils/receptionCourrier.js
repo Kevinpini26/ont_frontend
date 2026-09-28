@@ -46,3 +46,11 @@ export function identiteCourrier(courrier) {
     `Courrier #${courrier?.id ?? '—'}`
   );
 }
+
+export function libelleReferenceDocument(courrier) {
+  if (courrier?.numero_enregistrement) return `Enreg. ${courrier.numero_enregistrement}`;
+  if (courrier?.reference_documentaire) return `Réf. ${courrier.reference_documentaire}`;
+  if (courrier?.numero_depart) return `Départ ${courrier.numero_depart}`;
+  if (courrier?.numero_accuse_reception) return `Accusé ${courrier.numero_accuse_reception}`;
+  return 'Réf. non disponible';
+}

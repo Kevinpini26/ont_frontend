@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Bell } from 'lucide-react';
 import { listNotifications, markAllNotificationsRead, markNotificationRead } from '../../modules/kernel/api/notificationsApi';
 
 export function NotificationsBell() {
+  const navigate = useNavigate();
   const [ouvert, setOuvert] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [nonLues, setNonLues] = useState(0);
@@ -47,6 +49,10 @@ export function NotificationsBell() {
     if (!notification.read_at) {
       await markNotificationRead(notification.id);
       charger();
+    }
+    if (notification.data.lien) {
+      setOuvert(false);
+      navigate(notification.data.lien);
     }
   }
 

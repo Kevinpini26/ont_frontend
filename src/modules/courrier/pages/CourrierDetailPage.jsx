@@ -52,6 +52,12 @@ import { DocumentPreviewModal } from '../../../shared/components/DocumentPreview
 import { useRequete } from '../../../shared/hooks/useRequete';
 import { identiteCourrier } from '../utils/receptionCourrier';
 
+function texteAffichable(valeur) {
+  if (typeof valeur !== 'string') return '';
+  const texte = valeur.trim();
+  return texte && !['null', 'undefined'].includes(texte.toLowerCase()) ? texte : '';
+}
+
 export function CourrierDetailPage() {
   const { id } = useParams();
   const userCompte = useAuthStore((s) => s.user);
@@ -78,6 +84,9 @@ export function CourrierDetailPage() {
 
   if (chargement) return <LoadingBlock />;
   if (!courrier) return <Alert tone="error">Courrier introuvable.</Alert>;
+
+  const destinataireNom = texteAffichable(courrier.destinataire_externe_nom);
+  const destinataireEmail = texteAffichable(courrier.destinataire_externe_email);
 
   return (
     <div>
@@ -162,6 +171,15 @@ export function CourrierDetailPage() {
               <span className="font-medium text-text">Destination : </span>
               {courrier.direction_destination?.nom ?? 'Direction Générale'}
             </p>
+            {(destinataireNom || destinataireEmail) && (
+              <dl className="grid gap-2 rounded-field border border-border p-3">
+                <div>
+                  <dt className="text-xs text-text-subtle">Destinataire</dt>
+                  {destinataireNom && <dd className="font-medium text-text">{destinataireNom}</dd>}
+                  {destinataireEmail && <dd className="text-text-muted">{destinataireEmail}</dd>}
+                </div>
+              </dl>
+            )}
             {(courrier.mode_reception === 'depot_en_ligne' || courrier.numero_enregistrement || courrier.reference_documentaire || courrier.numero_depart) && (
               <dl className="grid gap-2 rounded-field border border-border p-3 sm:grid-cols-3">
                 {courrier.mode_reception === 'depot_en_ligne' && !courrier.numero_enregistrement ? (
@@ -843,9 +861,13 @@ export function ActionsCourrier({ courrier, user, executer }) {
     && courrier.relecture_validee_at && (!missionReponse || missionReponse.statut === 'retournee')) {
     return (
       <Card>
+        <CardHeader title="Réponse prête à signer" description="La relecture est validée ; la DG peut désormais signer la réponse définitive." />
         <CardBody className="space-y-4">
+          <p className="text-sm text-text-muted">
+            Le projet est validé et l’action finale est la signature officielle de la réponse.
+          </p>
           <Button variant="gold" disabled={envoiEnCours} onClick={() => executerEtSuivre(() => signer(courrier.id))}>
-            Signer
+            Signer la réponse
           </Button>
         </CardBody>
       </Card>
