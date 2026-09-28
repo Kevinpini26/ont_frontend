@@ -17,7 +17,7 @@ function AvatarInitiale({ nom }) {
   );
 }
 
-export function AnnotationsPanel({ courrierId }) {
+export function AnnotationsPanel({ courrierId, peutAnnoter = true }) {
   const user = useAuthStore((s) => s.user);
   const [annotations, setAnnotations] = useState([]);
   const [texte, setTexte] = useState('');
@@ -83,7 +83,7 @@ export function AnnotationsPanel({ courrierId }) {
           </ul>
         )}
 
-        <form onSubmit={ajouter} className="flex gap-3 border-t border-border pt-5">
+        {peutAnnoter && <form onSubmit={ajouter} className="flex gap-3 border-t border-border pt-5">
           <AvatarInitiale nom={user?.name} />
           <div className="min-w-0 flex-1 space-y-2">
             <textarea
@@ -99,7 +99,7 @@ export function AnnotationsPanel({ courrierId }) {
               </Button>
             </div>
           </div>
-        </form>
+        </form>}
       </CardBody>
     </Card>
   );

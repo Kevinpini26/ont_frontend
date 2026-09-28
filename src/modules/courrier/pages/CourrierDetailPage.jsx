@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { Building2, CalendarDays, Eye, Hash, Route } from 'lucide-react';
 import {
   accuserReception,
   dispatcherDirection,
   enregistrer,
+  envoyerCourrier,
   getCourrier,
   imputer,
   transmettreSec1,
@@ -369,7 +370,7 @@ export function CourrierDetailPage() {
         )}
       </div>
 
-      <AnnotationsPanel courrierId={courrier.id} />
+      <AnnotationsPanel courrierId={courrier.id} peutAnnoter={courrier.peut_annoter ?? user.poste !== 'secretariat_2'} />
 
       <DocumentPreviewModal
         open={apercu !== null}
@@ -515,7 +516,7 @@ function PanneauImputation({ courrier, user, executer }) {
   );
 }
 
-function ActionsCourrier({ courrier, user, executer }) {
+export function ActionsCourrier({ courrier, user, executer }) {
   const [agents, setAgents] = useState([]);
   const [relecteurId, setRelecteurId] = useState('');
   const [projetContenu, setProjetContenu] = useState(courrier.projet_reponse_contenu ?? '');
@@ -528,6 +529,7 @@ function ActionsCourrier({ courrier, user, executer }) {
   const [observationCorrection, setObservationCorrection] = useState('');
   const [noteTechnique, setNoteTechnique] = useState('');
   const [accuseReceptionPartenaire, setAccuseReceptionPartenaire] = useState('');
+  const [modeExpedition, setModeExpedition] = useState(courrier.destinataire_externe_email ? 'courriel' : 'poste');
   const [envoiEnCours, setEnvoiEnCours] = useState(false);
   const [dgIndisponible, setDgIndisponible] = useState(false);
 
@@ -710,6 +712,12 @@ function ActionsCourrier({ courrier, user, executer }) {
   }
 
   if (courrier.statut === 'en_dispatch' && user.poste === 'secretariat_2') {
+    if (courrier.dispatchs?.length) {
+      return <Card><CardHeader title="Exécuter les décisions institutionnelles" /><CardBody className="flex gap-3">
+        {courrier.dispatchs.some((dispatch) => dispatch.type_destination !== 'classement' && dispatch.statut === 'en_attente') && <Link to="/circuit/centre-dispatch">Dispatchs à exécuter</Link>}
+        {courrier.dispatchs.some((dispatch) => dispatch.type_destination === 'classement' && dispatch.statut === 'en_attente') && <Link to="/circuit/classement-archives">Classer</Link>}
+      </CardBody></Card>;
+    }
     return (
       <Card>
         <CardHeader
@@ -913,6 +921,19 @@ function ActionsCourrier({ courrier, user, executer }) {
   }
 
   const attendEnregistrementDirect = courrier.statut === 'recu' && !courrier.necessite_avis_dg;
+
+  if (courrier.statut === 'signe' && courrier.sens === 'sortant' && user.poste === 'secretariat_2') {
+    return <Card><CardHeader title="Envoi officiel" description="Exécuter l’envoi du document signé sans modifier son destinataire." /><CardBody className="space-y-4">
+      <p>Destinataire : {courrier.destinataire_externe_nom || 'Non déterminé'} · {courrier.destinataire_externe_email || 'Sans adresse e-mail'}</p>
+      <p>Numéro de départ : {courrier.numero_depart}</p>
+      <Field label="Mode d’expédition"><select className={inputClass} value={modeExpedition} onChange={(e) => setModeExpedition(e.target.value)}><option value="courriel">Courriel</option><option value="poste">Poste</option><option value="porteur">Porteur</option></select></Field>
+      <Button disabled={envoiEnCours || !courrier.destinataire_externe_nom} onClick={() => executerEtSuivre(() => envoyerCourrier(courrier.id, {
+        destinataire_externe_nom: courrier.destinataire_externe_nom,
+        destinataire_externe_email: courrier.destinataire_externe_email,
+        mode_expedition: modeExpedition,
+      }))}>Envoyer</Button>
+    </CardBody></Card>;
+  }
 
   if ((courrier.statut === 'signe' || attendEnregistrementDirect) && user.poste === 'secretariat_2') {
     return (

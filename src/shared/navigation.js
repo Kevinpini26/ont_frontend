@@ -98,6 +98,8 @@ export function navigationForUser(user) {
     }
     if (user.poste === 'secretariat_2') {
       items[0] = { label: 'Centre de dispatch', to: '/circuit/centre-dispatch', icon: Inbox };
+      items.push({ label: 'Envois officiels', to: '/circuit/envois-officiels', icon: Inbox });
+      items.push({ label: 'Archivage des dossiers', to: '/circuit/archivage-dossiers', icon: FileClock });
       items.push({ label: 'Classement & archives', to: '/circuit/classement-archives', icon: FileClock });
     }
 

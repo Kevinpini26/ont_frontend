@@ -43,6 +43,8 @@ const MissionsAssistantsPage = lazy(() =>
   import('./modules/courrier/pages/MissionsAssistantsPage').then((m) => ({ default: m.MissionsAssistantsPage })),
 );
 const CentreDispatchPage = lazy(() => import('./modules/courrier/pages/CentreDispatchPage').then((m) => ({ default: m.CentreDispatchPage })));
+const EnvoisOfficielsPage = lazy(() => import('./modules/courrier/pages/EnvoisOfficielsPage').then((m) => ({ default: m.EnvoisOfficielsPage })));
+const ArchivageDossiersPage = lazy(() => import('./modules/courrier/pages/ArchivageDossiersPage').then((m) => ({ default: m.ArchivageDossiersPage })));
 const BoiteDispatchDirectionPage = lazy(() => import('./modules/courrier/pages/BoiteDispatchDirectionPage').then((m) => ({ default: m.BoiteDispatchDirectionPage })));
 const TraitementsDirectionPage = lazy(() => import('./modules/courrier/pages/TraitementsDirectionPage').then((m) => ({ default: m.TraitementsDirectionPage })));
 const DocumentsInternesReceptionPage = lazy(() => import('./modules/courrier/pages/DocumentsInternesReceptionPage').then((m) => ({ default: m.DocumentsInternesReceptionPage })));
@@ -208,6 +210,8 @@ function AppRoutes() {
           </Route>
           <Route element={<ProtectedRoute roles={[ROLES.AGENT_CIRCUIT_COURRIER]} postes={['secretariat_2']} />}>
             <Route path="/circuit/centre-dispatch" element={<CentreDispatchPage />} />
+            <Route path="/circuit/envois-officiels" element={<EnvoisOfficielsPage />} />
+            <Route path="/circuit/archivage-dossiers" element={<ArchivageDossiersPage />} />
             <Route path="/circuit/classement-archives" element={<ClassementArchivesPage />} />
           </Route>
 

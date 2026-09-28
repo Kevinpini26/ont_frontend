@@ -194,6 +194,21 @@ export async function listCentreDispatch(params = {}) {
   return data.data;
 }
 
+export async function listCentreDispatchPage(params = {}) {
+  const { data } = await apiClient.get('/dispatchs/centre', { params });
+  return data;
+}
+
+export async function envoyerCourrier(id, donnees) {
+  const { data } = await apiClient.post(`/courriers/${id}/envoyer`, donnees);
+  return data.data;
+}
+
+export async function listDossiersAArchiver(page = 1) {
+  const { data } = await apiClient.get('/dossiers/a-archiver', { params: { page } });
+  return data;
+}
+
 export async function listBoiteDispatchDirection() {
   const { data } = await apiClient.get('/dispatchs/boite-direction');
   return data.data;
