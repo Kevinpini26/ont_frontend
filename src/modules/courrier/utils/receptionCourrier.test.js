@@ -26,6 +26,10 @@ describe('réception des courriers', () => {
     expect(identiteCourrier({ id: 8, numero_accuse_reception: null, numero_enregistrement: 'ONT/2026/0008' })).toBe('ONT/2026/0008');
   });
 
+  it('privilégie le numéro de départ après signature', () => {
+    expect(identiteCourrier({ id: 46, numero_enregistrement: '2026-0007', numero_depart: '2026-D0003' })).toBe('2026-D0003');
+  });
+
   it('traduit les erreurs sans exposer de détails techniques', () => {
     expect(messageErreurReception({ response: { status: 422, data: { errors: { objet: ['Objet requis.'] } } } })).toBe('Objet requis.');
     expect(messageErreurReception({ response: { status: 403 } })).toContain('pas autorisé');

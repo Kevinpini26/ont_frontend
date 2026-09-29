@@ -5,6 +5,7 @@ import { listDirections } from '../../kernel/api/directionsApi';
 import { marquerConsulte } from '../../kernel/api/notificationsApi';
 import { useAuthStore } from '../../kernel/store/authStore';
 import { STATUT_LABELS, TYPE_LABELS } from '../constants';
+import { libelleStatutCourrier } from '../utils/presentationCourrier';
 import { SearchBar } from '../../../shared/components/SearchBar';
 import { ExportButtons } from '../../../shared/components/ExportButtons';
 import { Card, CardBody, CardHeader } from '../../../shared/components/ui/Card';
@@ -304,7 +305,7 @@ function TableauCourriers({ courriers, chargement }) {
                 </td>
                 <td className={tdClass}>{TYPE_LABELS[c.type]}</td>
                 <td className={tdClass}>
-                  <Badge tone="info">{STATUT_LABELS[c.statut]}</Badge>
+                          <Badge tone="info">{libelleStatutCourrier(c)}</Badge>
                 </td>
                 <td className={tdClass}>
                   <Link to={`/courriers/${c.id}`}>

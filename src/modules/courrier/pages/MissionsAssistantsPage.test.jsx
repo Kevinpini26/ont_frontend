@@ -98,7 +98,25 @@ describe('création du brouillon D depuis une mission DG', () => {
 
     expect(await screen.findByText('Réponse officielle')).toBeInTheDocument();
     expect(screen.getByText('Rédacteur :')).toBeInTheDocument();
+    expect(screen.getByText(/Soumis le \d{2}\/10\/2026 \d{2}:\d{2}/)).toBeInTheDocument();
+    expect(screen.queryByText(/Invalid Date/)).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Examiner le projet' })).toHaveAttribute('href', '/courriers/43');
+  });
+
+  test('date de soumission absente affiche un fallback propre', async () => {
+    listMesMissions.mockResolvedValue([]);
+    listProjetsReponseARelire.mockResolvedValue([{
+      id: 44,
+      objet: 'Projet sans horodatage',
+      statut: 'projet_a_valider',
+      statut_label: 'Projet en attente de validation',
+      updated_at: null,
+    }]);
+    afficher();
+
+    await screen.findByRole('tab', { name: 'Projets à relire (1)' }).then((tab) => fireEvent.click(tab));
+    expect(await screen.findByText(/Date de soumission indisponible/)).toBeInTheDocument();
+    expect(screen.queryByText(/Invalid Date/)).not.toBeInTheDocument();
   });
 
   test('affiche une bannette de relecture vide sans masquer les missions', async () => {

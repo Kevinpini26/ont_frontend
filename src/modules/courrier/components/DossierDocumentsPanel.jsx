@@ -8,8 +8,9 @@ import { Button } from '../../../shared/components/ui/Button';
 import { useAuthStore } from '../../kernel/store/authStore';
 import { useDgAutorite } from '../../kernel/hooks/useDgAutorite';
 import { libelleReferenceDocument } from '../utils/receptionCourrier';
+import { libelleStatutCourrier } from '../utils/presentationCourrier';
 
-export function DossierDocumentsPanel({ courrier }) {
+export function DossierDocumentsPanel({ courrier, autoriserActions = true }) {
   const [dossier, setDossier] = useState(null);
   const [relations, setRelations] = useState([]);
   const [erreur, setErreur] = useState(null);
@@ -41,7 +42,7 @@ export function DossierDocumentsPanel({ courrier }) {
         if (error.code !== 'ERR_CANCELED') setErreur('Impossible de charger les documents associés.');
       });
     return () => controller.abort();
-  }, [courrier.dossier_id, courrier.id]);
+  }, [courrier.dossier_id, courrier.id, courrier.updated_at, courrier.statut, courrier.relecture_validee_at]);
 
   if (!courrier.dossier_id) return null;
 
@@ -50,20 +51,35 @@ export function DossierDocumentsPanel({ courrier }) {
       <CardHeader title={`Dossier #${courrier.dossier_id}`} description="Regroupement documentaire" />
       <CardBody className="space-y-4">
         {erreur && <Alert tone="error">{erreur}</Alert>}
-        {dossier && <div className="flex flex-wrap items-center gap-2"><Badge tone={dossier.statut_archivage === 'archive' ? 'success' : 'neutral'}>{dossier.statut_archivage}</Badge>{dossier.statut_archivage === 'actif' && sourceAutoriteDg && <Button onClick={() => actualiserDossier(() => deciderArchivageDossier(dossier.id))}>Décider l’archivage</Button>}{dossier.statut_archivage === 'a_archiver' && user?.poste === 'secretariat_2' && <Button onClick={() => actualiserDossier(() => archiverDossier(dossier.id))}>Archiver le dossier</Button>}</div>}
+        {dossier && <div className="flex flex-wrap items-center gap-2"><Badge tone={dossier.statut_archivage === 'archive' ? 'success' : 'neutral'}>{dossier.statut_archivage}</Badge>{autoriserActions && dossier.statut_archivage === 'actif' && sourceAutoriteDg && <Button onClick={() => actualiserDossier(() => deciderArchivageDossier(dossier.id))}>Décider l’archivage</Button>}{autoriserActions && dossier.statut_archivage === 'a_archiver' && user?.poste === 'secretariat_2' && <Button onClick={() => actualiserDossier(() => archiverDossier(dossier.id))}>Archiver le dossier</Button>}</div>}
         {dossier?.documents?.length > 0 && (
           <div className="space-y-2">
-            {dossier.documents.map((document) => (
-              <div key={document.id} className="flex flex-wrap items-center justify-between gap-2 rounded-field border border-border p-3 text-sm">
-                <div>
-                  <Link className="font-medium text-ont-blue-700 hover:underline dark:text-ont-blue-300" to={`/courriers/${document.id}`}>
-                    {document.objet}
-                  </Link>
-                  <p className="text-text-muted">{libelleReferenceDocument(document)}</p>
+            {dossier.documents.map((document) => {
+              const documentCourant = document.id === courrier.id
+                ? {
+                  ...document,
+                  statut: courrier.statut,
+                  relecture_validee_at: courrier.relecture_validee_at,
+                  numero_depart: courrier.numero_depart,
+                }
+                : document;
+              const documentAffiche = {
+                ...documentCourant,
+                statut_label: libelleStatutCourrier(documentCourant),
+              };
+
+              return (
+                <div key={document.id} className="flex flex-wrap items-center justify-between gap-2 rounded-field border border-border p-3 text-sm">
+                  <div>
+                    <Link className="font-medium text-ont-blue-700 hover:underline dark:text-ont-blue-300" to={`/courriers/${document.id}`}>
+                      {document.objet}
+                    </Link>
+                    <p className="text-text-muted">{libelleReferenceDocument(documentAffiche)}</p>
+                  </div>
+                  <Badge tone={document.id === courrier.id ? 'info' : 'neutral'}>{libelleStatutCourrier(documentAffiche)}</Badge>
                 </div>
-                <Badge tone={document.id === courrier.id ? 'info' : 'neutral'}>{document.statut_label}</Badge>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
         {relations.length > 0 && (

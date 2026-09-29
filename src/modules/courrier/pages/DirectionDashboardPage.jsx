@@ -4,7 +4,7 @@ import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Too
 import { AlertTriangle, Clock, GraduationCap, Mail, MailCheck, Users } from 'lucide-react';
 import { getCourriersStatistiquesDirection, listCourriers } from '../api/courrierApi';
 import { getStagiairesAlertes, getStagiairesStatistiques, listStagiaires } from '../../stagiaires/api/stagiairesApi';
-import { STATUT_LABELS } from '../constants';
+import { libelleStatutCourrier } from '../utils/presentationCourrier';
 import { PageHeader } from '../../../shared/components/ui/PageHeader';
 import { Card, CardBody, CardHeader } from '../../../shared/components/ui/Card';
 import { Badge } from '../../../shared/components/ui/Badge';
@@ -38,7 +38,7 @@ function DerniersCourriers({ courriers, chargement }) {
           <Link to={`/courriers/${c.id}`} className="min-w-0 flex-1 truncate text-text-muted hover:text-ont-blue-700">
             {c.objet}
           </Link>
-          <Badge tone="info">{STATUT_LABELS[c.statut]}</Badge>
+          <Badge tone="info">{libelleStatutCourrier(c)}</Badge>
         </li>
       ))}
     </ul>

@@ -7,6 +7,7 @@ import { Button } from '../../../shared/components/ui/Button';
 import { inputClass } from '../../../shared/components/ui/Field';
 import { SkeletonAvatarLines } from '../../../shared/components/ui/Skeleton';
 import { EmptyState } from '../../../shared/components/ui/EmptyState';
+import { formaterDateHeure } from '../utils/dateHeure';
 
 /** Rond d'initiale — même motif que le badge de compte dans Sidebar/AppLayout, ici à l'échelle d'un fil de discussion. */
 function AvatarInitiale({ nom }) {
@@ -74,7 +75,7 @@ export function AnnotationsPanel({ courrierId, peutAnnoter = true }) {
                 <div className="min-w-0 flex-1 rounded-field bg-surface-sunken px-3.5 py-2.5">
                   <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
                     <span className="text-sm font-medium text-text">{a.auteur?.name ?? 'Utilisateur'}</span>
-                    <time className="text-xs text-text-subtle">{new Date(a.created_at).toLocaleString('fr-FR')}</time>
+                    {formaterDateHeure(a.created_at) && <time className="text-xs text-text-subtle">{formaterDateHeure(a.created_at)}</time>}
                   </div>
                   <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-text-muted">{a.contenu}</p>
                 </div>

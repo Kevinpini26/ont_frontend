@@ -30,6 +30,7 @@ import {
 import { ZoneAlertes } from '../../../shared/components/ZoneAlertes';
 import { CHART_COLORS } from '../../../shared/chartColors';
 import { STATUT_LABELS, TYPE_LABELS } from '../constants';
+import { libelleStatutCourrier } from '../utils/presentationCourrier';
 
 const SEUIL_JOURS = 5;
 const AXIS_TICK = { fill: CHART_COLORS.axisTick, fontSize: 11 };
@@ -291,7 +292,7 @@ export function CourrierDgDashboardPage() {
                         <td className={`${tdClass} max-w-[16rem] truncate`} title={c.objet}>{c.objet}</td>
                         <td className={tdClass}>{TYPE_LABELS[c.type]}</td>
                         <td className={tdClass}>
-                          <Badge tone="info">{c.statut_label}</Badge>
+                          <Badge tone="info">{libelleStatutCourrier(c)}</Badge>
                         </td>
                         <td className={tdClass}>
                           <Link to={`/courriers/${c.id}`}>

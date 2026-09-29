@@ -6,10 +6,8 @@ import {
   STATUTS_INITIE_PAR_DG_SANS_VALIDATION,
   STATUT_LABELS,
 } from '../constants';
-
-function horodatage(iso) {
-  return new Date(iso).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
-}
+import { formaterDateHeure } from '../utils/dateHeure';
+import { libelleStatutCourrier } from '../utils/presentationCourrier';
 
 /**
  * Frise de progression du circuit — l'écran que la direction regarde en
@@ -20,7 +18,7 @@ function horodatage(iso) {
  * franchie ou en cours — la progression elle-même reste dérivée de
  * `statut`, transitions peut être absent (ex. liste, pas fiche détail).
  */
-export function StatutTimeline({ statut, necessiteAvisDg = true, initieParDg = false, validationDgRequise = false, transitions = [] }) {
+export function StatutTimeline({ statut, necessiteAvisDg = true, initieParDg = false, validationDgRequise = false, relectureValideeAt = null, transitions = [] }) {
   const etapes = initieParDg
     ? (validationDgRequise ? STATUTS_INITIE_PAR_DG_AVEC_VALIDATION : STATUTS_INITIE_PAR_DG_SANS_VALIDATION)
     : (necessiteAvisDg ? STATUTS : STATUTS_CIRCUIT_COURT);
@@ -54,6 +52,7 @@ export function StatutTimeline({ statut, necessiteAvisDg = true, initieParDg = f
         const courante = index === indexCourant;
         const dernier = index === etapes.length - 1;
         const transition = transitions?.find((t) => t.statut === s);
+        const dateTransition = formaterDateHeure(transition?.created_at);
 
         return (
           <li key={s} className={`flex gap-3 sm:min-w-0 sm:flex-1 sm:flex-col sm:items-center sm:gap-0 sm:text-center`}>
@@ -81,7 +80,9 @@ export function StatutTimeline({ statut, necessiteAvisDg = true, initieParDg = f
             </div>
             <div className="pb-4 sm:w-full sm:px-1 sm:pb-0 sm:pt-1.5">
               <p className={`text-xs font-medium ${courante ? 'text-text' : franchie ? 'text-text-muted' : 'text-text-subtle'}`}>
-                {STATUT_LABELS[s]}
+                {s === statut
+                  ? libelleStatutCourrier({ statut: s, relecture_validee_at: relectureValideeAt })
+                  : STATUT_LABELS[s]}
               </p>
               {courante && enBouclage && (
                 <p className="mt-0.5 text-xs font-medium text-ont-gold-700 dark:text-ont-gold-400">
@@ -98,12 +99,12 @@ export function StatutTimeline({ statut, necessiteAvisDg = true, initieParDg = f
                   Courrier imputé, dispatché vers la direction — {STATUT_LABELS[statut]}
                 </p>
               )}
-              {(franchie || courante) && transition && (
+              {(franchie || courante) && transition && dateTransition && (
                 <p className="mt-0.5 text-xs text-text-subtle">
                   {transition.emetteur ?? 'Guichet public'}
                   <span className="hidden sm:inline"> · </span>
                   <br className="sm:hidden" />
-                  {horodatage(transition.created_at)}
+                  {dateTransition}
                 </p>
               )}
             </div>

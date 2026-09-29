@@ -39,7 +39,6 @@ import {
   DEGRE_URGENCE_LABELS,
   TONE_URGENCE,
   POSTES_ASSISTANTS,
-  STATUT_LABELS,
 } from '../constants';
 import { PageHeader } from '../../../shared/components/ui/PageHeader';
 import { Card, CardBody, CardHeader } from '../../../shared/components/ui/Card';
@@ -50,7 +49,9 @@ import { Badge } from '../../../shared/components/ui/Badge';
 import { LoadingBlock } from '../../../shared/components/ui/Spinner';
 import { DocumentPreviewModal } from '../../../shared/components/DocumentPreviewModal';
 import { useRequete } from '../../../shared/hooks/useRequete';
-import { identiteCourrier } from '../utils/receptionCourrier';
+import { depotPublicDejaTransmis, identiteCourrier } from '../utils/receptionCourrier';
+import { formaterDateHeure } from '../utils/dateHeure';
+import { libelleStatutCourrier } from '../utils/presentationCourrier';
 
 function texteAffichable(valeur) {
   if (typeof valeur !== 'string') return '';
@@ -87,6 +88,8 @@ export function CourrierDetailPage() {
 
   const destinataireNom = texteAffichable(courrier.destinataire_externe_nom);
   const destinataireEmail = texteAffichable(courrier.destinataire_externe_email);
+  const derniereActivite = formaterDateHeure(courrier.updated_at);
+  const actionsAutorisees = !courrier.en_transit;
 
   return (
     <div>
@@ -97,7 +100,7 @@ export function CourrierDetailPage() {
         } · ${TYPE_LABELS[courrier.type]}`}
         action={
           <>
-            <Badge tone="info">{STATUT_LABELS[courrier.statut] ?? courrier.statut}</Badge>
+            <Badge tone="info">{libelleStatutCourrier(courrier)}</Badge>
             {courrier.mode_reception === 'depot_en_ligne' && !courrier.numero_enregistrement && (
               <Badge tone="warning">À enregistrer</Badge>
             )}
@@ -135,6 +138,7 @@ export function CourrierDetailPage() {
             initieParDg={courrier.initie_par_dg}
             validationDgRequise={courrier.validation_dg_requise}
             transitions={courrier.transitions}
+            relectureValideeAt={courrier.relecture_validee_at}
           />
         </div>
         <Card className="xl:sticky xl:top-[88px]">
@@ -144,7 +148,7 @@ export function CourrierDetailPage() {
               <div className="flex gap-3"><Hash size={17} className="mt-0.5 shrink-0 text-ont-blue-600" /><div><dt className="text-xs text-text-subtle">Référence</dt><dd className="mt-0.5 font-semibold text-text">{identiteCourrier(courrier)}</dd></div></div>
               <div className="flex gap-3"><Building2 size={17} className="mt-0.5 shrink-0 text-ont-blue-600" /><div><dt className="text-xs text-text-subtle">Destination</dt><dd className="mt-0.5 font-medium text-text">{courrier.direction_destination?.nom ?? 'Direction Générale'}</dd></div></div>
               <div className="flex gap-3"><Route size={17} className="mt-0.5 shrink-0 text-ont-blue-600" /><div><dt className="text-xs text-text-subtle">Cycle décisionnel</dt><dd className="mt-0.5 font-medium text-text">Cycle {courrier.cycle_courant ?? courrier.tour ?? 1}</dd></div></div>
-              <div className="flex gap-3"><CalendarDays size={17} className="mt-0.5 shrink-0 text-ont-blue-600" /><div><dt className="text-xs text-text-subtle">Dernière activité</dt><dd className="mt-0.5 font-medium text-text">{courrier.updated_at ? new Date(courrier.updated_at).toLocaleString('fr-FR') : '—'}</dd></div></div>
+              <div className="flex gap-3"><CalendarDays size={17} className="mt-0.5 shrink-0 text-ont-blue-600" /><div><dt className="text-xs text-text-subtle">Dernière activité</dt><dd className="mt-0.5 font-medium text-text">{derniereActivite ?? '—'}</dd></div></div>
             </dl>
           </CardBody>
         </Card>
@@ -155,7 +159,7 @@ export function CourrierDetailPage() {
       </div>
 
       <div className="mb-5">
-        <MissionsDocumentairesPanel courrier={courrier} user={user} onUpdate={setCourrier} />
+        <MissionsDocumentairesPanel courrier={courrier} user={user} onUpdate={setCourrier} autoriserActions={actionsAutorisees} />
       </div>
 
       {erreur && <Alert tone="error" className="mb-6">{erreur}</Alert>}
@@ -212,7 +216,7 @@ export function CourrierDetailPage() {
                 Ce dossier boucle : {courrier.tour}ᵉ passage devant la Direction Générale.
               </Alert>
             )}
-            <PanneauUrgence courrier={courrier} user={user} executer={executer} />
+            <PanneauUrgence courrier={courrier} user={user} executer={executer} actionsAutorisees={actionsAutorisees} />
             <PanneauImputation courrier={courrier} />
             {courrier.avis_dg && (
               <p className="text-text-muted">
@@ -367,9 +371,9 @@ export function CourrierDetailPage() {
         </Card>
 
         <NumerisationPanel courrier={courrier} />
-        <DossierDocumentsPanel courrier={courrier} />
-        <DispatchDecisionPanel courrier={courrier} user={user} onUpdate={setCourrier} />
-        {courrier.classement && <Card><CardHeader title="Classement"/><CardBody className="grid gap-2 text-sm md:grid-cols-2"><p>Statut : {courrier.classement.statut_label}</p><p>Cote : {courrier.classement.cote || 'Non renseignée'}</p><p>Emplacement : {courrier.classement.emplacement}</p><p>Classé par : {courrier.classement.classe_par} · {new Date(courrier.classement.classe_at).toLocaleString('fr-FR')}</p>{courrier.classement.archive_at&&<p>Archivé par : {courrier.classement.archive_par} · {new Date(courrier.classement.archive_at).toLocaleString('fr-FR')}</p>}</CardBody></Card>}
+        <DossierDocumentsPanel courrier={courrier} autoriserActions={actionsAutorisees} />
+        <DispatchDecisionPanel courrier={courrier} user={user} onUpdate={setCourrier} autoriserActions={actionsAutorisees} />
+        {courrier.classement && <Card><CardHeader title="Classement"/><CardBody className="grid gap-2 text-sm md:grid-cols-2"><p>Statut : {courrier.classement.statut_label}</p><p>Cote : {courrier.classement.cote || 'Non renseignée'}</p><p>Emplacement : {courrier.classement.emplacement}</p><p>Classé par : {courrier.classement.classe_par} · {formaterDateHeure(courrier.classement.classe_at) ?? '—'}</p>{courrier.classement.archive_at&&<p>Archivé par : {courrier.classement.archive_par} · {formaterDateHeure(courrier.classement.archive_at) ?? '—'}</p>}</CardBody></Card>}
 
         {courrier.contenu && (
           <Card>
@@ -412,7 +416,7 @@ export function CourrierDetailPage() {
  * statut courant, une fois le tri effectué — voir
  * CourrierCircuitService::requalifierUrgence().
  */
-function PanneauUrgence({ courrier, user, executer }) {
+function PanneauUrgence({ courrier, user, executer, actionsAutorisees }) {
   const [nouveauDegre, setNouveauDegre] = useState('');
   const [envoiEnCours, setEnvoiEnCours] = useState(false);
 
@@ -436,7 +440,7 @@ function PanneauUrgence({ courrier, user, executer }) {
     <div className="flex flex-wrap items-center gap-3">
       <span className="font-medium text-text">Degré d'urgence : </span>
       <Badge tone={TONE_URGENCE[courrier.degre_urgence]}>{DEGRE_URGENCE_LABELS[courrier.degre_urgence]}</Badge>
-      {user.poste === 'dg' && (
+      {actionsAutorisees && user.poste === 'dg' && (
         <form onSubmit={requalifier} className="flex items-center gap-2">
           <select
             className={`${inputClass} w-auto`}
@@ -528,6 +532,17 @@ export function ActionsCourrier({ courrier, user, executer }) {
             Enregistrer
           </Button>
         </CardBody>
+      </Card>
+    );
+  }
+
+  if (estDepotPublicRecu && user.poste === 'reception' && courrier.numero_enregistrement && depotPublicDejaTransmis(courrier)) {
+    return (
+      <Card>
+        <CardHeader
+          title="Transmis à SEC1"
+          description={courrier.en_transit ? 'En attente de réception par le Secrétariat 01.' : 'La réception par le Secrétariat 01 est confirmée.'}
+        />
       </Card>
     );
   }

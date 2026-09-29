@@ -16,9 +16,15 @@ vi.mock('../components/StatutTimeline', () => ({ StatutTimeline: () => null }));
 vi.mock('../components/BordereauxTimeline', () => ({ BordereauxTimeline: () => null }));
 vi.mock('../components/AnnotationsPanel', () => ({ AnnotationsPanel: () => null }));
 vi.mock('../components/NumerisationPanel', () => ({ NumerisationPanel: () => null }));
-vi.mock('../components/DossierDocumentsPanel', () => ({ DossierDocumentsPanel: () => null }));
-vi.mock('../components/MissionsDocumentairesPanel', () => ({ MissionsDocumentairesPanel: () => null }));
-vi.mock('../components/DispatchDecisionPanel', () => ({ DispatchDecisionPanel: () => null }));
+vi.mock('../components/DossierDocumentsPanel', () => ({
+  DossierDocumentsPanel: ({ autoriserActions }) => <div data-testid="dossier-actions" data-autoriser-actions={String(autoriserActions)} />,
+}));
+vi.mock('../components/MissionsDocumentairesPanel', () => ({
+  MissionsDocumentairesPanel: ({ autoriserActions }) => <div data-testid="mission-actions" data-autoriser-actions={String(autoriserActions)} />,
+}));
+vi.mock('../components/DispatchDecisionPanel', () => ({
+  DispatchDecisionPanel: ({ autoriserActions }) => <div data-testid="dispatch-actions" data-autoriser-actions={String(autoriserActions)} />,
+}));
 vi.mock('../components/DocumentPreviewModal', () => ({ DocumentPreviewModal: () => null }));
 vi.mock('../components/TipTapEditor', () => ({
   TipTapEditor: ({ content }) => <div>{content?.content?.[0]?.content?.[0]?.text}</div>,
@@ -70,6 +76,13 @@ const projetPreSignature = {
 };
 
 describe('détail de la réponse D', () => {
+  test('affiche l’attente de validation tant que la relecture n’est pas validée', () => {
+    afficherDetail({ ...projetPreSignature, relecture_validee_at: null });
+
+    expect(screen.getByText('Projet en attente de validation')).toBeInTheDocument();
+    expect(screen.queryByText('Projet prêt à signer')).not.toBeInTheDocument();
+  });
+
   test('affiche le statut, le contenu final, le destinataire et le CTA DG avant signature', () => {
     afficherDetail(projetPreSignature);
 
@@ -95,6 +108,57 @@ describe('détail de la réponse D', () => {
     expect(screen.queryByRole('button', { name: 'Signer la réponse' })).not.toBeInTheDocument();
     expect(screen.queryByText(/Accusé null/i)).not.toBeInTheDocument();
     expect(screen.getByText('Envoyé')).toBeInTheDocument();
+  });
+
+  test('affiche Signé et le numéro de départ après signature', () => {
+    afficherDetail({
+      ...projetPreSignature,
+      statut: 'signe',
+      numero_depart: '2026-D0003',
+      signe_at: '2026-09-29T00:26:57Z',
+    });
+
+    expect(screen.getByText('Signé')).toBeInTheDocument();
+    expect(screen.getAllByText('2026-D0003').length).toBeGreaterThan(0);
+    expect(screen.queryByRole('button', { name: 'Signer la réponse' })).not.toBeInTheDocument();
+  });
+
+  test('DG en transit voit la décharge mais pas les actions métier', () => {
+    afficherDetail({
+      ...projetPreSignature,
+      statut: 'en_attente_avis_dg',
+      en_transit: true,
+      necessite_avis_dg: true,
+      urgence_triee_at: '2026-09-29T00:00:00Z',
+      degre_urgence: 'urgent',
+      dossier_id: 8,
+      peut_ouvrir_nouveau_cycle: true,
+    });
+
+    expect(screen.getByRole('button', { name: 'Confirmer la réception' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Corriger' })).not.toBeInTheDocument();
+    expect(screen.getByTestId('dossier-actions')).toHaveAttribute('data-autoriser-actions', 'false');
+    expect(screen.getByTestId('mission-actions')).toHaveAttribute('data-autoriser-actions', 'false');
+    expect(screen.getByTestId('dispatch-actions')).toHaveAttribute('data-autoriser-actions', 'false');
+  });
+
+  test('après décharge DG, les actions métier autorisées réapparaissent', () => {
+    afficherDetail({
+      ...projetPreSignature,
+      statut: 'en_attente_avis_dg',
+      en_transit: false,
+      necessite_avis_dg: true,
+      urgence_triee_at: '2026-09-29T00:00:00Z',
+      degre_urgence: 'urgent',
+      dossier_id: 8,
+      peut_ouvrir_nouveau_cycle: true,
+    });
+
+    expect(screen.queryByRole('button', { name: 'Confirmer la réception' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Corriger' })).toBeInTheDocument();
+    expect(screen.getByTestId('dossier-actions')).toHaveAttribute('data-autoriser-actions', 'true');
+    expect(screen.getByTestId('mission-actions')).toHaveAttribute('data-autoriser-actions', 'true');
+    expect(screen.getByTestId('dispatch-actions')).toHaveAttribute('data-autoriser-actions', 'true');
   });
 
   test('SEC1 peut transmettre à la DG un courrier normal au classeur sans décharge locale', () => {

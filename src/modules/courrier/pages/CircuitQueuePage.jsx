@@ -18,6 +18,7 @@ import {
 import { DocumentPreviewModal } from '../../../shared/components/DocumentPreviewModal';
 import { useRequete } from '../../../shared/hooks/useRequete';
 import { ACTION_PAR_POSTE, DEGRE_URGENCE_LABELS, ORDRE_URGENCE, STATUT_LABELS, TONE_URGENCE, TYPE_LABELS } from '../constants';
+import { libelleStatutCourrier } from '../utils/presentationCourrier';
 import { SearchBar } from '../../../shared/components/SearchBar';
 import { useAuthStore } from '../../kernel/store/authStore';
 import { useDgAutorite } from '../../kernel/hooks/useDgAutorite';
@@ -742,7 +743,7 @@ export function CircuitQueuePage({ instructionsSeulement = false }) {
                             ) : enTransitPourCePoste ? (
                               <Badge tone="warning">En transit</Badge>
                             ) : (
-                              <Badge tone="info">{STATUT_LABELS[c.statut]}</Badge>
+                              <Badge tone="info">{libelleStatutCourrier(c)}</Badge>
                             )}
                           </td>
                           <td className={tdClass}>

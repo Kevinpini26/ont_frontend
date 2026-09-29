@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { Clock, FileSearch, Mail } from 'lucide-react';
 import { getCourriersStatistiques, listCourriers } from '../api/courrierApi';
-import { STATUT_LABELS } from '../constants';
+import { libelleStatutCourrier } from '../utils/presentationCourrier';
 import { PageHeader } from '../../../shared/components/ui/PageHeader';
 import { Card, CardBody, CardHeader } from '../../../shared/components/ui/Card';
 import { Badge } from '../../../shared/components/ui/Badge';
@@ -46,7 +46,7 @@ function ListeCourriers({ courriers, chargement }) {
           <Link to={`/courriers/${c.id}`} className="min-w-0 flex-1 truncate text-text-muted hover:text-ont-blue-700">
             {c.objet}
           </Link>
-          <Badge tone="info">{STATUT_LABELS[c.statut]}</Badge>
+          <Badge tone="info">{libelleStatutCourrier(c)}</Badge>
         </li>
       ))}
     </ul>

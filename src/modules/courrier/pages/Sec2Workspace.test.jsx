@@ -9,7 +9,7 @@ import { ActionsCourrier } from './CourrierDetailPage';
 import { archiverDossier, enregistrer, envoyerCourrier, executerDispatch, listCentreDispatchPage, listClassementsDocuments, listCourriers, listDossiersAArchiver } from '../api/courrierApi';
 
 vi.mock('../api/courrierApi', () => ({
-  enregistrer: vi.fn(), envoyerCourrier: vi.fn(), executerDispatch: vi.fn(), listCentreDispatchPage: vi.fn(),
+  enregistrer: vi.fn(), envoyerCourrier: vi.fn(), executerDispatch: vi.fn(), transmettreSec1: vi.fn(), listCentreDispatchPage: vi.fn(),
   listClassementsDocuments: vi.fn(), listCourriers: vi.fn(),
   archiverDossier: vi.fn(), listDossiersAArchiver: vi.fn(),
 }));
@@ -20,6 +20,48 @@ afterEach(cleanup);
 beforeEach(() => { vi.resetAllMocks(); });
 
 describe('Poste SEC2', () => {
+  test('Réception ne repropose pas Transmettre à SEC1 après une transmission active', () => {
+    afficher(<ActionsCourrier
+      courrier={{
+        id: 44,
+        statut: 'recu',
+        sens: 'entrant',
+        type: 'correspondance_generale',
+        mode_reception: 'depot_en_ligne',
+        numero_enregistrement: '2026-0007',
+        en_transit: true,
+        transitions: [{ destinataire_poste: 'secretariat_1', accuse_reception_at: null }],
+      }}
+      user={{ id: 1, poste: 'reception' }}
+      executer={vi.fn()}
+    />);
+
+    expect(screen.getByRole('heading', { name: 'Transmis à SEC1' })).toBeInTheDocument();
+    expect(screen.getByText('En attente de réception par le Secrétariat 01.')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Transmettre à SEC1' })).not.toBeInTheDocument();
+  });
+
+  test('Réception ne repropose pas Transmettre à SEC1 après la décharge de SEC1', () => {
+    afficher(<ActionsCourrier
+      courrier={{
+        id: 44,
+        statut: 'recu',
+        sens: 'entrant',
+        type: 'correspondance_generale',
+        mode_reception: 'depot_en_ligne',
+        numero_enregistrement: '2026-0007',
+        en_transit: false,
+        transitions: [{ destinataire_poste: 'secretariat_1', accuse_reception_at: '2026-09-29T00:19:32Z' }],
+      }}
+      user={{ id: 1, poste: 'reception' }}
+      executer={vi.fn()}
+    />);
+
+    expect(screen.getByRole('heading', { name: 'Transmis à SEC1' })).toBeInTheDocument();
+    expect(screen.getByText('La réception par le Secrétariat 01 est confirmée.')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Transmettre à SEC1' })).not.toBeInTheDocument();
+  });
+
   test('enregistre un dépôt public avec son AR automatique sans ressaisie partenaire', async () => {
     enregistrer.mockResolvedValue({ id: 44, numero_accuse_reception: 'AR-2026-000008', numero_enregistrement: '2026-00044' });
     const executer = vi.fn((action) => action());

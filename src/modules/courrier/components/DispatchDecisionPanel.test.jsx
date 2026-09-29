@@ -28,4 +28,16 @@ describe('DispatchDecisionPanel — cycles successifs', () => {
     expect(screen.getByText(/Cycle 1 · Direction — DMC/)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Transmettre à SEC2' })).not.toBeInTheDocument();
   });
+
+  test('conserve l’historique mais masque une nouvelle décision tant que la DG n’a pas déchargé', () => {
+    render(<DispatchDecisionPanel
+      courrier={{ id: 1, dispatchs, peut_ouvrir_nouveau_cycle: true }}
+      user={user}
+      onUpdate={vi.fn()}
+      autoriserActions={false}
+    />);
+
+    expect(screen.getByText(/Cycle 1 · Direction — DMC/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Transmettre à SEC2' })).not.toBeInTheDocument();
+  });
 });

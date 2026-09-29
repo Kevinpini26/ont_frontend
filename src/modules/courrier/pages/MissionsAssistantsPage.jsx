@@ -18,6 +18,7 @@ import { EmptyState } from '../../../shared/components/ui/EmptyState';
 import { Field, inputClass } from '../../../shared/components/ui/Field';
 import { LoadingBlock } from '../../../shared/components/ui/Spinner';
 import { Alert } from '../../../shared/components/ui/Alert';
+import { formaterDateHeure } from '../utils/dateHeure';
 
 const contenuVide = { type: 'doc', content: [{ type: 'paragraph' }] };
 
@@ -149,7 +150,7 @@ export function MissionsAssistantsPage() {
                     {['assignee', 'en_cours'].includes(mission.statut) ? (
                       <Link className="font-semibold text-primary hover:underline" to={`/courriers/${mission.courrier_id}`}>{mission.courrier?.objet}</Link>
                     ) : <span className="font-semibold">{mission.courrier?.objet}</span>}
-                    <p className="text-sm text-text-subtle">{mission.courrier?.numero_enregistrement} · {new Date(mission.envoyee_at).toLocaleString('fr-FR')}</p>
+                    <p className="text-sm text-text-subtle">{mission.courrier?.numero_enregistrement}{formaterDateHeure(mission.envoyee_at) ? ` · ${formaterDateHeure(mission.envoyee_at)}` : ''}</p>
                   </div>
                   <Badge tone={mission.statut === 'retournee' ? 'success' : mission.statut === 'annulee' ? 'neutral' : 'warning'}>{mission.statut_label}</Badge>
                 </div>
@@ -190,7 +191,7 @@ export function MissionsAssistantsPage() {
                   <Badge tone="warning">Relecture requise</Badge>
                 </div>
                 <p className="text-sm"><span className="font-medium">Rédacteur :</span> {projet.createur?.name ?? 'Non renseigné'}</p>
-                <p className="text-sm text-text-subtle">Soumis le {new Date(projet.updated_at).toLocaleString('fr-FR')} · {projet.statut_label}</p>
+                <p className="text-sm text-text-subtle">{formaterDateHeure(projet.updated_at) ? `Soumis le ${formaterDateHeure(projet.updated_at)} · ` : 'Date de soumission indisponible · '}{projet.statut_label}</p>
                 <Link to={`/courriers/${projet.id}`} className="inline-flex rounded-button bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary-hover">
                   Examiner le projet
                 </Link>

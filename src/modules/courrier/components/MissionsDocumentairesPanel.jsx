@@ -5,13 +5,14 @@ import { Card, CardBody, CardHeader } from '../../../shared/components/ui/Card';
 import { Button } from '../../../shared/components/ui/Button';
 import { Field, inputClass } from '../../../shared/components/ui/Field';
 import { Badge } from '../../../shared/components/ui/Badge';
+import { formaterDateHeure } from '../utils/dateHeure';
 
 const POSTES_ASSISTANTS = {
   dg: ['assistant_1', 'assistant_2'],
   dga: ['assistant_dga'],
 };
 
-export function MissionsDocumentairesPanel({ courrier, user, onUpdate }) {
+export function MissionsDocumentairesPanel({ courrier, user, onUpdate, autoriserActions = true }) {
   const [agents, setAgents] = useState([]);
   const [assistantId, setAssistantId] = useState('');
   const [instruction, setInstruction] = useState('');
@@ -19,7 +20,7 @@ export function MissionsDocumentairesPanel({ courrier, user, onUpdate }) {
   const [motif, setMotif] = useState('');
   const [enCours, setEnCours] = useState(false);
   const missions = courrier.missions_documentaires ?? [];
-  const estAutorite = (user.poste === 'dga' || (user.poste === 'dg' && user.source_autorite_dg))
+  const estAutorite = autoriserActions && (user.poste === 'dga' || (user.poste === 'dg' && user.source_autorite_dg))
     && ['en_attente_avis_dg', 'dispatch_execute'].includes(courrier.statut);
 
   useEffect(() => {
@@ -49,13 +50,13 @@ export function MissionsDocumentairesPanel({ courrier, user, onUpdate }) {
                   <Badge tone={mission.statut === 'retournee' ? 'success' : mission.statut === 'annulee' ? 'neutral' : 'warning'}>{mission.statut_label}</Badge>
                 </div>
                 <p className="mt-2"><span className="font-medium">Instruction :</span> {mission.instruction}</p>
-                <p className="text-text-subtle">Confiée par {mission.demandeur?.name} le {new Date(mission.envoyee_at).toLocaleString('fr-FR')}</p>
+                <p className="text-text-subtle">Confiée par {mission.demandeur?.name}{formaterDateHeure(mission.envoyee_at) ? ` le ${formaterDateHeure(mission.envoyee_at)}` : ' · Date indisponible'}</p>
                 {mission.compte_rendu && <p className="mt-2"><span className="font-medium">Retour :</span> {mission.compte_rendu}</p>}
 
-                {mission.assistant?.id === user.id && mission.statut === 'assignee' && (
+                {autoriserActions && mission.assistant?.id === user.id && mission.statut === 'assignee' && (
                   <Button className="mt-3" size="sm" disabled={enCours} onClick={() => executer(() => prendreMissionEnCharge(mission.id))}>Prendre en charge</Button>
                 )}
-                {mission.assistant?.id === user.id && mission.statut === 'en_cours' && (
+                {autoriserActions && mission.assistant?.id === user.id && mission.statut === 'en_cours' && (
                   <div className="mt-3 space-y-2">
                     <Field label="Compte rendu" htmlFor={`retour-${mission.id}`}>
                       <textarea id={`retour-${mission.id}`} className={inputClass} value={compteRendu} onChange={(e) => setCompteRendu(e.target.value)} />
