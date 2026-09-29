@@ -518,20 +518,12 @@ export function ActionsCourrier({ courrier, user, executer }) {
       <Card>
         <CardHeader title="Enregistrer le dépôt" description="Attribuez le numéro institutionnel avant toute transmission à SEC1." />
         <CardBody className="space-y-4">
-          <Field label="Classification">
+          <Field label="Classification :">
             <Badge tone="warning">{CLASSIFICATION_LABELS[classification]}</Badge>
           </Field>
-          <Field label="Accusé de réception du partenaire" htmlFor="accuseReceptionPartenaireDepot">
-            <input
-              id="accuseReceptionPartenaireDepot"
-              className={inputClass}
-              value={accuseReceptionPartenaire}
-              onChange={(e) => setAccuseReceptionPartenaire(e.target.value)}
-            />
-          </Field>
           <Button
-            disabled={envoiEnCours || !accuseReceptionPartenaire.trim()}
-            onClick={() => executerEtSuivre(() => enregistrer(courrier.id, classification, noteTechnique, accuseReceptionPartenaire))}
+            disabled={envoiEnCours}
+            onClick={() => executerEtSuivre(() => enregistrer(courrier.id, classification, noteTechnique, null))}
           >
             Enregistrer
           </Button>

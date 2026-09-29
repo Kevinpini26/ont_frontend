@@ -3,15 +3,15 @@ import { cleanup, render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { CourrierDetailPage } from './CourrierDetailPage';
 
-const mocks = vi.hoisted(() => ({ courrier: null }));
+const mocks = vi.hoisted(() => ({ courrier: null, user: null, dgAutorite: true }));
 
 vi.mock('../../../shared/hooks/useRequete', () => ({
   useRequete: () => ({ donnees: mocks.courrier, setDonnees: vi.fn(), chargement: false }),
 }));
 vi.mock('../../kernel/store/authStore', () => ({
-  useAuthStore: (selector) => selector({ user: { id: 1, name: 'DG', poste: 'dg' } }),
+  useAuthStore: (selector) => selector({ user: mocks.user }),
 }));
-vi.mock('../../kernel/hooks/useDgAutorite', () => ({ useDgAutorite: () => true }));
+vi.mock('../../kernel/hooks/useDgAutorite', () => ({ useDgAutorite: () => mocks.dgAutorite }));
 vi.mock('../components/StatutTimeline', () => ({ StatutTimeline: () => null }));
 vi.mock('../components/BordereauxTimeline', () => ({ BordereauxTimeline: () => null }));
 vi.mock('../components/AnnotationsPanel', () => ({ AnnotationsPanel: () => null }));
@@ -27,10 +27,14 @@ vi.mock('../components/TipTapEditor', () => ({
 afterEach(() => {
   cleanup();
   mocks.courrier = null;
+  mocks.user = null;
+  mocks.dgAutorite = true;
 });
 
-function afficherDetail(courrier) {
+function afficherDetail(courrier, user = { id: 1, name: 'DG', poste: 'dg' }) {
   mocks.courrier = courrier;
+  mocks.user = user;
+  mocks.dgAutorite = user.poste === 'dg';
   return render(
     <MemoryRouter initialEntries={[`/courriers/${courrier.id}`]}>
       <Routes>
@@ -91,5 +95,20 @@ describe('détail de la réponse D', () => {
     expect(screen.queryByRole('button', { name: 'Signer la réponse' })).not.toBeInTheDocument();
     expect(screen.queryByText(/Accusé null/i)).not.toBeInTheDocument();
     expect(screen.getByText('Envoyé')).toBeInTheDocument();
+  });
+
+  test('SEC1 peut transmettre à la DG un courrier normal au classeur sans décharge locale', () => {
+    afficherDetail({
+      ...projetPreSignature,
+      statut: 'en_attente_classeur',
+      sens: 'entrant',
+      en_transit: false,
+      necessite_avis_dg: true,
+      degre_urgence: 'normal',
+    }, { id: 10, name: 'Secrétariat 01', poste: 'secretariat_1' });
+
+    expect(screen.getByRole('heading', { name: "Au classeur d'attente" })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Transmettre à la DG' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Confirmer la réception' })).not.toBeInTheDocument();
   });
 });

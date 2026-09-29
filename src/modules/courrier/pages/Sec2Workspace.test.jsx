@@ -6,10 +6,10 @@ import { ClassementArchivesPage } from './ClassementArchivesPage';
 import { EnvoisOfficielsPage } from './EnvoisOfficielsPage';
 import { ArchivageDossiersPage } from './ArchivageDossiersPage';
 import { ActionsCourrier } from './CourrierDetailPage';
-import { archiverDossier, envoyerCourrier, executerDispatch, listCentreDispatchPage, listClassementsDocuments, listCourriers, listDossiersAArchiver } from '../api/courrierApi';
+import { archiverDossier, enregistrer, envoyerCourrier, executerDispatch, listCentreDispatchPage, listClassementsDocuments, listCourriers, listDossiersAArchiver } from '../api/courrierApi';
 
 vi.mock('../api/courrierApi', () => ({
-  envoyerCourrier: vi.fn(), executerDispatch: vi.fn(), listCentreDispatchPage: vi.fn(),
+  enregistrer: vi.fn(), envoyerCourrier: vi.fn(), executerDispatch: vi.fn(), listCentreDispatchPage: vi.fn(),
   listClassementsDocuments: vi.fn(), listCourriers: vi.fn(),
   archiverDossier: vi.fn(), listDossiersAArchiver: vi.fn(),
 }));
@@ -20,6 +20,40 @@ afterEach(cleanup);
 beforeEach(() => { vi.resetAllMocks(); });
 
 describe('Poste SEC2', () => {
+  test('enregistre un dépôt public avec son AR automatique sans ressaisie partenaire', async () => {
+    enregistrer.mockResolvedValue({ id: 44, numero_accuse_reception: 'AR-2026-000008', numero_enregistrement: '2026-00044' });
+    const executer = vi.fn((action) => action());
+    afficher(<ActionsCourrier
+      courrier={{
+        id: 44,
+        statut: 'recu',
+        sens: 'entrant',
+        type: 'correspondance_generale',
+        mode_reception: 'depot_en_ligne',
+        numero_accuse_reception: 'AR-2026-000008',
+        numero_enregistrement: null,
+        expediteur_externe_nom: 'Partenaire',
+      }}
+      user={{ id: 1, poste: 'reception' }}
+      executer={executer}
+    />);
+
+    expect(screen.queryByLabelText('Accusé de réception du partenaire')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }));
+    await waitFor(() => expect(enregistrer).toHaveBeenCalledWith(44, 'externe', '', null));
+  });
+
+  test('sépare clairement le libellé de classification de sa valeur pour enregistrer un dépôt', () => {
+    afficher(<ActionsCourrier
+      courrier={{ id: 10, statut: 'recu', sens: 'entrant', type: 'correspondance_generale', mode_reception: 'depot_en_ligne', numero_enregistrement: null }}
+      user={{ id: 1, poste: 'reception' }}
+      executer={vi.fn()}
+    />);
+
+    expect(screen.getByText('Classification :')).toBeInTheDocument();
+    expect(screen.getByText('Externe')).toBeInTheDocument();
+  });
+
   test('charge les dispatchs actifs filtrés et leur deuxième page côté serveur', async () => {
     listCentreDispatchPage.mockResolvedValue({ data: [dispatch], meta });
     afficher(<CentreDispatchPage />);

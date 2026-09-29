@@ -15,7 +15,7 @@ export function BordereauxTimeline({ transitions }) {
 
   return (
     <Card>
-      <CardHeader title="Bordereaux de transmission" description="Historique complet, opposable en cas de contestation sur un délai." />
+      <CardHeader title="Historique des transitions et transmissions" description="Changements de statut, remises et décharges du dossier." />
       <CardBody>
         {transitions.length === 0 ? (
           <EmptyState title="Aucun bordereau pour le moment" />
@@ -29,7 +29,7 @@ export function BordereauxTimeline({ transitions }) {
                     <span className="font-medium">
                       {t.ancien_statut ? `${t.ancien_statut} → ${t.nouveau_statut}` : t.statut_label}
                     </span>
-                    {' — transmis par '}
+                    {t.destinataire ? ' — transmis par ' : ' — transition enregistrée par '}
                     <span className="font-medium">{t.emetteur ?? 'Guichet public'}</span>
                     {t.expediteur_poste && <span className="text-text-subtle"> ({t.expediteur_poste})</span>}
                     {t.destinataire && (
