@@ -43,9 +43,13 @@ function afficher() {
   render(<MemoryRouter><MissionsAssistantsPage /></MemoryRouter>);
 }
 
+function reponseProjets(data = [], { current_page = 1, last_page = 1, total = data.length } = {}) {
+  return { data, meta: { current_page, last_page, total } };
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
-  listProjetsReponseARelire.mockResolvedValue([]);
+  listProjetsReponseARelire.mockResolvedValue(reponseProjets());
 });
 
 describe('création du brouillon D depuis une mission DG', () => {
@@ -79,7 +83,7 @@ describe('création du brouillon D depuis une mission DG', () => {
 
   test('distingue les projets nominativement soumis à la relecture et mène vers leur détail', async () => {
     listMesMissions.mockResolvedValue([mission]);
-    listProjetsReponseARelire.mockResolvedValue([{
+    listProjetsReponseARelire.mockResolvedValue(reponseProjets([{
       id: 43,
       objet: 'Réponse officielle',
       statut: 'projet_a_valider',
@@ -89,7 +93,7 @@ describe('création du brouillon D depuis une mission DG', () => {
       courrier_origine: { id: 12, numero_enregistrement: '2026-0005' },
       createur: { id: 6, name: 'Assistant DG1' },
       updated_at: '2026-10-01T08:00:00Z',
-    }]);
+    }]));
     afficher();
 
     await screen.findByRole('tab', { name: 'Mes missions (1)' });
@@ -105,13 +109,13 @@ describe('création du brouillon D depuis une mission DG', () => {
 
   test('date de soumission absente affiche un fallback propre', async () => {
     listMesMissions.mockResolvedValue([]);
-    listProjetsReponseARelire.mockResolvedValue([{
+    listProjetsReponseARelire.mockResolvedValue(reponseProjets([{
       id: 44,
       objet: 'Projet sans horodatage',
       statut: 'projet_a_valider',
       statut_label: 'Projet en attente de validation',
       updated_at: null,
-    }]);
+    }]));
     afficher();
 
     await screen.findByRole('tab', { name: 'Projets à relire (1)' }).then((tab) => fireEvent.click(tab));
@@ -126,5 +130,21 @@ describe('création du brouillon D depuis une mission DG', () => {
     await screen.findByRole('tab', { name: 'Projets à relire (0)' });
     fireEvent.click(screen.getByRole('tab', { name: 'Projets à relire (0)' }));
     expect(await screen.findByText('Aucun projet à relire')).toBeInTheDocument();
+  });
+
+  test('parcourt les pages de la bannette à partir des métadonnées paginées', async () => {
+    listMesMissions.mockResolvedValue([]);
+    listProjetsReponseARelire
+      .mockResolvedValueOnce(reponseProjets([{ id: 45, objet: 'Projet page 1', updated_at: null }], { current_page: 1, last_page: 2, total: 21 }))
+      .mockResolvedValueOnce(reponseProjets([{ id: 46, objet: 'Projet page 2', updated_at: null }], { current_page: 2, last_page: 2, total: 21 }));
+    afficher();
+
+    fireEvent.click(await screen.findByRole('tab', { name: 'Projets à relire (21)' }));
+    expect(await screen.findByText('Projet page 1')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Suivant' }));
+
+    expect(await screen.findByText('Projet page 2')).toBeInTheDocument();
+    expect(screen.queryByText('Projet page 1')).not.toBeInTheDocument();
+    expect(listProjetsReponseARelire).toHaveBeenLastCalledWith(2);
   });
 });

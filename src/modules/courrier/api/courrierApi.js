@@ -70,9 +70,9 @@ export async function listMesMissions(signal) {
   return data.data;
 }
 
-export async function listProjetsReponseARelire(signal) {
-  const { data } = await apiClient.get('/projets-reponse/a-relire', { signal });
-  return data.data;
+export async function listProjetsReponseARelire(page = 1, signal) {
+  const { data } = await apiClient.get('/projets-reponse/a-relire', { params: { page }, signal });
+  return data;
 }
 
 export async function prendreMissionEnCharge(id) {

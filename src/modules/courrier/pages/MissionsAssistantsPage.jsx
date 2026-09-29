@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   creerProjetReponseMission,
@@ -18,6 +18,7 @@ import { EmptyState } from '../../../shared/components/ui/EmptyState';
 import { Field, inputClass } from '../../../shared/components/ui/Field';
 import { LoadingBlock } from '../../../shared/components/ui/Spinner';
 import { Alert } from '../../../shared/components/ui/Alert';
+import { Pagination } from '../../../shared/components/ui/Pagination';
 import { formaterDateHeure } from '../utils/dateHeure';
 
 const contenuVide = { type: 'doc', content: [{ type: 'paragraph' }] };
@@ -86,29 +87,35 @@ function ProjetReponseMission({ mission, disabled, executer }) {
 
 export function MissionsAssistantsPage() {
   const [missions, setMissions] = useState(null);
-  const [projetsARevoir, setProjetsARevoir] = useState(null);
+  const [reponseProjetsARevoir, setReponseProjetsARevoir] = useState(null);
+  const [pageRelecture, setPageRelecture] = useState(1);
   const [onglet, setOnglet] = useState('missions');
   const [retours, setRetours] = useState({});
   const [enCours, setEnCours] = useState(false);
   const [erreur, setErreur] = useState(null);
   const [succes, setSucces] = useState(null);
 
-  async function charger() {
+  const charger = useCallback(async () => {
     const [missionsChargees, projetsCharges] = await Promise.all([
       listMesMissions(),
-      listProjetsReponseARelire(),
+      listProjetsReponseARelire(pageRelecture),
     ]);
     setMissions(missionsChargees);
-    setProjetsARevoir(projetsCharges);
-  }
+    setReponseProjetsARevoir(projetsCharges);
+  }, [pageRelecture]);
+
+  const projetsARevoir = reponseProjetsARevoir?.meta?.current_page === pageRelecture
+    ? reponseProjetsARevoir.data
+    : null;
+  const nombreProjetsARevoir = reponseProjetsARevoir?.meta?.total ?? 0;
 
   useEffect(() => {
     charger().catch((err) => {
       setErreur(err.response?.data?.message ?? 'Chargement des missions impossible.');
       setMissions([]);
-      setProjetsARevoir([]);
+      setReponseProjetsARevoir({ data: [], meta: { current_page: pageRelecture, last_page: 1, total: 0 } });
     });
-  }, []);
+  }, [charger, pageRelecture]);
 
   async function executer(action, messageSucces = null) {
     setErreur(null);
@@ -137,7 +144,7 @@ export function MissionsAssistantsPage() {
           Mes missions ({missions.length})
         </Button>
         <Button type="button" size="sm" variant={onglet === 'relecture' ? 'primary' : 'secondary'} role="tab" aria-selected={onglet === 'relecture'} onClick={() => setOnglet('relecture')}>
-          Projets à relire ({projetsARevoir.length})
+          Projets à relire ({nombreProjetsARevoir})
         </Button>
       </div>
       {onglet === 'missions' && (missions.length === 0 ? <EmptyState title="Aucune mission reçue" /> : (
@@ -200,6 +207,7 @@ export function MissionsAssistantsPage() {
           ))}
         </div>
       ))}
+      {onglet === 'relecture' && <Pagination meta={reponseProjetsARevoir?.meta} onPageChange={setPageRelecture} />}
     </div>
   );
 }
