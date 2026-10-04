@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { archiverClassement, classerDispatch, corrigerClassement, listCentreDispatchPage, listClassementsDocuments } from '../api/courrierApi';
+import { accuserReceptionDispatch, archiverClassement, classerDispatch, corrigerClassement, listCentreDispatchPage, listClassementsDocuments } from '../api/courrierApi';
 import { PageHeader } from '../../../shared/components/ui/PageHeader';
 import { Card, CardBody } from '../../../shared/components/ui/Card';
 import { Button } from '../../../shared/components/ui/Button';
@@ -34,6 +34,9 @@ export function ClassementArchivesPage() {
     catch (err) { setErreur(err.response?.data?.message ?? 'Action impossible.'); }
     finally { setEnCours(false); }
   }
+  function confirmerReception(dispatch) {
+    return executer(() => accuserReceptionDispatch(dispatch.id));
+  }
   const modifier = (cle, champ, valeur) => setSaisie((s) => ({ ...s, [cle]: { ...s[cle], [champ]: valeur } }));
   if (!donnees && !erreur) return <LoadingBlock />;
   return <div><PageHeader title="Classement & archives" description="Classement et archivage documentaire SEC2. L’archivage du dossier exige une décision distincte DG/DGA." />
@@ -43,12 +46,20 @@ export function ClassementArchivesPage() {
       {donnees.dispatchs.data.map((d) => <Card key={d.id}><CardBody className="space-y-3">
         <Link to={`/courriers/${d.courrier_id}`}>{d.courrier?.objet} — réception et dossier</Link>
         <p>Décision : {d.instruction}</p>
-        <div className="grid gap-2 md:grid-cols-2">
-          <Field label="Cote (facultative)"><input className={inputClass} onChange={(e) => modifier(d.id, 'cote', e.target.value)} /></Field>
-          <Field label="Emplacement" required><input className={inputClass} onChange={(e) => modifier(d.id, 'emplacement', e.target.value)} /></Field>
-          <Field label="Observation (facultative)"><input className={inputClass} onChange={(e) => modifier(d.id, 'observation', e.target.value)} /></Field>
-        </div>
-        <Button disabled={enCours || !saisie[d.id]?.emplacement?.trim()} onClick={() => executer(() => classerDispatch(d.id, saisie[d.id]))}>Classer</Button>
+        {d.peut_accuser_reception && <p className="text-sm text-text-subtle">À réceptionner par SEC2</p>}
+        {d.accuse_reception_at && <p className="text-sm text-success">Réception SEC2 confirmée</p>}
+        {d.peut_accuser_reception ? (
+          <Button disabled={enCours} loading={enCours} onClick={() => confirmerReception(d)}>Confirmer la réception</Button>
+        ) : (
+          <>
+            <div className="grid gap-2 md:grid-cols-2">
+              <Field label="Cote (facultative)"><input className={inputClass} onChange={(e) => modifier(d.id, 'cote', e.target.value)} /></Field>
+              <Field label="Emplacement" required><input className={inputClass} onChange={(e) => modifier(d.id, 'emplacement', e.target.value)} /></Field>
+              <Field label="Observation (facultative)"><input className={inputClass} onChange={(e) => modifier(d.id, 'observation', e.target.value)} /></Field>
+            </div>
+            <Button disabled={enCours || !saisie[d.id]?.emplacement?.trim()} loading={enCours} onClick={() => executer(() => classerDispatch(d.id, saisie[d.id]))}>Classer</Button>
+          </>
+        )}
       </CardBody></Card>)}
       <Pagination meta={donnees.dispatchs.meta} onPageChange={setPageDispatch} />
       <h2 className="font-semibold">Documents classés et archives</h2>

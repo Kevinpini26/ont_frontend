@@ -23,7 +23,14 @@ vi.mock('../components/MissionsDocumentairesPanel', () => ({
   MissionsDocumentairesPanel: ({ autoriserActions }) => <div data-testid="mission-actions" data-autoriser-actions={String(autoriserActions)} />,
 }));
 vi.mock('../components/DispatchDecisionPanel', () => ({
-  DispatchDecisionPanel: ({ autoriserActions }) => <div data-testid="dispatch-actions" data-autoriser-actions={String(autoriserActions)} />,
+  DispatchDecisionPanel: ({ courrier, autoriserActions }) => (
+    <div
+      data-testid="dispatch-actions"
+      data-autoriser-actions={String(autoriserActions)}
+      data-statut={courrier.statut}
+      data-peut-decider-classement={String(courrier.peut_decider_classement)}
+    />
+  ),
 }));
 vi.mock('../../../shared/components/DocumentPreviewModal', () => ({
   DocumentPreviewModal: ({ open, title, url, downloadFilename }) => (
@@ -117,6 +124,23 @@ describe('détail de la réponse D', () => {
     expect(screen.queryByRole('button', { name: 'Signer la réponse' })).not.toBeInTheDocument();
     expect(screen.queryByText(/Accusé null/i)).not.toBeInTheDocument();
     expect(screen.getByText('Envoyé')).toBeInTheDocument();
+  });
+
+  test.each([
+    ['envoye', 'Envoyé'],
+    ['remis', 'Remis'],
+  ])('conserve le statut livraison %s pendant le cycle documentaire', (statut, libelle) => {
+    afficherDetail({
+      ...projetPreSignature,
+      statut,
+      mode_sortie: 'courriel_et_retrait',
+      dispatchs: [{ id: 1, type_destination: 'classement', statut: 'en_attente' }],
+      peut_ouvrir_nouveau_cycle: false,
+      peut_decider_classement: false,
+    });
+
+    expect(screen.getByText(libelle)).toBeInTheDocument();
+    expect(screen.getByTestId('dispatch-actions')).toHaveAttribute('data-statut', statut);
   });
 
   test('affiche l’attente de signature et le PDF à imprimer sans le présenter comme signé', () => {

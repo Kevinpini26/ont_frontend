@@ -14,10 +14,18 @@ export function DispatchDecisionPanel({ courrier, user, onUpdate, autoriserActio
   const [enCours, setEnCours] = useState(false);
   const [erreur, setErreur] = useState(null);
 
-  useEffect(() => { listDirections().then(setDirections); }, []);
+  const peutDeciderClassement = autoriserActions && courrier.peut_decider_classement === true;
+  const peutDeciderCycle = !courrier.peut_decider_classement
+    && autoriserActions
+    && courrier.peut_ouvrir_nouveau_cycle
+    && Boolean(user.source_autorite_dg);
 
-  const peutDecider = autoriserActions && courrier.peut_ouvrir_nouveau_cycle && Boolean(user.source_autorite_dg);
-  if (!peutDecider && !(courrier.dispatchs?.length > 0)) return null;
+  useEffect(() => {
+    if (!peutDeciderCycle) return;
+    listDirections().then(setDirections);
+  }, [peutDeciderCycle]);
+
+  if (!peutDeciderClassement && !peutDeciderCycle && !(courrier.dispatchs?.length > 0)) return null;
 
   function modifier(index, cle, valeur) {
     setDestinations((actuelles) => actuelles.map((item, i) => i === index ? { ...item, [cle]: valeur } : item));
@@ -38,17 +46,49 @@ export function DispatchDecisionPanel({ courrier, user, onUpdate, autoriserActio
     finally { setEnCours(false); }
   }
 
+  async function deciderClassement() {
+    setEnCours(true); setErreur(null);
+    try {
+      onUpdate(await deciderDispatch(courrier.id, [{
+        type: 'classement',
+        instruction: 'Classement documentaire après sortie complète.',
+      }]));
+    } catch (e) { setErreur(e.response?.data?.message ?? 'Décision impossible.'); }
+    finally { setEnCours(false); }
+  }
+
   return (
     <Card>
-      <CardHeader title="Dispatch institutionnel" description="La DG/DGA décide ; le Secrétariat 02 exécute chaque destination indépendamment." />
+      <CardHeader
+        title="Dispatch institutionnel"
+        description={peutDeciderClassement
+          ? 'La DG décide le classement documentaire après une sortie complètement terminée.'
+          : 'La DG/DGA décide ; le Secrétariat 02 exécute chaque destination indépendamment.'}
+      />
       <CardBody className="space-y-4">
         {courrier.dispatchs?.map((dispatch) => (
           <div key={dispatch.id} className="rounded-field border border-border p-3 text-sm">
             <div className="flex flex-wrap justify-between gap-2"><span>Cycle {dispatch.cycle} · {dispatch.type_destination_label} — {dispatch.direction?.nom ?? dispatch.destinataire_externe_nom ?? 'Classement'}</span><Badge tone={dispatch.statut === 'execute' ? 'success' : 'warning'}>{dispatch.statut_label}</Badge></div>
+            {dispatch.type_destination === 'classement' && (
+              <p className="mt-2 text-text-subtle">
+                {dispatch.statut === 'execute'
+                  ? courrier.classement?.statut_label ?? 'Classement exécuté'
+                  : dispatch.accuse_reception_at
+                    ? 'Réception SEC2 confirmée · classement à exécuter'
+                    : dispatch.peut_accuser_reception
+                      ? 'Classement décidé · à réceptionner par SEC2'
+                      : 'Classement en attente d’exécution SEC2'}
+              </p>
+            )}
             {dispatch.traitement_direction && <ol className="mt-2 space-y-1 text-text-subtle"><li>SEC2 a exécuté le dispatch</li><li>Secrétariat : {dispatch.traitement_direction.recu_secretariat_at ? 'reçu' : 'en attente'}</li><li>Directeur : {dispatch.traitement_direction.statut_label}</li>{dispatch.traitement_direction.decision_directeur_label && <li>Décision : {dispatch.traitement_direction.decision_directeur_label}</li>}</ol>}
           </div>
         ))}
-        {peutDecider && destinations.map((destination, index) => (
+        {peutDeciderClassement && (
+          <div className="flex items-center gap-3">
+            <Button loading={enCours} onClick={deciderClassement}>Décider le classement</Button>
+          </div>
+        )}
+        {peutDeciderCycle && destinations.map((destination, index) => (
           <div key={index} className="space-y-3 rounded-field border border-border p-4">
             <Field label={`Destination ${index + 1}`}>
               <select className={inputClass} value={destination.type} onChange={(e) => modifier(index, 'type', e.target.value)}>
@@ -62,7 +102,7 @@ export function DispatchDecisionPanel({ courrier, user, onUpdate, autoriserActio
           </div>
         ))}
         {erreur && <p className="text-sm text-danger">{erreur}</p>}
-        {peutDecider && <div className="flex gap-2"><Button variant="secondary" onClick={() => setDestinations((d) => [...d, vide()])}>Ajouter une destination</Button><Button loading={enCours} disabled={destinations.some((d) => !d.instruction.trim())} onClick={valider}>Transmettre à SEC2</Button></div>}
+        {peutDeciderCycle && <div className="flex gap-2"><Button variant="secondary" onClick={() => setDestinations((d) => [...d, vide()])}>Ajouter une destination</Button><Button loading={enCours} disabled={destinations.some((d) => !d.instruction.trim())} onClick={valider}>Transmettre à SEC2</Button></div>}
       </CardBody>
     </Card>
   );
