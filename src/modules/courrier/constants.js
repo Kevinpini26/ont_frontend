@@ -64,7 +64,9 @@ export const STATUT_LABELS = {
   en_attente_validation_dg: 'En attente de validation DG',
   en_relecture: 'En relecture',
   signe: 'Signé',
+  disponible_retrait: 'Disponible pour retrait',
   envoye: 'Envoyé',
+  remis: 'Remis',
   enregistre: 'Enregistré',
 };
 

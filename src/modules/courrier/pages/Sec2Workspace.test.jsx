@@ -6,10 +6,10 @@ import { ClassementArchivesPage } from './ClassementArchivesPage';
 import { EnvoisOfficielsPage } from './EnvoisOfficielsPage';
 import { ArchivageDossiersPage } from './ArchivageDossiersPage';
 import { ActionsCourrier } from './CourrierDetailPage';
-import { archiverDossier, enregistrer, envoyerCourrier, executerDispatch, listCentreDispatchPage, listClassementsDocuments, listCourriers, listDossiersAArchiver } from '../api/courrierApi';
+import { archiverDossier, choisirModeSortie, enregistrer, envoyerParCourriel, executerDispatch, listCentreDispatchPage, listClassementsDocuments, listCourriers, listDossiersAArchiver, rendreDisponiblePourRetrait } from '../api/courrierApi';
 
 vi.mock('../api/courrierApi', () => ({
-  enregistrer: vi.fn(), envoyerCourrier: vi.fn(), executerDispatch: vi.fn(), transmettreSec1: vi.fn(), listCentreDispatchPage: vi.fn(),
+  enregistrer: vi.fn(), choisirModeSortie: vi.fn(), confirmerRemisePhysique: vi.fn(), envoyerParCourriel: vi.fn(), rendreDisponiblePourRetrait: vi.fn(), executerDispatch: vi.fn(), transmettreSec1: vi.fn(), listCentreDispatchPage: vi.fn(),
   listClassementsDocuments: vi.fn(), listCourriers: vi.fn(),
   archiverDossier: vi.fn(), listDossiersAArchiver: vi.fn(),
 }));
@@ -131,22 +131,50 @@ describe('Poste SEC2', () => {
     expect(screen.queryByRole('button', { name: 'Archiver le document' })).not.toBeInTheDocument();
   });
 
-  test('file officielle limitée aux sortants signés et paginée', async () => {
+  test('file des sorties SEC2 limitée aux actions restantes et paginée', async () => {
     listCourriers.mockResolvedValue({ data: [{ id: 7, objet: 'Réponse D', numero_depart: 'DEP-7' }], meta });
     afficher(<EnvoisOfficielsPage />);
     await screen.findByRole('link', { name: 'DEP-7 — Réponse D' });
-    expect(listCourriers).toHaveBeenCalledWith({ statut: 'signe', sens: 'sortant', page: 1 }, expect.any(AbortSignal));
+    expect(listCourriers).toHaveBeenCalledWith({ file_sorties_sec2: true, page: 1 }, expect.any(AbortSignal));
     fireEvent.click(screen.getByRole('button', { name: 'Suivant' }));
-    await waitFor(() => expect(listCourriers).toHaveBeenCalledWith({ statut: 'signe', sens: 'sortant', page: 2 }, expect.any(AbortSignal)));
+    await waitFor(() => expect(listCourriers).toHaveBeenCalledWith({ file_sorties_sec2: true, page: 2 }, expect.any(AbortSignal)));
   });
 
-  test('D signé présente Envoyer, jamais Enregistrer, avec destinataire fixé', async () => {
-    envoyerCourrier.mockResolvedValue({ id: 9, statut: 'envoye' });
+  test('D signé demande le choix explicite du mode avant toute sortie', async () => {
+    choisirModeSortie.mockResolvedValue({ id: 9, mode_sortie: 'courriel' });
     const executer = vi.fn((action) => action());
-    afficher(<ActionsCourrier courrier={{ id: 9, statut: 'signe', sens: 'sortant', destinataire_externe_nom: 'Partenaire', destinataire_externe_email: 'partenaire@example.test', numero_depart: 'DEP-9' }} user={{ id: 1, poste: 'secretariat_2' }} executer={executer} />);
+    afficher(<ActionsCourrier courrier={{ id: 9, statut: 'signe', sens: 'sortant', destinataire_externe_nom: 'Partenaire', destinataire_externe_email: 'partenaire@example.test', numero_depart: 'DEP-9', peut_choisir_mode_sortie: true }} user={{ id: 1, poste: 'secretariat_2' }} executer={executer} />);
     expect(screen.queryByRole('button', { name: 'Enregistrer' })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Envoyer' }));
-    await waitFor(() => expect(envoyerCourrier).toHaveBeenCalledWith(9, { destinataire_externe_nom: 'Partenaire', destinataire_externe_email: 'partenaire@example.test', mode_expedition: 'courriel' }));
+    expect(screen.getByRole('combobox', { name: 'Mode de remise' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Envoyer par courriel' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Choisir le mode de remise' }));
+    await waitFor(() => expect(choisirModeSortie).toHaveBeenCalledWith(9, 'courriel'));
+  });
+
+  test('un D configuré courriel présente uniquement l’action courriel', async () => {
+    envoyerParCourriel.mockResolvedValue({ id: 9, statut: 'envoye' });
+    const executer = vi.fn((action) => action());
+    afficher(<ActionsCourrier courrier={{ id: 9, statut: 'signe', sens: 'sortant', mode_sortie: 'courriel', destinataire_externe_nom: 'Partenaire', destinataire_externe_email: 'partenaire@example.test', numero_depart: 'DEP-9', peut_envoyer_par_courriel: true }} user={{ id: 1, poste: 'secretariat_2' }} executer={executer} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Envoyer par courriel' }));
+    await waitFor(() => expect(envoyerParCourriel).toHaveBeenCalledWith(9));
+    expect(screen.queryByRole('button', { name: 'Rendre disponible pour retrait' })).not.toBeInTheDocument();
+  });
+
+  test('un courriel envoyé laisse le retrait combiné disponible indépendamment', async () => {
+    rendreDisponiblePourRetrait.mockResolvedValue({ id: 9, statut: 'envoye', retrait_disponible_at: '2026-09-29T10:35:00Z' });
+    const executer = vi.fn((action) => action());
+    afficher(<ActionsCourrier courrier={{ id: 9, statut: 'envoye', sens: 'sortant', mode_sortie: 'courriel_et_retrait', courriel_envoye_at: '2026-09-29T10:32:00Z', courriel_destinataire: 'partenaire@example.test', peut_rendre_disponible_pour_retrait: true }} user={{ id: 1, poste: 'secretariat_2' }} executer={executer} />);
+    expect(screen.getByText(/Envoyé le/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Envoyer par courriel' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Rendre disponible pour retrait' }));
+    await waitFor(() => expect(rendreDisponiblePourRetrait).toHaveBeenCalledWith(9, null));
+  });
+
+  test('un retrait terminé ne repropose ni disponibilité ni confirmation', () => {
+    afficher(<ActionsCourrier courrier={{ id: 9, statut: 'remis', sens: 'sortant', mode_sortie: 'courriel_et_retrait', courriel_envoye_at: '2026-09-29T10:32:00Z', courriel_destinataire: 'partenaire@example.test', retrait_disponible_at: '2026-09-29T10:35:00Z', remis_le: '2026-09-29T11:00:00Z', remis_a: 'Jean Ilunga', peut_confirmer_remise_physique: true }} user={{ id: 1, poste: 'secretariat_2' }} executer={vi.fn()} />);
+    expect(screen.getByText(/Remis le/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Confirmer la remise' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Rendre disponible pour retrait' })).not.toBeInTheDocument();
   });
 
   test('D en attente de signature ne présente pas l’action Envoyer à SEC2', () => {

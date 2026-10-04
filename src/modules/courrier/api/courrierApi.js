@@ -349,6 +349,32 @@ export async function televerserScanSigne(id, scan) {
   return data.data;
 }
 
+export async function choisirModeSortie(id, modeSortie) {
+  const { data } = await apiClient.post(`/courriers/${id}/mode-sortie`, { mode_sortie: modeSortie });
+  return data.data;
+}
+
+export async function envoyerParCourriel(id) {
+  const { data } = await apiClient.post(`/courriers/${id}/envoyer-par-courriel`);
+  return data.data;
+}
+
+export async function rendreDisponiblePourRetrait(id, observation) {
+  const { data } = await apiClient.post(`/courriers/${id}/rendre-disponible-retrait`, { observation });
+  return data.data;
+}
+
+export async function confirmerRemisePhysique(id, remisA, observation, dechargeRemise) {
+  const formulaire = new FormData();
+  formulaire.append('remis_a', remisA);
+  if (observation) formulaire.append('observation', observation);
+  if (dechargeRemise) formulaire.append('decharge_remise', dechargeRemise);
+  const { data } = await apiClient.post(`/courriers/${id}/confirmer-remise-physique`, formulaire, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return data.data;
+}
+
 export async function enregistrer(id, classification, noteTechnique, accuseReceptionPartenaire) {
   const { data } = await apiClient.post(`/courriers/${id}/enregistrer`, {
     classification,

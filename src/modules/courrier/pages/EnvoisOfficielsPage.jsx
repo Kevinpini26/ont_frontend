@@ -12,11 +12,11 @@ export function EnvoisOfficielsPage() {
   const [erreur, setErreur] = useState(null);
   useEffect(() => {
     const controleur = new AbortController();
-    listCourriers({ statut: 'signe', sens: 'sortant', page }, controleur.signal)
+    listCourriers({ file_sorties_sec2: true, page }, controleur.signal)
       .then(setDonnees).catch((err) => { if (!controleur.signal.aborted) setErreur(err.response?.data?.message ?? 'Chargement des envois impossible.'); });
     return () => controleur.abort();
   }, [page]);
-  return <div><PageHeader title="Envois officiels" description="Courriers sortants signés à réceptionner puis envoyer par SEC2." />
+  return <div><PageHeader title="Sorties officielles SEC2" description="Canaux de remise à exécuter et retraits physiques à confirmer." />
     {erreur && <Alert tone="error">{erreur}</Alert>}
     {!donnees ? <LoadingBlock /> : <><ul className="space-y-3">{donnees.data.map((courrier) => <li key={courrier.id}><Link to={`/courriers/${courrier.id}`}>{courrier.numero_depart} — {courrier.objet}</Link></li>)}</ul><Pagination meta={donnees.meta} onPageChange={setPage} /></>}
   </div>;

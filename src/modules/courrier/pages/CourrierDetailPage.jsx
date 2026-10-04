@@ -3,12 +3,15 @@ import { Link, useParams } from 'react-router-dom';
 import { Building2, CalendarDays, Eye, Hash, Route } from 'lucide-react';
 import {
   accuserReception,
+  choisirModeSortie,
+  confirmerRemisePhysique,
   dispatcherDirection,
   enregistrer,
-  envoyerCourrier,
+  envoyerParCourriel,
   getCourrier,
   transmettreSec1,
   requalifierUrgence,
+  rendreDisponiblePourRetrait,
   rendreAvis,
   renvoyerAuTri,
   renvoyerPourCorrection,
@@ -494,7 +497,11 @@ export function ActionsCourrier({ courrier, user, executer, setApercu }) {
   const [observationCorrection, setObservationCorrection] = useState('');
   const [noteTechnique, setNoteTechnique] = useState('');
   const [accuseReceptionPartenaire, setAccuseReceptionPartenaire] = useState('');
-  const [modeExpedition, setModeExpedition] = useState(courrier.destinataire_externe_email ? 'courriel' : 'poste');
+  const [modeSortie, setModeSortie] = useState(courrier.mode_sortie ?? 'courriel');
+  const [observationRetrait, setObservationRetrait] = useState('');
+  const [nomRecuperant, setNomRecuperant] = useState('');
+  const [observationRemise, setObservationRemise] = useState('');
+  const [dechargeRemise, setDechargeRemise] = useState(null);
   const [scanSigne, setScanSigne] = useState(null);
   const [envoiEnCours, setEnvoiEnCours] = useState(false);
   useEffect(() => {
@@ -947,17 +954,101 @@ export function ActionsCourrier({ courrier, user, executer, setApercu }) {
 
   const attendEnregistrementDirect = courrier.statut === 'recu' && !courrier.necessite_avis_dg;
 
-  if (courrier.statut === 'signe' && courrier.sens === 'sortant' && user.poste === 'secretariat_2') {
-    return <Card><CardHeader title="Envoi officiel" description="Exécuter l’envoi du document signé sans modifier son destinataire." /><CardBody className="space-y-4">
-      <p>Destinataire : {courrier.destinataire_externe_nom || 'Non déterminé'} · {courrier.destinataire_externe_email || 'Sans adresse e-mail'}</p>
-      <p>Numéro de départ : {courrier.numero_depart}</p>
-      <Field label="Mode d’expédition"><select className={inputClass} value={modeExpedition} onChange={(e) => setModeExpedition(e.target.value)}><option value="courriel">Courriel</option><option value="poste">Poste</option><option value="porteur">Porteur</option></select></Field>
-      <Button disabled={envoiEnCours || !courrier.destinataire_externe_nom} onClick={() => executerEtSuivre(() => envoyerCourrier(courrier.id, {
-        destinataire_externe_nom: courrier.destinataire_externe_nom,
-        destinataire_externe_email: courrier.destinataire_externe_email,
-        mode_expedition: modeExpedition,
-      }))}>Envoyer</Button>
-    </CardBody></Card>;
+  const statutSortie = ['signe', 'disponible_retrait', 'envoye', 'remis'];
+  const peutExecuterSortieSec2 = [
+    courrier.peut_choisir_mode_sortie,
+    courrier.peut_envoyer_par_courriel,
+    courrier.peut_rendre_disponible_pour_retrait,
+    courrier.peut_confirmer_remise_physique,
+  ].some(Boolean);
+  if (courrier.sens === 'sortant' && peutExecuterSortieSec2
+    && statutSortie.includes(courrier.statut)
+    && (courrier.statut === 'signe' || courrier.mode_sortie)) {
+    const modeCourriel = ['courriel', 'courriel_et_retrait'].includes(courrier.mode_sortie);
+    const modeRetrait = ['retrait_physique', 'courriel_et_retrait'].includes(courrier.mode_sortie);
+    return (
+      <Card>
+        <CardHeader title="Mode de remise" description="Choisir et suivre séparément les canaux de sortie du document signé." />
+        <CardBody className="space-y-4">
+          <p>Destinataire : {courrier.destinataire_externe_nom || 'Non déterminé'} · {courrier.destinataire_externe_email || 'Sans adresse e-mail'}</p>
+          <p>Numéro de départ : {courrier.numero_depart}</p>
+          {!courrier.mode_sortie ? (
+            <>
+              <Field label="Mode de remise" htmlFor="mode-sortie">
+                <select id="mode-sortie" className={inputClass} value={modeSortie} onChange={(event) => setModeSortie(event.target.value)}>
+                  <option value="courriel">Courriel</option>
+                  <option value="retrait_physique">Retrait physique</option>
+                  <option value="courriel_et_retrait">Courriel + retrait</option>
+                </select>
+              </Field>
+              {courrier.peut_choisir_mode_sortie && (
+                <Button disabled={envoiEnCours} onClick={() => executerEtSuivre(() => choisirModeSortie(courrier.id, modeSortie))}>
+                  Choisir le mode de remise
+                </Button>
+              )}
+            </>
+          ) : (
+            <>
+              {modeCourriel && (
+                <section className="space-y-2 border-t border-border pt-3" aria-label="Canal courriel">
+                  <h3 className="font-medium">Courriel</h3>
+                  {courrier.courriel_envoye_at ? (
+                    <p>✓ Envoyé le {formaterDateHeure(courrier.courriel_envoye_at)} à {courrier.courriel_destinataire}</p>
+                  ) : (
+                    <>
+                      <p>En attente d’envoi à {courrier.destinataire_externe_email || 'adresse manquante'}</p>
+                      {courrier.peut_envoyer_par_courriel && (
+                        <Button disabled={envoiEnCours} onClick={() => executerEtSuivre(() => envoyerParCourriel(courrier.id))}>
+                          Envoyer par courriel
+                        </Button>
+                      )}
+                    </>
+                  )}
+                </section>
+              )}
+              {modeRetrait && (
+                <section className="space-y-2 border-t border-border pt-3" aria-label="Retrait physique">
+                  <h3 className="font-medium">Retrait physique</h3>
+                  {courrier.remis_le ? (
+                    <p>✓ Remis le {formaterDateHeure(courrier.remis_le)} à {courrier.remis_a}</p>
+                  ) : courrier.retrait_disponible_at ? (
+                    <p>• Disponible depuis le {formaterDateHeure(courrier.retrait_disponible_at)}</p>
+                  ) : (
+                    <p>Pas encore disponible pour retrait.</p>
+                  )}
+                  {!courrier.retrait_disponible_at && !courrier.remis_le && courrier.peut_rendre_disponible_pour_retrait && (
+                    <div className="space-y-2">
+                      <Field label="Observation (facultatif)" htmlFor="observation-retrait">
+                        <textarea id="observation-retrait" rows={2} className={inputClass} value={observationRetrait} onChange={(event) => setObservationRetrait(event.target.value)} />
+                      </Field>
+                      <Button disabled={envoiEnCours} onClick={() => executerEtSuivre(() => rendreDisponiblePourRetrait(courrier.id, observationRetrait || null))}>
+                        Rendre disponible pour retrait
+                      </Button>
+                    </div>
+                  )}
+                  {courrier.retrait_disponible_at && !courrier.remis_le && courrier.peut_confirmer_remise_physique && (
+                    <div className="space-y-2">
+                      <Field label="Nom du récupérant" htmlFor="nom-recuperant" required>
+                        <input id="nom-recuperant" className={inputClass} value={nomRecuperant} onChange={(event) => setNomRecuperant(event.target.value)} />
+                      </Field>
+                      <Field label="Observation (facultatif)" htmlFor="observation-remise">
+                        <textarea id="observation-remise" rows={2} className={inputClass} value={observationRemise} onChange={(event) => setObservationRemise(event.target.value)} />
+                      </Field>
+                      <Field label="Décharge (facultatif)" htmlFor="decharge-remise">
+                        <input id="decharge-remise" type="file" accept="application/pdf,image/jpeg,image/png" className={inputClass} onChange={(event) => setDechargeRemise(event.target.files?.[0] ?? null)} />
+                      </Field>
+                      <Button disabled={envoiEnCours || !nomRecuperant.trim()} onClick={() => executerEtSuivre(() => confirmerRemisePhysique(courrier.id, nomRecuperant, observationRemise || null, dechargeRemise))}>
+                        Confirmer la remise
+                      </Button>
+                    </div>
+                  )}
+                </section>
+              )}
+            </>
+          )}
+        </CardBody>
+      </Card>
+    );
   }
 
   if ((courrier.statut === 'signe' || attendEnregistrementDirect) && user.poste === 'secretariat_2') {
