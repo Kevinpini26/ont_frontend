@@ -24,6 +24,7 @@ export const STATUTS = [
   'en_attente_avis_dg',
   'projet_a_rediger',
   'projet_a_valider',
+  'en_attente_signature',
   'signe',
   'enregistre',
 ];
@@ -56,6 +57,7 @@ export const STATUT_LABELS = {
   en_attente_avis_dg: "En attente d'avis DG",
   projet_a_rediger: 'Projet de réponse à rédiger',
   projet_a_valider: 'Projet en attente de validation',
+  en_attente_signature: 'En attente de signature',
   en_dispatch: 'En dispatch vers la direction',
   dispatch_execute: 'Dispatch exécuté',
   chez_direction: 'Chez le secrétariat de la direction',

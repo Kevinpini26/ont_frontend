@@ -335,6 +335,20 @@ export async function signer(id) {
   return data.data;
 }
 
+export async function validerPourSignature(id) {
+  const { data } = await apiClient.post(`/courriers/${id}/valider-pour-signature`);
+  return data.data;
+}
+
+export async function televerserScanSigne(id, scan) {
+  const formulaire = new FormData();
+  formulaire.append('scan', scan);
+  const { data } = await apiClient.post(`/courriers/${id}/scan-signe`, formulaire, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return data.data;
+}
+
 export async function enregistrer(id, classification, noteTechnique, accuseReceptionPartenaire) {
   const { data } = await apiClient.post(`/courriers/${id}/enregistrer`, {
     classification,

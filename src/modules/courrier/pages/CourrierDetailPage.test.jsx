@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { CourrierDetailPage } from './CourrierDetailPage';
 
@@ -25,7 +25,15 @@ vi.mock('../components/MissionsDocumentairesPanel', () => ({
 vi.mock('../components/DispatchDecisionPanel', () => ({
   DispatchDecisionPanel: ({ autoriserActions }) => <div data-testid="dispatch-actions" data-autoriser-actions={String(autoriserActions)} />,
 }));
-vi.mock('../components/DocumentPreviewModal', () => ({ DocumentPreviewModal: () => null }));
+vi.mock('../../../shared/components/DocumentPreviewModal', () => ({
+  DocumentPreviewModal: ({ open, title, url, downloadFilename }) => (
+    open ? (
+      <div data-testid="preview-modal" data-title={title} data-url={url} data-download={downloadFilename}>
+        Preview
+      </div>
+    ) : null
+  ),
+}));
 vi.mock('../components/TipTapEditor', () => ({
   TipTapEditor: ({ content }) => <div>{content?.content?.[0]?.content?.[0]?.text}</div>,
 }));
@@ -86,11 +94,12 @@ describe('détail de la réponse D', () => {
   test('affiche le statut, le contenu final, le destinataire et le CTA DG avant signature', () => {
     afficherDetail(projetPreSignature);
 
-    expect(screen.getByText('Projet prêt à signer')).toBeInTheDocument();
+    expect(screen.getAllByText('Projet prêt à signer').length).toBeGreaterThan(0);
     expect(screen.getByText('Texte final de la réponse')).toBeInTheDocument();
     expect(screen.getByText('Partenaire')).toBeInTheDocument();
     expect(screen.getByText('partenaire@example.test')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Signer la réponse' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Valider pour signature' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Signer la réponse' })).not.toBeInTheDocument();
     expect(screen.queryByText(/Accusé null/i)).not.toBeInTheDocument();
   });
 
@@ -108,6 +117,48 @@ describe('détail de la réponse D', () => {
     expect(screen.queryByRole('button', { name: 'Signer la réponse' })).not.toBeInTheDocument();
     expect(screen.queryByText(/Accusé null/i)).not.toBeInTheDocument();
     expect(screen.getByText('Envoyé')).toBeInTheDocument();
+  });
+
+  test('affiche l’attente de signature et le PDF à imprimer sans le présenter comme signé', () => {
+    afficherDetail({
+      ...projetPreSignature,
+      statut: 'en_attente_signature',
+      numero_depart: '2026-D0100',
+      valide_signature_at: '2026-09-29T10:00:00Z',
+      valide_signature_par: { id: 1, name: 'DG' },
+      pdf_a_signer_disponible: true,
+      pdf_disponible: false,
+      peut_televerser_scan_signe: true,
+    });
+
+    expect(screen.getByRole('heading', { name: 'En attente de signature physique' })).toBeInTheDocument();
+    expect(screen.getAllByText(/2026-D0100/).length).toBeGreaterThan(0);
+    expect(screen.getByRole('button', { name: 'Télécharger le PDF à signer' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Téléverser la version signée')).toHaveAttribute('accept', 'application/pdf,.pdf');
+    expect(screen.getByRole('button', { name: 'Téléverser la version signée' })).toBeDisabled();
+    expect(screen.getByText(/ne pourra plus être remplacé/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Signer la réponse' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Voir le PDF signé' })).not.toBeInTheDocument();
+  });
+
+  test('déclenche l’ouverture de la preview PDF au clic sur le bouton pré-signature', async () => {
+    afficherDetail({
+      ...projetPreSignature,
+      statut: 'en_attente_signature',
+      numero_depart: '2026-D0004',
+      valide_signature_par: { id: 1, name: 'DG' },
+      pdf_a_signer_disponible: true,
+      pdf_disponible: false,
+      peut_televerser_scan_signe: false,
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Télécharger le PDF à signer' }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('preview-modal')).toHaveAttribute('data-title', 'Réponse à signer');
+      expect(screen.getByTestId('preview-modal')).toHaveAttribute('data-url', '/courriers/99/pdf-a-signer');
+      expect(screen.getByTestId('preview-modal')).toHaveAttribute('data-download', 'reponse-2026-D0004-a-signer.pdf');
+    });
   });
 
   test('affiche Signé et le numéro de départ après signature', () => {

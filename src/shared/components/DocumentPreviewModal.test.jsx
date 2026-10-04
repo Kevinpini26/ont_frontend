@@ -34,6 +34,17 @@ describe('DocumentPreviewModal', () => {
     expect(await screen.findByText('Impossible de charger le document.')).toBeInTheDocument();
   });
 
+  test('affiche bien le PDF quand le header inclut un charset', async () => {
+    vi.spyOn(apiClient, 'get').mockResolvedValue({
+      data: new Blob(['%PDF-1.7'], { type: 'application/pdf' }),
+      headers: { 'content-type': 'application/pdf; charset=UTF-8' },
+    });
+
+    render(<DocumentPreviewModal open title="Convention" url="/stagiaires/1/documents/2/telecharger" onClose={() => {}} />);
+
+    await waitFor(() => expect(document.querySelector('embed[type="application/pdf"]')).toBeInTheDocument());
+  });
+
   test('rien ne se charge tant que la modale nest pas ouverte', () => {
     const getSpy = vi.spyOn(apiClient, 'get').mockResolvedValue({ data: new Blob(), headers: {} });
 

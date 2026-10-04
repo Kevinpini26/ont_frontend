@@ -14,11 +14,13 @@ import {
   renvoyerPourCorrection,
   signer,
   soumettreProjetReponse,
+  televerserScanSigne,
   transmettreAvisDg,
   transmettreDepuisClasseur,
   transmettreTri,
   validerAvantDiffusion,
   validerRelecture,
+  validerPourSignature,
 } from '../api/courrierApi';
 import { listAgentsCircuitCourrier } from '../../kernel/api/agentsApi';
 import { useDgAutorite } from '../../kernel/hooks/useDgAutorite';
@@ -384,7 +386,7 @@ export function CourrierDetailPage() {
           </Card>
         )}
 
-        <ActionsCourrier courrier={courrier} user={user} executer={executer} />
+        <ActionsCourrier courrier={courrier} user={user} executer={executer} setApercu={setApercu} />
 
         {courrier.projet_reponse_contenu && (
           <Card>
@@ -479,7 +481,7 @@ function PanneauImputation({ courrier }) {
   );
 }
 
-export function ActionsCourrier({ courrier, user, executer }) {
+export function ActionsCourrier({ courrier, user, executer, setApercu }) {
   const [agents, setAgents] = useState([]);
   const [relecteurId, setRelecteurId] = useState('');
   const [projetContenu, setProjetContenu] = useState(courrier.projet_reponse_contenu ?? '');
@@ -493,6 +495,7 @@ export function ActionsCourrier({ courrier, user, executer }) {
   const [noteTechnique, setNoteTechnique] = useState('');
   const [accuseReceptionPartenaire, setAccuseReceptionPartenaire] = useState('');
   const [modeExpedition, setModeExpedition] = useState(courrier.destinataire_externe_email ? 'courriel' : 'poste');
+  const [scanSigne, setScanSigne] = useState(null);
   const [envoiEnCours, setEnvoiEnCours] = useState(false);
   useEffect(() => {
     if (courrier.sens !== 'sortant' && courrier.statut === 'projet_a_rediger' && POSTES_ASSISTANTS.includes(user.poste)) {
@@ -864,15 +867,76 @@ export function ActionsCourrier({ courrier, user, executer }) {
   }
 
   const missionReponse = courrier.missions_documentaires?.find((mission) => mission.projet_courrier_id === courrier.id);
-  if ((courrier.statut === 'en_relecture' || courrier.statut === 'projet_a_valider') && user.poste === 'dg'
+  if (courrier.statut === 'projet_a_valider' && user.poste === 'dg'
     && courrier.relecture_validee_at && (!missionReponse || missionReponse.statut === 'retournee')) {
     return (
       <Card>
-        <CardHeader title="Réponse prête à signer" description="La relecture est validée ; la DG peut désormais signer la réponse définitive." />
+        <CardHeader title="Projet prêt à signer" description="La relecture est validée ; la DG peut valider le document à imprimer et signer." />
         <CardBody className="space-y-4">
           <p className="text-sm text-text-muted">
-            Le projet est validé et l’action finale est la signature officielle de la réponse.
+            Cette validation attribue le numéro de départ et prépare le PDF. Elle ne constitue pas encore la signature physique.
           </p>
+          <Button variant="gold" disabled={envoiEnCours} onClick={() => executerEtSuivre(() => validerPourSignature(courrier.id))}>
+            Valider pour signature
+          </Button>
+        </CardBody>
+      </Card>
+    );
+  }
+
+  if (courrier.statut === 'en_attente_signature'
+    && (user.poste === 'dg' || courrier.valide_signature_par?.id === user.id)) {
+    return (
+      <Card>
+        <CardHeader title="En attente de signature physique" description="Le document est prêt à être imprimé. La signature manuscrite et le cachet ne sont pas encore enregistrés." />
+        <CardBody className="space-y-4">
+          <p className="text-sm text-text-muted">Numéro de départ : <strong>{courrier.numero_depart}</strong></p>
+          {courrier.pdf_a_signer_disponible && (
+            <Button variant="secondary" disabled={envoiEnCours} onClick={() => setApercu({
+              title: 'Réponse à signer',
+              url: `/courriers/${courrier.id}/pdf-a-signer`,
+              downloadFilename: `reponse-${courrier.numero_depart}-a-signer.pdf`,
+            })}>
+              Télécharger le PDF à signer
+            </Button>
+          )}
+          <p className="text-sm text-text-muted">Imprimez ce document, faites-le signer et cacheter, puis téléversez la version numérisée.</p>
+          {courrier.peut_televerser_scan_signe && (
+            <div className="space-y-3">
+              <Field label="Téléverser la version signée" htmlFor="scan-signe" hint="PDF uniquement. Le scan accepté deviendra le document officiel.">
+                <input
+                  id="scan-signe"
+                  type="file"
+                  accept="application/pdf,.pdf"
+                  className={inputClass}
+                  disabled={envoiEnCours}
+                  onChange={(event) => setScanSigne(event.target.files?.[0] ?? null)}
+                />
+              </Field>
+              <p className="text-sm text-text-muted">Après validation, ce fichier deviendra la version officielle et ne pourra plus être remplacé par le workflow normal.</p>
+              <Button
+                variant="gold"
+                disabled={!scanSigne || envoiEnCours}
+                onClick={() => {
+                  if (window.confirm('Confirmez-vous que ce PDF correspond au document portant la signature et le cachet requis ? Après validation, il deviendra la version officielle et ne pourra plus être remplacé par le workflow normal.')) {
+                    executerEtSuivre(() => televerserScanSigne(courrier.id, scanSigne));
+                  }
+                }}
+              >
+                Téléverser la version signée
+              </Button>
+            </div>
+          )}
+        </CardBody>
+      </Card>
+    );
+  }
+
+  if (courrier.statut === 'en_relecture' && user.poste === 'dg' && courrier.relecture_validee_at) {
+    return (
+      <Card>
+        <CardHeader title="Réponse prête à signer" description="Le circuit historique de relecture est validé." />
+        <CardBody>
           <Button variant="gold" disabled={envoiEnCours} onClick={() => executerEtSuivre(() => signer(courrier.id))}>
             Signer la réponse
           </Button>

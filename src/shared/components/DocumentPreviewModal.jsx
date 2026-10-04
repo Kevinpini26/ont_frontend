@@ -37,7 +37,7 @@ export function DocumentPreviewModal({ open, onClose, title, url, downloadFilena
       .then((response) => {
         urlObjet = URL.createObjectURL(response.data);
         setBlobUrl(urlObjet);
-        setMimeType(response.headers['content-type'] ?? response.data.type);
+        setMimeType(response.headers['content-type'] ?? response.data?.type ?? 'application/octet-stream');
       })
       .catch(() => setErreur('Impossible de charger le document.'))
       .finally(() => setChargement(false));
@@ -57,8 +57,9 @@ export function DocumentPreviewModal({ open, onClose, title, url, downloadFilena
     lien.click();
   }
 
-  const estImage = mimeType?.startsWith('image/');
-  const estPdf = mimeType === 'application/pdf';
+  const typeMimeNormalise = (mimeType ?? '').toLowerCase();
+  const estImage = typeMimeNormalise.startsWith('image/');
+  const estPdf = typeMimeNormalise.includes('application/pdf');
 
   return (
     <Modal open={open} onClose={onClose} title={title} size="xl">

@@ -149,7 +149,20 @@ describe('Poste SEC2', () => {
     await waitFor(() => expect(envoyerCourrier).toHaveBeenCalledWith(9, { destinataire_externe_nom: 'Partenaire', destinataire_externe_email: 'partenaire@example.test', mode_expedition: 'courriel' }));
   });
 
-  test('la DG voit un bouton de signature explicite pour une réponse validée', () => {
+  test('D en attente de signature ne présente pas l’action Envoyer à SEC2', () => {
+    afficher(<ActionsCourrier courrier={{
+      id: 10,
+      statut: 'en_attente_signature',
+      sens: 'sortant',
+      numero_depart: '2026-D0010',
+      destinataire_externe_nom: 'Partenaire',
+      pdf_a_signer_disponible: true,
+    }} user={{ id: 2, poste: 'secretariat_2' }} executer={vi.fn()} />);
+
+    expect(screen.queryByRole('button', { name: 'Envoyer' })).not.toBeInTheDocument();
+  });
+
+  test('la DG voit un bouton de validation pour signature après relecture', () => {
     afficher(<ActionsCourrier
       courrier={{
         id: 99,
@@ -168,7 +181,7 @@ describe('Poste SEC2', () => {
       executer={vi.fn((action) => action())}
     />);
 
-    expect(screen.getByRole('button', { name: 'Signer la réponse' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Valider pour signature' })).toBeInTheDocument();
   });
 
   test.each(['assistant_1', 'assistant_2', 'secretariat_1', 'secretariat_2'])(
