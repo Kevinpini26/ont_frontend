@@ -29,6 +29,7 @@ import { useConfirm } from '../../../shared/hooks/useConfirm';
 
 const FORMULAIRE_VIDE = {
   name: '',
+  initiales_reference: '',
   email: '',
   password: '',
   role: ROLES.DIRECTEUR_DIRECTION,
@@ -84,6 +85,7 @@ export function AdminUsersPage() {
 
     const payload = {
       name: formulaire.name,
+      initiales_reference: formulaire.initiales_reference || null,
       email: formulaire.email,
       role: formulaire.role,
       poste: posteRequis ? formulaire.poste : undefined,
@@ -115,6 +117,7 @@ export function AdminUsersPage() {
     setEdition(user);
     setFormulaire({
       name: user.name,
+      initiales_reference: user.initiales_reference ?? '',
       email: user.email,
       password: '',
       role: user.role === ROLES.RESPONSABLE_DIRECTION ? ROLES.DIRECTEUR_DIRECTION : user.role,
@@ -168,6 +171,21 @@ export function AdminUsersPage() {
                 value={formulaire.name}
                 onChange={(e) => setFormulaire((f) => ({ ...f, name: e.target.value }))}
                 required
+              />
+            </Field>
+            <Field
+              label="Initiales institutionnelles"
+              htmlFor="initiales_reference"
+              hint="Optionnel. Saisies par l'administration pour un signataire."
+            >
+              <input
+                id="initiales_reference"
+                className={inputClass}
+                value={formulaire.initiales_reference}
+                onChange={(e) => setFormulaire((f) => ({ ...f, initiales_reference: e.target.value }))}
+                maxLength={12}
+                pattern="[A-Za-z]{1,12}"
+                autoCapitalize="characters"
               />
             </Field>
             <Field label="E-mail" htmlFor="email" required>
@@ -281,6 +299,7 @@ export function AdminUsersPage() {
                 filename="utilisateurs-ont"
                 columns={[
                   { label: 'Nom', value: (u) => u.name },
+                  { label: 'Initiales institutionnelles', value: (u) => u.initiales_reference ?? '' },
                   { label: 'E-mail', value: (u) => u.email },
                   { label: 'Rôle', value: (u) => u.role_label },
                   { label: 'Poste', value: (u) => u.poste_label ?? '' },
@@ -297,6 +316,7 @@ export function AdminUsersPage() {
               <thead className={theadClass}>
                 <tr>
                   <th className={thClass}>Nom</th>
+                  <th className={thClass}>Initiales</th>
                   <th className={thClass}>E-mail</th>
                   <th className={thClass}>Rôle</th>
                   <th className={thClass}>Poste</th>
@@ -306,11 +326,12 @@ export function AdminUsersPage() {
               </thead>
               <tbody className={tbodyClass}>
                 {chargement ? (
-                  <SkeletonRows colonnes={6} />
+                  <SkeletonRows colonnes={7} />
                 ) : (
                   usersFiltres.map((u) => (
                     <tr key={u.id} className={trHoverClass}>
                       <td className={tdClassPremiere}>{u.name}</td>
+                      <td className={tdClass}>{u.initiales_reference ?? '—'}</td>
                       <td className={tdClass}>{u.email}</td>
                       <td className={tdClass}>
                         <Badge tone="info">{u.role_label}</Badge>
