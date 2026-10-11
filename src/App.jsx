@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { createBrowserRouter, Navigate, Route, Routes, RouterProvider, useLocation } from 'react-router-dom';
 import { AppLayout } from './shared/components/AppLayout';
 import { ErrorBoundary } from './shared/components/ErrorBoundary';
 import { ProtectedRoute } from './shared/components/ProtectedRoute';
@@ -48,6 +48,8 @@ const EnvoisOfficielsPage = lazy(() => import('./modules/courrier/pages/EnvoisOf
 const ArchivageDossiersPage = lazy(() => import('./modules/courrier/pages/ArchivageDossiersPage').then((m) => ({ default: m.ArchivageDossiersPage })));
 const BoiteDispatchDirectionPage = lazy(() => import('./modules/courrier/pages/BoiteDispatchDirectionPage').then((m) => ({ default: m.BoiteDispatchDirectionPage })));
 const TraitementsDirectionPage = lazy(() => import('./modules/courrier/pages/TraitementsDirectionPage').then((m) => ({ default: m.TraitementsDirectionPage })));
+const DocumentsInternesDirectionPage = lazy(() => import('./modules/courrier/pages/DocumentsInternesDirectionPage').then((m) => ({ default: m.DocumentsInternesDirectionPage })));
+const DocumentInterneAutonomePage = lazy(() => import('./modules/courrier/pages/DocumentInterneAutonomePage').then((m) => ({ default: m.DocumentInterneAutonomePage })));
 const DocumentsInternesReceptionPage = lazy(() => import('./modules/courrier/pages/DocumentsInternesReceptionPage').then((m) => ({ default: m.DocumentsInternesReceptionPage })));
 const ClassementArchivesPage = lazy(() => import('./modules/courrier/pages/ClassementArchivesPage').then((m) => ({ default: m.ClassementArchivesPage })));
 const PosteDeTravailTriPage = lazy(() =>
@@ -142,7 +144,7 @@ function RedirectAvecQuery({ vers }) {
   return <Navigate to={`${vers}${location.search}`} replace />;
 }
 
-function AppRoutes() {
+export function AppRoutes() {
   useThemeSync(useLocation().pathname);
 
   return (
@@ -195,6 +197,9 @@ function AppRoutes() {
           </Route>
           <Route element={<ProtectedRoute roles={[ROLES.SECRETARIAT_DIRECTION]} />}>
             <Route path="/direction/courriers-recus" element={<BoiteDispatchDirectionPage />} />
+            <Route path="/direction/documents-internes" element={<DocumentsInternesDirectionPage />} />
+            <Route path="/direction/documents-internes/nouveau" element={<DocumentInterneAutonomePage />} />
+            <Route path="/direction/documents-internes/:id" element={<DocumentInterneAutonomePage />} />
           </Route>
 
           <Route element={<ProtectedRoute roles={[ROLES.AGENT_CIRCUIT_COURRIER]} postesInterdits={['protocole', 'assistant_protocole', 'assistant_dga']} />}>
@@ -269,13 +274,17 @@ function AppRoutes() {
   );
 }
 
-export default function App() {
+function AppShell() {
   return (
-    <ErrorBoundary>
-      <BrowserRouter>
-        <AppRoutes />
-        <ToastContainer />
-      </BrowserRouter>
-    </ErrorBoundary>
+    <>
+      <AppRoutes />
+      <ToastContainer />
+    </>
   );
+}
+
+const router = createBrowserRouter([{ path: '*', element: <AppShell /> }]);
+
+export default function App() {
+  return <ErrorBoundary><RouterProvider router={router} /></ErrorBoundary>;
 }

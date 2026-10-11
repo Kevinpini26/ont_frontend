@@ -258,6 +258,25 @@ export async function demanderCorrectionDocumentProduit(id, motif) { const { dat
 export async function validerDocumentProduit(id) { const { data } = await apiClient.post(`/documents-produits-direction/${id}/valider`); return data.data; }
 export async function transmettreDocumentReception(id) { const { data } = await apiClient.post(`/documents-produits-direction/${id}/transmettre-reception`); return data.data; }
 export async function listDocumentsProduits() { const { data } = await apiClient.get('/documents-produits-direction'); return data.data; }
+export async function listDocumentsInternesAutonomes(page = 1, signal) {
+  const { data } = await apiClient.get('/documents-produits-direction', {
+    params: { origine: 'autonome', page },
+    signal,
+  });
+  return data;
+}
+export async function getDocumentInterneAutonome(id, signal) {
+  const { data } = await apiClient.get(`/documents-produits-direction/${id}`, { signal });
+  return data.data;
+}
+export async function creerDocumentInterneAutonome(payload) {
+  const { data } = await apiClient.post('/documents-produits-direction/autonomes', payload);
+  return data.data;
+}
+export async function sauvegarderDocumentInterneAutonome(id, payload) {
+  const { data } = await apiClient.patch(`/documents-produits-direction/${id}/brouillon`, payload);
+  return data.data;
+}
 export async function recevoirDocumentProduit(id) { const { data } = await apiClient.post(`/documents-produits-direction/${id}/recevoir`); return data.data; }
 export async function listClassementsDocuments(page = 1) { const { data } = await apiClient.get('/classements-documents', { params: { page } }); return data; }
 export async function classerDispatch(id, payload) { const { data } = await apiClient.post(`/dispatchs/${id}/classer`, payload); return data.data; }

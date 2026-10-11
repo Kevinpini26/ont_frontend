@@ -1,4 +1,4 @@
-import { BarChart3, Building2, CalendarCheck, ClipboardList, Clock, FileClock, History, Inbox, LayoutDashboard, Mail, ScanLine, ScrollText, Settings, Target, Users } from 'lucide-react';
+import { BarChart3, BookOpen, Building2, CalendarCheck, ClipboardList, Clock, FileClock, History, Inbox, LayoutDashboard, Mail, ScanLine, ScrollText, Settings, Target, Users } from 'lucide-react';
 import { estDirecteurDirection, ROLES } from '../modules/kernel/constants';
 
 /**
@@ -88,6 +88,7 @@ export function navigationForUser(user) {
           { label: 'Courrier', to: '/direction/courrier', icon: Mail, countKey: 'courriers_recus' },
           { label: 'Courriers dispatchés', to: '/direction/courriers-recus', icon: Inbox },
           { label: 'Documents de retour', to: '/direction/courriers-a-traiter', icon: ClipboardList },
+          { label: 'Documents internes', to: '/direction/documents-internes', icon: BookOpen },
         ],
       },
     ];

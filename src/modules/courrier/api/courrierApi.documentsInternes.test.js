@@ -1,0 +1,51 @@
+import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { apiClient } from '../../../shared/api/client';
+import {
+  creerDocumentInterneAutonome,
+  getDocumentInterneAutonome,
+  listDocumentsInternesAutonomes,
+  sauvegarderDocumentInterneAutonome,
+} from './courrierApi';
+
+vi.mock('../../../shared/api/client', () => ({
+  apiClient: {
+    get: vi.fn(),
+    post: vi.fn(),
+    patch: vi.fn(),
+  },
+}));
+
+describe('API des documents internes autonomes', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  test('conserve data, meta et links et applique le filtre serveur avant pagination', async () => {
+    const pagine = { data: [{ id: 1 }], meta: { current_page: 2, last_page: 3, total: 41 }, links: { next: '?page=3' } };
+    apiClient.get.mockResolvedValue({ data: pagine });
+    const signal = new AbortController().signal;
+
+    await expect(listDocumentsInternesAutonomes(2, signal)).resolves.toEqual(pagine);
+    expect(apiClient.get).toHaveBeenCalledWith('/documents-produits-direction', {
+      params: { origine: 'autonome', page: 2 },
+      signal,
+    });
+  });
+
+  test('utilise uniquement les routes existantes pour détail, création et sauvegarde', async () => {
+    const resultat = { data: { id: 7, origine: 'autonome' } };
+    apiClient.get.mockResolvedValue({ data: resultat });
+    apiClient.post.mockResolvedValue({ data: resultat });
+    apiClient.patch.mockResolvedValue({ data: resultat });
+
+    await expect(getDocumentInterneAutonome(7)).resolves.toEqual(resultat.data);
+    await expect(creerDocumentInterneAutonome({ objet: 'Objet', contenu: {} })).resolves.toEqual(resultat.data);
+    await expect(sauvegarderDocumentInterneAutonome(7, { objet: 'Objet', contenu: {}, version_contenu: 3 })).resolves.toEqual(resultat.data);
+
+    expect(apiClient.get).toHaveBeenCalledWith('/documents-produits-direction/7', { signal: undefined });
+    expect(apiClient.post).toHaveBeenCalledWith('/documents-produits-direction/autonomes', { objet: 'Objet', contenu: {} });
+    expect(apiClient.patch).toHaveBeenCalledWith('/documents-produits-direction/7/brouillon', {
+      objet: 'Objet',
+      contenu: {},
+      version_contenu: 3,
+    });
+  });
+});
