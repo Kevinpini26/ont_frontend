@@ -4,7 +4,10 @@ import {
   creerDocumentInterneAutonome,
   getDocumentInterneAutonome,
   listDocumentsInternesAutonomes,
+  demanderCorrectionDocumentProduit,
   sauvegarderDocumentInterneAutonome,
+  soumettreDocumentInterneAutonome,
+  validerDocumentProduit,
 } from './courrierApi';
 
 vi.mock('../../../shared/api/client', () => ({
@@ -39,6 +42,7 @@ describe('API des documents internes autonomes', () => {
     await expect(getDocumentInterneAutonome(7)).resolves.toEqual(resultat.data);
     await expect(creerDocumentInterneAutonome({ objet: 'Objet', contenu: {} })).resolves.toEqual(resultat.data);
     await expect(sauvegarderDocumentInterneAutonome(7, { objet: 'Objet', contenu: {}, version_contenu: 3 })).resolves.toEqual(resultat.data);
+    await expect(soumettreDocumentInterneAutonome(7, 3)).resolves.toEqual(resultat.data);
 
     expect(apiClient.get).toHaveBeenCalledWith('/documents-produits-direction/7', { signal: undefined });
     expect(apiClient.post).toHaveBeenCalledWith('/documents-produits-direction/autonomes', { objet: 'Objet', contenu: {} });
@@ -47,5 +51,19 @@ describe('API des documents internes autonomes', () => {
       contenu: {},
       version_contenu: 3,
     });
+    expect(apiClient.post).toHaveBeenLastCalledWith('/documents-produits-direction/7/soumettre', { version_contenu: 3 });
+  });
+
+  test('utilise les contrats de décision existants sans envoyer de contenu éditorial', async () => {
+    const resultat = { data: { id: 7, statut: 'a_corriger', motif_correction: 'Préciser la période' } };
+    apiClient.post.mockResolvedValue({ data: resultat });
+
+    await expect(demanderCorrectionDocumentProduit(7, 'Préciser la période')).resolves.toEqual(resultat.data);
+    await expect(validerDocumentProduit(7)).resolves.toEqual(resultat.data);
+
+    expect(apiClient.post).toHaveBeenNthCalledWith(1, '/documents-produits-direction/7/demander-correction', {
+      motif: 'Préciser la période',
+    });
+    expect(apiClient.post).toHaveBeenNthCalledWith(2, '/documents-produits-direction/7/valider');
   });
 });

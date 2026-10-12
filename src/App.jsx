@@ -50,6 +50,8 @@ const BoiteDispatchDirectionPage = lazy(() => import('./modules/courrier/pages/B
 const TraitementsDirectionPage = lazy(() => import('./modules/courrier/pages/TraitementsDirectionPage').then((m) => ({ default: m.TraitementsDirectionPage })));
 const DocumentsInternesDirectionPage = lazy(() => import('./modules/courrier/pages/DocumentsInternesDirectionPage').then((m) => ({ default: m.DocumentsInternesDirectionPage })));
 const DocumentInterneAutonomePage = lazy(() => import('./modules/courrier/pages/DocumentInterneAutonomePage').then((m) => ({ default: m.DocumentInterneAutonomePage })));
+const DocumentsInternesDirecteurPage = lazy(() => import('./modules/courrier/pages/DocumentsInternesDirecteurPage').then((m) => ({ default: m.DocumentsInternesDirecteurPage })));
+const DocumentInterneDirecteurPage = lazy(() => import('./modules/courrier/pages/DocumentInterneDirecteurPage').then((m) => ({ default: m.DocumentInterneDirecteurPage })));
 const DocumentsInternesReceptionPage = lazy(() => import('./modules/courrier/pages/DocumentsInternesReceptionPage').then((m) => ({ default: m.DocumentsInternesReceptionPage })));
 const ClassementArchivesPage = lazy(() => import('./modules/courrier/pages/ClassementArchivesPage').then((m) => ({ default: m.ClassementArchivesPage })));
 const PosteDeTravailTriPage = lazy(() =>
@@ -184,6 +186,8 @@ export function AppRoutes() {
           <Route element={<ProtectedRoute roles={ROLES_DIRECTEUR_DIRECTION} />}>
             <Route path="/direction/tableau-de-bord" element={<DirectionDashboardPage />} />
             <Route path="/direction/stagiaires" element={<DirectionStagiairesPage />} />
+            <Route path="/direction/directeur/documents-internes" element={<DocumentsInternesDirecteurPage />} />
+            <Route path="/direction/directeur/documents-internes/:id" element={<DocumentInterneDirecteurPage />} />
           </Route>
 
           {/* Le secrétariat de direction (Lot 3) reçoit et consulte le

@@ -9,11 +9,14 @@ import { Field, inputClass } from '../../../shared/components/ui/Field';
 import { PageHeader } from '../../../shared/components/ui/PageHeader';
 import { LoadingBlock } from '../../../shared/components/ui/Spinner';
 import { useToast } from '../../../shared/components/ui/Toast';
+import { ROLES } from '../../kernel/constants';
+import { useAuthStore } from '../../kernel/store/authStore';
 import { TipTapEditor } from '../components/TipTapEditor';
 import {
   creerDocumentInterneAutonome,
   getDocumentInterneAutonome,
   sauvegarderDocumentInterneAutonome,
+  soumettreDocumentInterneAutonome,
 } from '../api/courrierApi';
 
 const CONTENU_VIDE = { type: 'doc', content: [{ type: 'paragraph' }] };
@@ -37,7 +40,7 @@ function messageErreur(erreur, action) {
   if (statut === 401) return 'Votre session a expiré. Connectez-vous à nouveau.';
   if (statut === 403) return "Vous n’êtes pas autorisé à effectuer cette action.";
   if (statut === 404) return 'Ce document est introuvable ou n’est pas accessible.';
-  if (statut === 409) return 'Un autre secrétaire a modifié ce brouillon depuis son chargement. Vos modifications locales sont conservées.';
+  if (statut === 409) return 'La version ou le statut du document a changé depuis son chargement. Vos modifications locales sont conservées. Consultez la version serveur avant de réessayer.';
   if (statut === 422) return 'Certaines informations sont invalides. Vérifiez les champs signalés.';
   return `Impossible ${action} le document. Réessayez.`;
 }
@@ -226,6 +229,11 @@ function DetailDocument({ id }) {
   const [objet, setObjet] = useState('');
   const [contenu, setContenu] = useState(CONTENU_VIDE);
   const [enregistrement, setEnregistrement] = useState(false);
+  const [soumissionEnCours, setSoumissionEnCours] = useState(false);
+  const [confirmationSoumission, setConfirmationSoumission] = useState(false);
+  const generationRequeteRef = useRef(0);
+  const idDocumentCourantRef = useRef(String(id));
+  const mutationEnCoursRef = useRef(null);
   const [conflit, setConflit] = useState(false);
   const [versionServeur, setVersionServeur] = useState(null);
   const [chargementServeur, setChargementServeur] = useState(false);
@@ -233,6 +241,13 @@ function DetailDocument({ id }) {
   const [remplacementConfirme, setRemplacementConfirme] = useState(false);
   const location = useLocation();
   const toast = useToast();
+  const utilisateur = useAuthStore((state) => state.user);
+  idDocumentCourantRef.current = String(id);
+
+  function requeteCourante(generation, documentId) {
+    return generationRequeteRef.current === generation
+      && idDocumentCourantRef.current === String(documentId);
+  }
 
   const chargerServeur = useCallback(async (signal) => {
     const resultat = await getDocumentInterneAutonome(id, signal);
@@ -246,36 +261,62 @@ function DetailDocument({ id }) {
 
   useEffect(() => {
     const controleur = new AbortController();
+    const generation = ++generationRequeteRef.current;
+    mutationEnCoursRef.current = null;
     setChargement(true);
     setDocument(null);
     setErreurChargement('');
     setErreurSauvegarde('');
+    setErreurs({});
+    setEnregistrement(false);
+    setSoumissionEnCours(false);
+    setConfirmationSoumission(false);
+    setConflit(false);
     setVersionServeur(null);
+    setChargementServeur(false);
+    setErreurServeur('');
+    setRemplacementConfirme(false);
     chargerServeur(controleur.signal)
       .then((resultat) => {
-        if (controleur.signal.aborted) return;
+        if (!requeteCourante(generation, id) || controleur.signal.aborted) return;
         setDocument(resultat);
         setObjet(resultat.courrier?.objet ?? '');
         setContenu(resultat.courrier?.contenu ?? CONTENU_VIDE);
       })
       .catch((err) => {
-        if (!controleur.signal.aborted && err.code !== 'ERR_CANCELED') {
+        if (requeteCourante(generation, id) && !controleur.signal.aborted && err.code !== 'ERR_CANCELED') {
           setDocument(null);
           setErreurChargement(err.status === 422 ? err.message : messageErreur(err, 'de charger'));
         }
       })
       .finally(() => {
-        if (!controleur.signal.aborted) setChargement(false);
+        if (requeteCourante(generation, id) && !controleur.signal.aborted) setChargement(false);
       });
-    return () => controleur.abort();
+    return () => {
+      controleur.abort();
+      if (generationRequeteRef.current === generation) generationRequeteRef.current += 1;
+    };
   }, [chargerServeur, id]);
 
+  const documentCorrespondant = String(document?.id) === String(id);
   const modifiable = STATUTS_MODIFIABLES.includes(document?.statut);
   const objetInitial = document?.courrier?.objet ?? '';
   const contenuInitial = document?.courrier?.contenu ?? CONTENU_VIDE;
   const changements = objet !== objetInitial || JSON.stringify(contenu) !== JSON.stringify(contenuInitial);
   const contenuModifiable = contenuAutonomePrisEnCharge(contenuInitial);
   const modificationsLocales = changements;
+  const versionDisponible = Number.isInteger(document?.version_contenu) && document.version_contenu > 0;
+  const afficherSoumission = documentCorrespondant
+    && utilisateur?.role === ROLES.SECRETARIAT_DIRECTION
+    && document?.origine === 'autonome'
+    && document?.statut === 'brouillon'
+    && versionDisponible
+    && contenuModifiable;
+  const peutSoumettre = afficherSoumission
+    && !changements
+    && !enregistrement
+    && !soumissionEnCours
+    && !conflit;
   const blocker = useBlocker(modificationsLocales);
   useAvertissementAvantAbandon(modificationsLocales);
   const dateCorrection = document?.correction_demandee_at;
@@ -288,15 +329,20 @@ function DetailDocument({ id }) {
     if (!objet.trim()) nouvellesErreurs.objet = "L’objet est obligatoire.";
     if (!texteContenu(contenu).trim()) nouvellesErreurs.contenu = 'Le contenu est obligatoire.';
     setErreurs(nouvellesErreurs);
-    if (Object.keys(nouvellesErreurs).length || !document || !modifiable || !contenuModifiable) return;
+    if (Object.keys(nouvellesErreurs).length || !documentCorrespondant || !document || !modifiable || !contenuModifiable || mutationEnCoursRef.current) return;
 
+    const generation = generationRequeteRef.current;
+    const documentId = document.id;
+    const operation = { generation, documentId, type: 'sauvegarde' };
+    mutationEnCoursRef.current = operation;
     setEnregistrement(true);
     try {
-      const resultat = await sauvegarderDocumentInterneAutonome(document.id, {
+      const resultat = await sauvegarderDocumentInterneAutonome(documentId, {
         objet: objet.trim(),
         contenu,
         version_contenu: document.version_contenu,
       });
+      if (!requeteCourante(generation, documentId) || mutationEnCoursRef.current !== operation) return;
       if (resultat.origine !== 'autonome') throw new Error('La réponse ne correspond pas à un document autonome.');
       setDocument(resultat);
       setObjet(resultat.courrier?.objet ?? '');
@@ -305,24 +351,68 @@ function DetailDocument({ id }) {
       setVersionServeur(null);
       toast.success('Brouillon enregistré.');
     } catch (err) {
+      if (!requeteCourante(generation, documentId) || mutationEnCoursRef.current !== operation) return;
       setErreurs(erreursChamps(err));
       setErreurSauvegarde(messageErreur(err, 'd’enregistrer'));
       if (err.response?.status === 409) setConflit(true);
     } finally {
-      setEnregistrement(false);
+      if (mutationEnCoursRef.current === operation) {
+        mutationEnCoursRef.current = null;
+        if (requeteCourante(generation, documentId)) setEnregistrement(false);
+      }
+    }
+  }
+
+  async function soumettre() {
+    if (!peutSoumettre || mutationEnCoursRef.current || !documentCorrespondant || !document) return;
+    const generation = generationRequeteRef.current;
+    const documentId = document.id;
+    const operation = { generation, documentId, type: 'soumission' };
+    mutationEnCoursRef.current = operation;
+    setSoumissionEnCours(true);
+    setErreurSauvegarde('');
+
+    try {
+      const resultat = await soumettreDocumentInterneAutonome(documentId, document.version_contenu);
+      if (!requeteCourante(generation, documentId) || mutationEnCoursRef.current !== operation) return;
+      if (resultat.origine !== 'autonome') throw new Error('La réponse ne correspond pas à un document autonome.');
+      setDocument(resultat);
+      setObjet(resultat.courrier?.objet ?? '');
+      setContenu(resultat.courrier?.contenu ?? CONTENU_VIDE);
+      setConflit(false);
+      setVersionServeur(null);
+      toast.success('Document soumis au Directeur pour examen.');
+    } catch (err) {
+      if (!requeteCourante(generation, documentId) || mutationEnCoursRef.current !== operation) return;
+      setErreurs(erreursChamps(err));
+      setErreurSauvegarde(messageErreur(err, 'de soumettre'));
+      if (err.response?.status === 409) setConflit(true);
+    } finally {
+      if (mutationEnCoursRef.current === operation) {
+        mutationEnCoursRef.current = null;
+        if (requeteCourante(generation, documentId)) {
+          setSoumissionEnCours(false);
+          setConfirmationSoumission(false);
+        }
+      }
     }
   }
 
   async function consulterVersionServeur() {
+    const generation = generationRequeteRef.current;
+    const documentId = document?.id;
+    if (!documentId || !documentCorrespondant) return;
     setChargementServeur(true);
     setErreurServeur('');
     try {
       const resultat = await chargerServeur();
+      if (!requeteCourante(generation, documentId)) return;
       setVersionServeur(resultat);
     } catch (err) {
+      if (!requeteCourante(generation, documentId)) return;
       setErreurServeur(err.status === 422 ? err.message : messageErreur(err, 'de charger'));
     } finally {
-      setChargementServeur(false);
+      if (requeteCourante(generation, documentId)) setChargementServeur(false);
     }
   }
 
@@ -332,7 +422,7 @@ function DetailDocument({ id }) {
   }
 
   function confirmerRemplacementParVersionServeur() {
-    if (!versionServeur) return;
+    if (!versionServeur || !documentCorrespondant || String(versionServeur.id) !== String(id)) return;
     setDocument(versionServeur);
     setObjet(versionServeur.courrier?.objet ?? '');
     setContenu(versionServeur.courrier?.contenu ?? CONTENU_VIDE);
@@ -342,7 +432,7 @@ function DetailDocument({ id }) {
     setRemplacementConfirme(false);
   }
 
-  if (chargement) return <LoadingBlock label="Chargement du document interne…" />;
+  if (chargement || (document && !documentCorrespondant)) return <LoadingBlock label="Chargement du document interne…" />;
 
   if (!document) {
     return (
@@ -414,7 +504,7 @@ function DetailDocument({ id }) {
               </Field>
               {conflit && (
                 <div className="space-y-3">
-                  <Alert tone="error">Un autre secrétaire a modifié ce brouillon depuis son chargement. Vos modifications locales sont conservées et aucune sauvegarde forcée n’a été tentée.</Alert>
+                  <Alert tone="error">La version ou le statut du document a changé. Vos modifications locales sont conservées et aucune action forcée n’a été tentée.</Alert>
                   <div className="flex flex-wrap gap-2">
                     <Button type="button" variant="secondary" loading={chargementServeur} onClick={consulterVersionServeur}>Consulter la version serveur</Button>
                   </div>
@@ -437,9 +527,22 @@ function DetailDocument({ id }) {
                   </CardBody>
                 </Card>
               )}
-              <div className="flex justify-end">
+              <div className="flex flex-wrap justify-end gap-2">
+                {afficherSoumission && (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    disabled={!peutSoumettre}
+                    onClick={() => setConfirmationSoumission(true)}
+                  >
+                    Soumettre au Directeur
+                  </Button>
+                )}
                 <Button type="submit" loading={enregistrement} disabled={!changements || !contenuModifiable}>Enregistrer le brouillon</Button>
               </div>
+              {afficherSoumission && changements && (
+                <p className="text-right text-sm text-text-muted">Enregistrez vos modifications avant de soumettre le document.</p>
+              )}
             </form>
           ) : (
             <div className="space-y-4">
@@ -492,6 +595,17 @@ function DetailDocument({ id }) {
         tone="danger"
         onConfirm={confirmerRemplacementParVersionServeur}
         onCancel={() => setRemplacementConfirme(false)}
+      />
+      <ConfirmDialog
+        open={confirmationSoumission}
+        title="Soumettre ce document au Directeur pour examen ?"
+        description="Le document ne sera plus modifiable pendant son examen, sauf si le Directeur demande une correction."
+        confirmLabel="Soumettre au Directeur"
+        pending={soumissionEnCours}
+        onConfirm={soumettre}
+        onCancel={() => {
+          if (!mutationEnCoursRef.current) setConfirmationSoumission(false);
+        }}
       />
     </div>
   );

@@ -74,6 +74,7 @@ export function navigationForUser(user) {
           { label: 'Tableau de bord', to: '/direction/tableau-de-bord', icon: LayoutDashboard },
           { label: 'Courrier', to: '/direction/courrier', icon: Mail, countKey: 'courriers_recus' },
           { label: 'Courriers à traiter', to: '/direction/courriers-a-traiter', icon: Inbox },
+          { label: 'Documents internes', to: '/direction/directeur/documents-internes', icon: BookOpen },
           { label: 'Stagiaires', to: '/direction/stagiaires', icon: Users },
         ],
       },

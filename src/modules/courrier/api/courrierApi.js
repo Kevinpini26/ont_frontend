@@ -277,6 +277,10 @@ export async function sauvegarderDocumentInterneAutonome(id, payload) {
   const { data } = await apiClient.patch(`/documents-produits-direction/${id}/brouillon`, payload);
   return data.data;
 }
+export async function soumettreDocumentInterneAutonome(id, version_contenu) {
+  const { data } = await apiClient.post(`/documents-produits-direction/${id}/soumettre`, { version_contenu });
+  return data.data;
+}
 export async function recevoirDocumentProduit(id) { const { data } = await apiClient.post(`/documents-produits-direction/${id}/recevoir`); return data.data; }
 export async function listClassementsDocuments(page = 1) { const { data } = await apiClient.get('/classements-documents', { params: { page } }); return data; }
 export async function classerDispatch(id, payload) { const { data } = await apiClient.post(`/dispatchs/${id}/classer`, payload); return data.data; }
