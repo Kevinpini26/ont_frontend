@@ -219,6 +219,11 @@ export async function listBoiteDispatchDirection() {
   return data.data;
 }
 
+export async function getDispatch(id) {
+  const { data } = await apiClient.get(`/dispatchs/${id}`);
+  return data.data;
+}
+
 export async function executerDispatch(id, referenceTransmission, preuve) {
   const formulaire = new FormData();
   if (referenceTransmission) formulaire.append('reference_transmission', referenceTransmission);

@@ -6,10 +6,11 @@ import { ClassementArchivesPage } from './ClassementArchivesPage';
 import { EnvoisOfficielsPage } from './EnvoisOfficielsPage';
 import { ArchivageDossiersPage } from './ArchivageDossiersPage';
 import { ActionsCourrier } from './CourrierDetailPage';
-import { archiverDossier, choisirModeSortie, enregistrer, envoyerParCourriel, executerDispatch, listCentreDispatchPage, listClassementsDocuments, listCourriers, listDossiersAArchiver, rendreDisponiblePourRetrait } from '../api/courrierApi';
+import { accuserReception, accuserReceptionDispatch, archiverDossier, choisirModeSortie, executerDispatch, enregistrer, envoyerParCourriel, listBoiteDispatchDirection, listCentreDispatchPage, listClassementsDocuments, listCourriers, listDossiersAArchiver, rendreDisponiblePourRetrait } from '../api/courrierApi';
+import { BoiteDispatchDirectionPage } from './BoiteDispatchDirectionPage';
 
 vi.mock('../api/courrierApi', () => ({
-  enregistrer: vi.fn(), choisirModeSortie: vi.fn(), confirmerRemisePhysique: vi.fn(), envoyerParCourriel: vi.fn(), rendreDisponiblePourRetrait: vi.fn(), executerDispatch: vi.fn(), transmettreSec1: vi.fn(), listCentreDispatchPage: vi.fn(),
+  accuserReception: vi.fn(), accuserReceptionDispatch: vi.fn(), enregistrer: vi.fn(), choisirModeSortie: vi.fn(), confirmerRemisePhysique: vi.fn(), envoyerParCourriel: vi.fn(), rendreDisponiblePourRetrait: vi.fn(), executerDispatch: vi.fn(), getDispatch: vi.fn(), listBoiteDispatchDirection: vi.fn(), transmettreTraitementDirecteur: vi.fn(), transmettreSec1: vi.fn(), listCentreDispatchPage: vi.fn(),
   listClassementsDocuments: vi.fn(), listCourriers: vi.fn(),
   archiverDossier: vi.fn(), listDossiersAArchiver: vi.fn(),
 }));
@@ -17,7 +18,7 @@ const meta = { current_page: 1, last_page: 2, total: 21 };
 const dispatch = { id: 1, courrier_id: 5, courrier: { objet: 'Document SEC2' }, type_destination: 'direction', type_destination_label: 'Direction', statut: 'en_attente', statut_label: 'En attente', instruction: 'Traiter' };
 const afficher = (element) => render(<MemoryRouter>{element}</MemoryRouter>);
 afterEach(cleanup);
-beforeEach(() => { vi.resetAllMocks(); });
+beforeEach(() => { vi.resetAllMocks(); sessionStorage.clear(); });
 
 describe('Poste SEC2', () => {
   test('Réception ne repropose pas Transmettre à SEC1 après une transmission active', () => {
@@ -103,6 +104,88 @@ describe('Poste SEC2', () => {
     expect(listCentreDispatchPage).toHaveBeenCalledWith({ page: 1, type: 'direction', statut: 'en_attente' });
     fireEvent.click(screen.getByRole('button', { name: 'Suivant' }));
     await waitFor(() => expect(listCentreDispatchPage).toHaveBeenCalledWith({ page: 2, type: 'direction', statut: 'en_attente' }));
+  });
+
+  test('prend en charge un dispatch autonome avant de permettre sa transmission', async () => {
+    const dispatchAutonome = {
+      ...dispatch,
+      id: 19,
+      courrier_id: 52,
+      courrier: {
+        id: 52,
+        objet: 'Document autonome DG',
+        reference_documentaire: '123/DG/ABC/ONT/2026',
+        numero_enregistrement: 'ONT-2026-123',
+        direction_origine: 'Direction A',
+        direction_destination: 'Direction B',
+        transitions: [{
+          nouveau_statut: 'en_dispatch',
+          destinataire_poste: 'secretariat_2',
+          accuse_reception_at: null,
+        }],
+      },
+      decisionnaire: { name: 'Agent DG' },
+      decisionnaire_poste: 'dg',
+      document_autonome: { document_id: 7, prise_en_charge_sec2: null },
+    };
+    const prisEnCharge = {
+      ...dispatchAutonome,
+      courrier: {
+        ...dispatchAutonome.courrier,
+        transitions: [{
+          ...dispatchAutonome.courrier.transitions[0],
+          accuse_reception_at: '2026-10-13T10:00:00Z',
+          accuse_reception_par: 'Agent SEC2',
+        }],
+      },
+      document_autonome: {
+        ...dispatchAutonome.document_autonome,
+        prise_en_charge_sec2: { acteur: 'Agent SEC2', date: '2026-10-13T10:00:00Z' },
+      },
+    };
+    listCentreDispatchPage
+      .mockResolvedValueOnce({ data: [dispatchAutonome], meta })
+      .mockResolvedValueOnce({ data: [prisEnCharge], meta })
+      .mockResolvedValueOnce({ data: [], meta });
+    accuserReception.mockResolvedValue({});
+    executerDispatch.mockResolvedValue({});
+
+    afficher(<CentreDispatchPage />);
+    await screen.findByText('123/DG/ABC/ONT/2026');
+    fireEvent.click(screen.getByRole('button', { name: 'Prendre en charge' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmer la prise en charge' }));
+    await waitFor(() => expect(accuserReception).toHaveBeenCalledWith(52));
+    expect(executerDispatch).not.toHaveBeenCalled();
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Confirmer la transmission à la direction' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmer la transmission' }));
+    await waitFor(() => expect(executerDispatch).toHaveBeenCalledWith(19, undefined, undefined));
+  });
+
+  test('la boîte de la direction montre le dispatch transmis sans acquittement automatique', async () => {
+    listBoiteDispatchDirection.mockResolvedValue([{
+      ...dispatch,
+      id: 23,
+      courrier_id: 55,
+      courrier: {
+        objet: 'Document autonome transmis',
+        numero_enregistrement: 'ONT-2026-456',
+        reference_documentaire: '456/DG/ABC/ONT/2026',
+        direction_origine: 'Direction A',
+        direction_destination: 'Direction B',
+      },
+      decisionnaire: { name: 'Agent DG' },
+      decisionnaire_poste: 'dg',
+      execute_at: '2026-10-13T10:00:00Z',
+      accuse_reception_at: null,
+      document_autonome: { document_id: 8 },
+    }]);
+
+    afficher(<BoiteDispatchDirectionPage />);
+    await screen.findByText('Transmis — réception à confirmer');
+    expect(screen.getByText('456/DG/ABC/ONT/2026')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Confirmer la réception' })).toBeInTheDocument();
+    expect(accuserReceptionDispatch).not.toHaveBeenCalled();
   });
 
   test('ne présente jamais l’exécution générique pour un classement', async () => {
