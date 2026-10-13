@@ -759,7 +759,7 @@ describe('DocumentInterneAutonomePage', () => {
       },
     }));
     afficherDetail();
-    expect(await screen.findByText('ONT-2026-00042')).toBeInTheDocument();
+    expect(await screen.findAllByText('ONT-2026-00042')).toHaveLength(2);
     expect(screen.getByText('Ce document n’est pas modifiable dans son statut actuel.')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Enregistrer le brouillon' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /soumettre|valider|signer|transmettre/i })).not.toBeInTheDocument();

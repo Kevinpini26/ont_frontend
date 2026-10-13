@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { demanderCorrectionDocumentProduit, getDocumentInterneAutonome, validerDocumentProduit } from '../api/courrierApi';
 import { TipTapEditor } from '../components/TipTapEditor';
+import { ScanOfficielPanel } from '../components/ScanOfficielPanel';
 import { Alert } from '../../../shared/components/ui/Alert';
 import { Badge } from '../../../shared/components/ui/Badge';
 import { Button } from '../../../shared/components/ui/Button';
@@ -75,6 +76,7 @@ function statutLabel(document) {
   if (document?.statut === 'brouillon' && document.soumis_at) return 'Correction en préparation';
   if (document?.statut === 'brouillon') return 'Brouillon — non soumis';
   if (document?.statut === 'valide') return 'Contenu validé';
+  if (document?.statut === 'scan_enregistre') return 'Scan officiel enregistré';
   return document?.statut_label ?? document?.statut ?? 'Statut indisponible';
 }
 
@@ -259,6 +261,8 @@ export function DocumentInterneDirecteurPage() {
             <CardHeader title="Contenu" description="Consultation en lecture seule." />
             <CardBody>{rendreContenu(document)}</CardBody>
           </Card>
+
+          <ScanOfficielPanel key={document.id} document={document} onUpdated={setDocument} />
 
           {document.tracabilite && (
             <Card className="mb-4">

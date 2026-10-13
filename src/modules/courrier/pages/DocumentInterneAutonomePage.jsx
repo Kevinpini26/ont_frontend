@@ -12,6 +12,7 @@ import { useToast } from '../../../shared/components/ui/Toast';
 import { ROLES } from '../../kernel/constants';
 import { useAuthStore } from '../../kernel/store/authStore';
 import { TipTapEditor } from '../components/TipTapEditor';
+import { ScanOfficielPanel } from '../components/ScanOfficielPanel';
 import {
   creerDocumentInterneAutonome,
   getDocumentInterneAutonome,
@@ -27,6 +28,7 @@ const LIBELLES_ACTIONS = {
   'document_direction.soumis': 'Document soumis',
   'document_direction.correction_demandee': 'Correction demandée',
   'document_direction.valide': 'Document validé',
+  'document_direction.scan_officiel_depose': 'Scan officiel enregistré',
 };
 
 function texteContenu(contenu) {
@@ -52,7 +54,7 @@ function erreursChamps(erreur) {
 }
 
 function tonaliteStatut(statut) {
-  if (statut === 'valide') return 'success';
+  if (['valide', 'scan_enregistre'].includes(statut)) return 'success';
   if (statut === 'a_corriger') return 'warning';
   if (statut === 'soumis_directeur') return 'info';
   return 'neutral';
@@ -469,6 +471,8 @@ function DetailDocument({ id }) {
           {document.courrier?.reference_documentaire && <div><p className="text-xs font-medium uppercase text-text-subtle">Référence institutionnelle</p><p className="mt-1 text-sm text-text">{document.courrier.reference_documentaire}</p></div>}
         </CardBody>
       </Card>
+
+      <ScanOfficielPanel key={document.id} document={document} onUpdated={setDocument} />
 
       {document.statut === 'a_corriger' && document.motif_correction && (
         <Alert tone="info" className="mb-5">

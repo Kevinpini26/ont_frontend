@@ -176,7 +176,7 @@ describe('DocumentInterneDirecteurPage', () => {
     await user.click(screen.getByRole('button', { name: 'Valider le contenu' }));
     await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Valider le contenu' }));
     await waitFor(() => expect(validerDocumentProduit).toHaveBeenCalledWith('15'));
-    expect(await screen.findByText(/DIR-2026-008/)).toBeInTheDocument();
+    expect(await screen.findAllByText(/DIR-2026-008/)).toHaveLength(2);
     expect(screen.getByText('Contenu validé')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Demander une correction' })).not.toBeInTheDocument();
   });
