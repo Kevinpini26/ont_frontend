@@ -3,10 +3,10 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, expect, test, vi } from 'vitest';
 import { ScanOfficielPanel } from './ScanOfficielPanel';
 import { useAuthStore } from '../../kernel/store/authStore';
-import { getDocumentInterneAutonome } from '../api/courrierApi';
+import { getDocumentInterneAutonome, transmettreDocumentReception } from '../api/courrierApi';
 import { deposerScanOfficiel, lirePdfOfficiel } from '../api/scanOfficielApi';
 
-vi.mock('../api/courrierApi', () => ({ getDocumentInterneAutonome: vi.fn() }));
+vi.mock('../api/courrierApi', () => ({ getDocumentInterneAutonome: vi.fn(), transmettreDocumentReception: vi.fn() }));
 vi.mock('../api/scanOfficielApi', async (importOriginal) => ({
   ...await importOriginal(), deposerScanOfficiel: vi.fn(), lirePdfOfficiel: vi.fn(),
 }));
@@ -16,6 +16,11 @@ const documentValide = { id: 7, origine: 'autonome', statut: 'valide', direction
 const documentEnregistre = { ...documentValide, statut: 'scan_enregistre', historique: [
   { action: 'document_direction.scan_officiel_depose', acteur: { name: 'Secrétaire ONT' }, date: '2026-10-13T11:00:00Z' },
 ] };
+const documentTransmis = { ...documentEnregistre, statut: 'transmis_reception', transmis_reception_at: '2026-10-13T12:00:00Z',
+  transmis_reception_par: { id: 4, name: 'Secrétaire ONT' }, historique: [
+    ...documentEnregistre.historique,
+    { action: 'document_direction.autonome_transmis_reception', acteur: { name: 'Secrétaire ONT' }, date: '2026-10-13T12:00:00Z' },
+  ] };
 const resultatDepot = { id: 10, document_produit_direction_id: 7, est_actif: true, version: 1, attestation_confirmee: true, atteste_at: '2026-10-13T11:00:00Z' };
 const marqueur = 'ont:scan-officiel:4:7';
 
@@ -162,4 +167,66 @@ test('une réponse tardive après départ ne modifie aucun document et garde le 
   expect(onUpdated).not.toHaveBeenCalled();
   expect(getDocumentInterneAutonome).not.toHaveBeenCalled();
   expect(sessionStorage.getItem(marqueur)).toBeTruthy();
+});
+
+test('le secrétariat confirme une seule transmission et actualise l’état serveur', async () => {
+  transmettreDocumentReception.mockResolvedValue(documentTransmis);
+  const onUpdated = vi.fn();
+  const vue = render(<ScanOfficielPanel document={documentEnregistre} onUpdated={onUpdated} />);
+  const user = userEvent.setup();
+  await user.click(screen.getByRole('button', { name: 'Transmettre à la Réception' }));
+  await screen.findByRole('dialog');
+  expect(transmettreDocumentReception).not.toHaveBeenCalled();
+  const confirmer = screen.getByRole('button', { name: 'Confirmer la transmission' });
+  fireEvent.click(confirmer);
+  fireEvent.click(confirmer);
+  await screen.findByText('Le document signé et cacheté a été transmis à la Réception.');
+  expect(transmettreDocumentReception).toHaveBeenCalledTimes(1);
+  expect(transmettreDocumentReception).toHaveBeenCalledWith(7);
+  expect(onUpdated).toHaveBeenCalledWith(documentTransmis);
+  expect(sessionStorage.getItem('ont:transmission-reception:4:7')).toBeNull();
+  vue.rerender(<ScanOfficielPanel document={documentTransmis} onUpdated={onUpdated} />);
+  expect(screen.getByText('Transmis à la Réception')).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Transmettre à la Réception' })).not.toBeInTheDocument();
+});
+
+test('une réponse incertaine verrouille la transmission jusqu’à vérification explicite', async () => {
+  transmettreDocumentReception.mockRejectedValue(new Error('Network Error'));
+  getDocumentInterneAutonome.mockResolvedValue(documentTransmis);
+  const onUpdated = vi.fn();
+  const vue = render(<ScanOfficielPanel document={documentEnregistre} onUpdated={onUpdated} />);
+  const user = userEvent.setup();
+  await user.click(screen.getByRole('button', { name: 'Transmettre à la Réception' }));
+  await user.click(screen.getByRole('button', { name: 'Confirmer la transmission' }));
+  await screen.findByText(/résultat de la transmission est incertain/);
+  expect(sessionStorage.getItem('ont:transmission-reception:4:7')).toBe('pending');
+  expect(screen.queryByRole('button', { name: 'Transmettre à la Réception' })).not.toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: 'Vérifier l’état du document' }));
+  await screen.findByText('La transmission à la Réception est confirmée par le serveur.');
+  expect(getDocumentInterneAutonome).toHaveBeenCalledWith(7);
+  expect(onUpdated).toHaveBeenCalledWith(documentTransmis);
+  expect(sessionStorage.getItem('ont:transmission-reception:4:7')).toBeNull();
+  expect(transmettreDocumentReception).toHaveBeenCalledTimes(1);
+  vue.rerender(<ScanOfficielPanel document={documentTransmis} onUpdated={onUpdated} />);
+  expect(screen.queryByRole('button', { name: 'Transmettre à la Réception' })).not.toBeInTheDocument();
+});
+
+test('la Réception consulte uniquement le scan d’un document effectivement transmis', async () => {
+  useAuthStore.setState({ user: { id: 30, role: 'agent_circuit_courrier', poste: 'reception' } });
+  lirePdfOfficiel.mockResolvedValue(new Blob(['%PDF-'], { type: 'application/pdf' }));
+  render(<ScanOfficielPanel document={documentTransmis} onUpdated={vi.fn()} modeReception />);
+  expect(screen.queryByRole('button', { name: 'Transmettre à la Réception' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Vérifier l’état du document' })).not.toBeInTheDocument();
+  const user = userEvent.setup();
+  await user.click(screen.getByRole('button', { name: 'Consulter le scan officiel' }));
+  expect(await screen.findByRole('link', { name: 'Télécharger le PDF' })).toHaveAttribute('href', 'blob:scan-prive');
+  expect(lirePdfOfficiel).toHaveBeenCalledWith(7, true, expect.any(AbortSignal));
+  expect(getDocumentInterneAutonome).not.toHaveBeenCalled();
+  expect(transmettreDocumentReception).not.toHaveBeenCalled();
+});
+
+test('la Réception ne peut pas consulter un scan avant sa transmission', () => {
+  useAuthStore.setState({ user: { id: 30, role: 'agent_circuit_courrier', poste: 'reception' } });
+  render(<ScanOfficielPanel document={documentEnregistre} onUpdated={vi.fn()} modeReception />);
+  expect(screen.queryByRole('button', { name: 'Consulter le scan officiel' })).not.toBeInTheDocument();
 });

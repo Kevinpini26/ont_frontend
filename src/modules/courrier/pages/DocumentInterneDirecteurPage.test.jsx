@@ -13,6 +13,7 @@ vi.mock('../api/courrierApi', () => ({
   demanderCorrectionDocumentProduit: vi.fn(),
   getDocumentInterneAutonome: vi.fn(),
   validerDocumentProduit: vi.fn(),
+  transmettreDocumentReception: vi.fn(),
 }));
 
 vi.mock('../components/TipTapEditor', () => ({

@@ -249,7 +249,7 @@ export function DocumentInterneDirecteurPage() {
             <CardBody className="grid gap-3 text-sm md:grid-cols-2">
               <p>Créateur : {document.tracabilite?.createur?.name ?? '—'}</p>
               <p>Directeur assigné : {document.directeur?.name ?? '—'}</p>
-              <p>Statut : <Badge tone={statut === 'valide' ? 'success' : statut === 'soumis_directeur' ? 'info' : statut === 'a_corriger' ? 'warning' : 'neutral'}>{statutLabel(document)}</Badge></p>
+              <p>Statut : <Badge tone={['valide', 'scan_enregistre', 'transmis_reception'].includes(statut) ? 'success' : statut === 'soumis_directeur' ? 'info' : statut === 'a_corriger' ? 'warning' : 'neutral'}>{statutLabel(document)}</Badge></p>
               <p>Référence documentaire : {document.courrier?.reference_documentaire ?? '—'}</p>
               {document.motif_correction && <p className="md:col-span-2">Motif de correction : {document.motif_correction}</p>}
               {document.soumis_at && <p>Soumis le : {formaterDateHeure(document.soumis_at) ?? '—'}</p>}

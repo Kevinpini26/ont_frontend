@@ -258,6 +258,13 @@ export async function demanderCorrectionDocumentProduit(id, motif) { const { dat
 export async function validerDocumentProduit(id) { const { data } = await apiClient.post(`/documents-produits-direction/${id}/valider`); return data.data; }
 export async function transmettreDocumentReception(id) { const { data } = await apiClient.post(`/documents-produits-direction/${id}/transmettre-reception`); return data.data; }
 export async function listDocumentsProduits() { const { data } = await apiClient.get('/documents-produits-direction'); return data.data; }
+export async function listDocumentsAutonomesTransmisReception(page = 1, signal) {
+  const { data } = await apiClient.get('/documents-produits-direction/transmis-reception/autonomes', {
+    params: { page },
+    signal,
+  });
+  return data;
+}
 export async function listDocumentsInternesAutonomes(page = 1, signal) {
   const { data } = await apiClient.get('/documents-produits-direction', {
     params: { origine: 'autonome', page },

@@ -54,7 +54,7 @@ function erreursChamps(erreur) {
 }
 
 function tonaliteStatut(statut) {
-  if (['valide', 'scan_enregistre'].includes(statut)) return 'success';
+  if (['valide', 'scan_enregistre', 'transmis_reception'].includes(statut)) return 'success';
   if (statut === 'a_corriger') return 'warning';
   if (statut === 'soumis_directeur') return 'info';
   return 'neutral';

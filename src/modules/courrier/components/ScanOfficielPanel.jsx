@@ -7,21 +7,38 @@ import { ConfirmDialog } from '../../../shared/components/ui/ConfirmDialog';
 import { Modal } from '../../../shared/components/ui/Modal';
 import { inputClass } from '../../../shared/components/ui/Field';
 import { useAuthStore } from '../../kernel/store/authStore';
-import { ROLES, estDirecteurDirection } from '../../kernel/constants';
-import { getDocumentInterneAutonome } from '../api/courrierApi';
+import { POSTES, ROLES, estDirecteurDirection } from '../../kernel/constants';
+import { getDocumentInterneAutonome, transmettreDocumentReception } from '../api/courrierApi';
 import { ATTESTATION_SCAN_OFFICIEL, deposerScanOfficiel, erreurScanOfficiel, lirePdfOfficiel, validerFichierScan } from '../api/scanOfficielApi';
 import { formaterDateHeure } from '../utils/dateHeure';
 
+function erreurTransmissionReception(erreur) {
+  switch (erreur.response?.status) {
+    case 401: return 'Votre session a expiré. Connectez-vous à nouveau.';
+    case 403:
+    case 404: return 'Accès refusé ou document inaccessible pour cette transmission.';
+    case 409: return 'La transmission est déjà effectuée ou en conflit. Vérifiez l’état du document avant toute autre démarche.';
+    case 422: return 'Le document ne satisfait pas les conditions de transmission. Vérifiez son état et sa référence.';
+    case 503: return 'Le résultat de la transmission est incertain. Vérifiez l’état du document avant toute nouvelle tentative.';
+    default: return 'Le résultat de la transmission est incertain. Vérifiez l’état du document avant toute nouvelle tentative.';
+  }
+}
+
 // Monter avec key=document.id : aucune réponse tardive ne doit atteindre un autre document.
-export function ScanOfficielPanel({ document: documentMetier, onUpdated }) {
+export function ScanOfficielPanel({ document: documentMetier, onUpdated, modeReception = false }) {
   const utilisateur = useAuthStore((state) => state.user);
   const marqueur = `ont:scan-officiel:${utilisateur?.id}:${documentMetier.id}`;
+  const marqueurTransmission = `ont:transmission-reception:${utilisateur?.id}:${documentMetier.id}`;
   const [incertain, setIncertain] = useState(() => {
     try { return Boolean(sessionStorage.getItem(marqueur)); } catch { return true; }
   });
   const [fichier, setFichier] = useState(null);
   const [attestation, setAttestation] = useState(false);
   const [confirmation, setConfirmation] = useState(false);
+  const [confirmationTransmission, setConfirmationTransmission] = useState(false);
+  const [transmissionIncertaine, setTransmissionIncertaine] = useState(() => {
+    try { return Boolean(sessionStorage.getItem(marqueurTransmission)); } catch { return true; }
+  });
   const [operation, setOperation] = useState('');
   const [message, setMessage] = useState('');
   const [erreurs, setErreurs] = useState([]);
@@ -43,16 +60,29 @@ export function ScanOfficielPanel({ document: documentMetier, onUpdated }) {
   }, []);
 
   const historiqueDepot = documentMetier.historique?.find((entree) => entree.action === 'document_direction.scan_officiel_depose');
-  const enregistre = documentMetier.statut === 'scan_enregistre' || depot?.est_actif === true;
+  const historiqueTransmission = documentMetier.historique?.find((entree) => entree.action === 'document_direction.autonome_transmis_reception');
+  const transmis = documentMetier.statut === 'transmis_reception';
+  const transmissionComplete = transmis
+    && Boolean(documentMetier.transmis_reception_at)
+    && Boolean(documentMetier.transmis_reception_par);
+  const enregistre = ['scan_enregistre', 'transmis_reception'].includes(documentMetier.statut) || depot?.est_actif === true;
   const memeDirection = utilisateur?.direction_id != null && documentMetier.direction_id != null
     && String(utilisateur.direction_id) === String(documentMetier.direction_id);
   const secretariat = memeDirection && utilisateur?.role === ROLES.SECRETARIAT_DIRECTION;
+  const agentReception = utilisateur?.role === ROLES.AGENT_CIRCUIT_COURRIER && utilisateur?.poste === POSTES.RECEPTION;
   const consultation = secretariat || (memeDirection && estDirecteurDirection(utilisateur)
-    && String(utilisateur.id) === String(documentMetier.directeur_id) && Boolean(documentMetier.soumis_at));
+    && String(utilisateur.id) === String(documentMetier.directeur_id) && Boolean(documentMetier.soumis_at))
+    || (agentReception && modeReception && transmissionComplete);
   const peutDeposer = secretariat && documentMetier.statut === 'valide' && !enregistre && !historiqueDepot && !incertain;
+  const peutTransmettre = secretariat && documentMetier.statut === 'scan_enregistre' && enregistre
+    && !transmis && !historiqueTransmission && !transmissionIncertaine;
 
   function oublierMarqueur() {
     try { sessionStorage.removeItem(marqueur); } catch { /* Le verrou local reste conservateur. */ }
+  }
+
+  function oublierMarqueurTransmission() {
+    try { sessionStorage.removeItem(marqueurTransmission); } catch { /* Le verrou local reste conservateur. */ }
   }
 
   async function actualiser() {
@@ -61,6 +91,20 @@ export function ScanOfficielPanel({ document: documentMetier, onUpdated }) {
     if (!vivant.current) return null;
     onUpdated(resultat);
     if (resultat.statut === 'scan_enregistre') {
+      oublierMarqueur();
+      setIncertain(false);
+    }
+    const transmissionConfirmee = resultat.statut === 'transmis_reception'
+      && Boolean(resultat.transmis_reception_at)
+      && Boolean(resultat.transmis_reception_par);
+    const absenceConfirmee = resultat.statut === 'scan_enregistre'
+      && resultat.transmis_reception_at == null
+      && resultat.transmis_reception_par == null;
+    if (transmissionConfirmee || absenceConfirmee) {
+      oublierMarqueurTransmission();
+      setTransmissionIncertaine(false);
+    }
+    if (transmissionConfirmee) {
       oublierMarqueur();
       setIncertain(false);
     }
@@ -75,11 +119,16 @@ export function ScanOfficielPanel({ document: documentMetier, onUpdated }) {
     try {
       const resultat = await actualiser();
       if (!resultat || !vivant.current) return;
-      setMessage(resultat.statut === 'scan_enregistre'
-        ? 'L’enregistrement du scan est confirmé par le serveur.'
-        : 'Aucun enregistrement de scan n’est confirmé à cet instant. En cas de dépôt incertain, ne recommencez pas : vérifiez à nouveau ultérieurement ou contactez le support.');
+      const transmissionConfirmee = resultat.statut === 'transmis_reception'
+        && Boolean(resultat.transmis_reception_at)
+        && Boolean(resultat.transmis_reception_par);
+      setMessage(transmissionConfirmee
+        ? 'La transmission à la Réception est confirmée par le serveur.'
+        : resultat.statut === 'scan_enregistre'
+          ? 'Le scan officiel est confirmé par le serveur ; le document n’est pas encore transmis.'
+          : 'Aucun enregistrement de scan n’est confirmé à cet instant. En cas de dépôt incertain, ne recommencez pas : vérifiez à nouveau ultérieurement ou contactez le support.');
     } catch (err) {
-      if (vivant.current) setMessage(erreurScanOfficiel(err));
+      if (vivant.current) setMessage(transmissionIncertaine ? erreurTransmissionReception(err) : erreurScanOfficiel(err));
     } finally {
       verrou.current = false;
       if (vivant.current) setOperation('');
@@ -158,6 +207,49 @@ export function ScanOfficielPanel({ document: documentMetier, onUpdated }) {
     }
   }
 
+  async function transmettre() {
+    if (verrou.current || !peutTransmettre) return;
+    try {
+      sessionStorage.setItem(marqueurTransmission, 'pending');
+    } catch {
+      setConfirmationTransmission(false);
+      setMessage('Le navigateur ne permet pas de sécuriser cette demande. Autorisez le stockage de session avant de transmettre. Aucun envoi n’a été effectué.');
+      return;
+    }
+
+    verrou.current = true;
+    setOperation('transmission');
+    setMessage('');
+    try {
+      const resultat = await transmettreDocumentReception(documentMetier.id);
+      if (!vivant.current) return;
+      if (!resultat
+        || String(resultat.id) !== String(documentMetier.id)
+        || resultat.statut !== 'transmis_reception'
+        || !resultat.transmis_reception_at
+        || !resultat.transmis_reception_par) {
+        throw new Error('Réponse de transmission incomplète');
+      }
+      onUpdated(resultat);
+      oublierMarqueurTransmission();
+      setTransmissionIncertaine(false);
+      setMessage('Le document signé et cacheté a été transmis à la Réception.');
+    } catch (err) {
+      if (!vivant.current) return;
+      const status = err.response?.status;
+      const aVerifier = !status || status === 409 || status >= 500;
+      setTransmissionIncertaine(aVerifier);
+      if (!aVerifier) oublierMarqueurTransmission();
+      setMessage(erreurTransmissionReception(err));
+    } finally {
+      verrou.current = false;
+      if (vivant.current) {
+        setOperation('');
+        setConfirmationTransmission(false);
+      }
+    }
+  }
+
   async function ouvrirPdf(scan) {
     if (verrou.current) return;
     verrou.current = true;
@@ -186,7 +278,7 @@ export function ScanOfficielPanel({ document: documentMetier, onUpdated }) {
     setApercu(null);
   }
 
-  if (documentMetier.origine !== 'autonome' || !['valide', 'scan_enregistre'].includes(documentMetier.statut)) return null;
+  if (documentMetier.origine !== 'autonome' || !['valide', 'scan_enregistre', 'transmis_reception'].includes(documentMetier.statut)) return null;
 
   return (
     <Card className="mb-5">
@@ -203,6 +295,13 @@ export function ScanOfficielPanel({ document: documentMetier, onUpdated }) {
             {depot?.attestation_confirmee && <p className="text-sm">Attestation confirmée lors du dépôt.</p>}
           </div>
         ) : <p className="text-sm text-text-muted">Téléchargez le PDF officiel, imprimez-le, puis faites apposer la signature manuscrite et le cachet physiques requis. Numérisez ensuite le document complet au format PDF.</p>}
+        {transmissionComplete && (
+          <div className="space-y-2">
+            <Badge tone="info">Transmis à la Réception</Badge>
+            <p className="text-sm">Transmis le : {formaterDateHeure(documentMetier.transmis_reception_at)}</p>
+            <p className="text-sm">Transmis par : {documentMetier.transmis_reception_par.name}</p>
+          </div>
+        )}
 
         <div className="flex flex-wrap gap-2">
           {consultation && documentMetier.statut === 'valide' && !enregistre && <Button type="button" variant="secondary" disabled={Boolean(operation)} loading={operation === 'pdf'} onClick={() => ouvrirPdf(false)}>Télécharger le PDF officiel</Button>}
@@ -211,9 +310,12 @@ export function ScanOfficielPanel({ document: documentMetier, onUpdated }) {
 
         {incertain && !enregistre && <Alert>Un dépôt est en attente de vérification. Son résultat est incertain ; le formulaire reste verrouillé et aucun fichier ne sera renvoyé automatiquement.</Alert>}
         {historiqueDepot && !enregistre && <Alert>Un dépôt figure dans l’historique. Vérifiez l’état du document avant toute autre démarche.</Alert>}
+        {transmissionIncertaine && !transmis && <Alert>Une transmission est en attente de vérification. Son résultat est incertain ; aucune nouvelle transmission ne sera effectuée automatiquement.</Alert>}
         {message && <Alert>{message}</Alert>}
         {erreurs.length > 0 && <div id="scan-officiel-erreurs" role="alert" className="text-sm text-ont-red-700"><ul className="list-disc pl-5">{erreurs.map((erreur, index) => <li key={index}>{erreur}</li>)}</ul></div>}
-        {(incertain || message || historiqueDepot || enregistre) && <Button type="button" variant="secondary" disabled={Boolean(operation)} loading={operation === 'verification'} onClick={verifier}>Vérifier l’état du document</Button>}
+        {!modeReception && (incertain || transmissionIncertaine || message || historiqueDepot || enregistre)
+          && <Button type="button" variant="secondary" disabled={Boolean(operation)} loading={operation === 'verification'} onClick={verifier}>Vérifier l’état du document</Button>}
+        {peutTransmettre && <Button type="button" disabled={Boolean(operation)} onClick={() => setConfirmationTransmission(true)}>Transmettre à la Réception</Button>}
 
         {peutDeposer && (
           <form onSubmit={preparer} noValidate className="space-y-4 border-t border-border pt-4">
@@ -237,9 +339,11 @@ export function ScanOfficielPanel({ document: documentMetier, onUpdated }) {
             <Button type="submit" disabled={!fichier || !attestation || Boolean(operation)} loading={operation === 'validation'}>Enregistrer le scan officiel</Button>
           </form>
         )}
-        {!secretariat && !enregistre && <p className="text-sm text-text-muted">Le dépôt est réservé au secrétariat de la direction productrice.</p>}
+        {!secretariat && !agentReception && !enregistre && <p className="text-sm text-text-muted">Le dépôt est réservé au secrétariat de la direction productrice.</p>}
         <ConfirmDialog open={confirmation} title="Enregistrer ce scan officiel ?" description={`Vous confirmez le dépôt de « ${fichier?.name ?? ''} » et votre attestation. Aucun remplacement du scan n’est proposé après enregistrement.`}
           confirmLabel="Confirmer le dépôt" pending={operation === 'depot'} onConfirm={enregistrer} onCancel={() => { if (!verrou.current) setConfirmation(false); }} />
+        <ConfirmDialog open={confirmationTransmission} title="Transmettre à la Réception ?" description="Le scan officiel signé et cacheté ainsi que sa référence documentaire seront rendus consultables à la Réception. Cette étape ne crée aucun numéro d’enregistrement et ne permet pas encore la réception dans le circuit central."
+          confirmLabel="Confirmer la transmission" pending={operation === 'transmission'} onConfirm={transmettre} onCancel={() => { if (!verrou.current) setConfirmationTransmission(false); }} />
         <Modal open={Boolean(apercu)} onClose={fermerApercu} title={apercu?.scan ? 'Scan officiel signé et cacheté' : 'PDF officiel à imprimer'} size="xl">
           {apercu && <div className="space-y-4">
             <a href={apercu.url} download={`${apercu.scan ? 'scan-officiel' : 'document-interne'}-${documentMetier.id}.pdf`} className="inline-block rounded-field border border-border-strong px-4 py-2 text-sm font-medium focus-visible:outline-2">Télécharger le PDF</a>

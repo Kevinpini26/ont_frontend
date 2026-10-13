@@ -18,6 +18,7 @@ vi.mock('../api/courrierApi', () => ({
   getDocumentInterneAutonome: vi.fn(),
   sauvegarderDocumentInterneAutonome: vi.fn(),
   soumettreDocumentInterneAutonome: vi.fn(),
+  transmettreDocumentReception: vi.fn(),
 }));
 
 vi.mock('../components/TipTapEditor', () => ({
