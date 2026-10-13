@@ -178,6 +178,7 @@ describe('Poste SEC2', () => {
       decisionnaire_poste: 'dg',
       execute_at: '2026-10-13T10:00:00Z',
       accuse_reception_at: null,
+      peut_accuser_reception: true,
       document_autonome: { document_id: 8 },
     }]);
 
@@ -185,6 +186,51 @@ describe('Poste SEC2', () => {
     await screen.findByText('Transmis — réception à confirmer');
     expect(screen.getByText('456/DG/ABC/ONT/2026')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Confirmer la réception' })).toBeInTheDocument();
+    expect(accuserReceptionDispatch).not.toHaveBeenCalled();
+  });
+
+  test('la direction confirme explicitement la réception et voit l’agent et la date dans l’historique', async () => {
+    const transmis = {
+      ...dispatch,
+      id: 24,
+      courrier_id: 56,
+      courrier: { objet: 'Document autonome', numero_enregistrement: 'ONT-2026-457', reference_documentaire: '457/DG/ABC/ONT/2026' },
+      decisionnaire: { name: 'Agent DG' },
+      decide_at: '2026-10-13T09:00:00Z',
+      execute_par: { name: 'Agent SEC2' },
+      execute_at: '2026-10-13T10:00:00Z',
+      document_autonome: { document_id: 9 },
+      peut_accuser_reception: true,
+    };
+    const recu = {
+      ...transmis,
+      accuse_reception_at: '2026-10-13T11:00:00Z',
+      accuse_reception_par: { name: 'Agent Direction' },
+      peut_accuser_reception: false,
+    };
+    listBoiteDispatchDirection.mockResolvedValueOnce([transmis]).mockResolvedValueOnce([recu]);
+    accuserReceptionDispatch.mockResolvedValue({});
+
+    afficher(<BoiteDispatchDirectionPage />);
+    await screen.findByText('En attente d’un accusé explicite');
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmer la réception' }));
+
+    await waitFor(() => expect(accuserReceptionDispatch).toHaveBeenCalledWith(24));
+    await screen.findByText(/Agent Direction/);
+    expect(screen.getByText(/Réception confirmée/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Confirmer la réception' })).not.toBeInTheDocument();
+  });
+
+  test('la boîte ne propose pas de réception si le backend ne l’autorise pas', async () => {
+    listBoiteDispatchDirection.mockResolvedValue([{
+      ...dispatch,
+      accuse_reception_at: null,
+      peut_accuser_reception: false,
+    }]);
+
+    afficher(<BoiteDispatchDirectionPage />);
+    await screen.findByText('Transmis — réception à confirmer');
+    expect(screen.queryByRole('button', { name: 'Confirmer la réception' })).not.toBeInTheDocument();
     expect(accuserReceptionDispatch).not.toHaveBeenCalled();
   });
 

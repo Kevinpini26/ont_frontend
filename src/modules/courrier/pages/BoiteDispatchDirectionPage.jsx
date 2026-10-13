@@ -11,6 +11,10 @@ import { LoadingBlock } from '../../../shared/components/ui/Spinner';
 import { Alert } from '../../../shared/components/ui/Alert';
 import { DocumentPreviewModal } from '../../../shared/components/DocumentPreviewModal';
 
+function dateReception(valeur) {
+  return valeur ? new Date(valeur).toLocaleString('fr-FR') : '—';
+}
+
 export function BoiteDispatchDirectionPage() {
   const [dispatchs, setDispatchs] = useState(null);
   const [notes, setNotes] = useState({});
@@ -96,29 +100,51 @@ export function BoiteDispatchDirectionPage() {
                     ) : (
                       <div className="flex flex-col items-start gap-2">
                         <Badge tone="warning">Transmis — réception à confirmer</Badge>
-                        <Button
-                          type="button"
-                          disabled={actionEnCours !== null}
-                          loading={actionEnCours === dispatch.id}
-                          onClick={() => confirmerReception(dispatch)}
-                        >
-                          Confirmer la réception
-                        </Button>
+                        {dispatch.peut_accuser_reception && (
+                          <Button
+                            type="button"
+                            disabled={actionEnCours !== null}
+                            loading={actionEnCours === dispatch.id}
+                            onClick={() => confirmerReception(dispatch)}
+                          >
+                            Confirmer la réception
+                          </Button>
+                        )}
                       </div>
                     )}
                   </div>
                   {autonome && (
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      onClick={() => setApercu({
-                        title: 'Scan officiel signé et cacheté',
-                        url: `/dispatchs/${dispatch.id}/scan-officiel`,
-                        downloadFilename: `scan-officiel-${dispatch.id}.pdf`,
-                      })}
-                    >
-                      <Eye size={16} /> Consulter le scan officiel
-                    </Button>
+                    <>
+                      <dl className="grid gap-2 border-t border-border pt-3 text-sm sm:grid-cols-3">
+                        <div>
+                          <dt className="text-text-subtle">Décision DG/DGA</dt>
+                          <dd>{dispatch.decisionnaire?.name ?? '—'} · {dateReception(dispatch.decide_at)}</dd>
+                        </div>
+                        <div>
+                          <dt className="text-text-subtle">Transmission SEC2</dt>
+                          <dd>{dispatch.execute_par?.name ?? '—'} · {dateReception(dispatch.execute_at)}</dd>
+                        </div>
+                        <div>
+                          <dt className="text-text-subtle">Réception par la direction</dt>
+                          <dd>
+                            {dispatch.accuse_reception_at
+                              ? `${dispatch.accuse_reception_par?.name ?? 'Agent habilité'} · ${dateReception(dispatch.accuse_reception_at)}`
+                              : 'En attente d’un accusé explicite'}
+                          </dd>
+                        </div>
+                      </dl>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={() => setApercu({
+                          title: 'Scan officiel signé et cacheté',
+                          url: `/dispatchs/${dispatch.id}/scan-officiel`,
+                          downloadFilename: `scan-officiel-${dispatch.id}.pdf`,
+                        })}
+                      >
+                        <Eye size={16} /> Consulter le scan officiel
+                      </Button>
+                    </>
                   )}
                   {dispatch.traitement_direction?.statut === 'recu_secretariat' && (
                     <div className="flex flex-wrap items-end gap-2">
