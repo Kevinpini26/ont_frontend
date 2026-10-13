@@ -15,6 +15,7 @@ export function navigationForUser(user) {
       { title: 'Autorité DG', items: [
         { label: 'File DG', to: '/circuit/dg', icon: Inbox },
         { label: 'Espace Direction Générale', to: '/circuit/espace-dg', icon: Building2 },
+        { label: 'Décisions documents autonomes', to: '/circuit/documents-autonomes-dg', icon: FileText },
       ] },
     ];
   }
@@ -121,6 +122,9 @@ export function navigationForUser(user) {
     // sa simple file de traitement.
     if (poste === 'dg') {
       items.push({ label: 'Espace Direction Générale', to: '/circuit/espace-dg', icon: Building2 });
+    }
+    if (['dg', 'dga'].includes(poste)) {
+      items.push({ label: 'Décisions documents autonomes', to: '/circuit/documents-autonomes-dg', icon: FileText });
     }
 
     // Lot 4 : seuls la Réception (présente à la DG) et la DG/DGA (rendent

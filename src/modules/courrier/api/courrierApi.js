@@ -296,6 +296,18 @@ export async function transmettreAutonomeDgDepuisSec1(id) {
   const { data } = await apiClient.post(`/documents-produits-direction/${id}/transmettre-dg-sec1`);
   return data.data;
 }
+export async function listDocumentsAutonomesEnAttenteDg(page = 1, signal) {
+  const { data } = await apiClient.get('/documents-produits-direction/autonomes-dg', { params: { page }, signal });
+  return data;
+}
+export async function getEtatAutonomeDg(id, signal) {
+  const { data } = await apiClient.get(`/documents-produits-direction/${id}/controle-dg`, { signal });
+  return data.data;
+}
+export async function deciderAutonomeDg(id, payload) {
+  const { data } = await apiClient.post(`/documents-produits-direction/${id}/decision-dg`, payload);
+  return data.data;
+}
 export async function listDocumentsInternesAutonomes(page = 1, signal) {
   const { data } = await apiClient.get('/documents-produits-direction', {
     params: { origine: 'autonome', page },

@@ -171,6 +171,17 @@ describe('navigationForUser', () => {
     expect(destinations).not.toContain('/circuit/archivage-dossiers');
   });
 
+  test('expose les décisions autonomes aux autorités DG déléguées', () => {
+    const sections = navigationForUser({
+      role: 'agent_circuit_courrier',
+      poste: 'assistant_dga',
+      poste_delegue: 'dg',
+    });
+    const destinations = sections.flatMap((section) => section.items.map((item) => item.to));
+
+    expect(destinations).toContain('/circuit/documents-autonomes-dg');
+  });
+
   test('réserve la file des documents autonomes à SEC1', () => {
     const sec1 = navigationForUser({ role: 'agent_circuit_courrier', poste: 'secretariat_1' });
     const reception = navigationForUser({ role: 'agent_circuit_courrier', poste: 'reception' });
