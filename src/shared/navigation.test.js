@@ -170,4 +170,13 @@ describe('navigationForUser', () => {
     expect(destinations).not.toContain('/circuit/centre-dispatch');
     expect(destinations).not.toContain('/circuit/archivage-dossiers');
   });
+
+  test('réserve la file des documents autonomes à SEC1', () => {
+    const sec1 = navigationForUser({ role: 'agent_circuit_courrier', poste: 'secretariat_1' });
+    const reception = navigationForUser({ role: 'agent_circuit_courrier', poste: 'reception' });
+    const route = '/circuit/documents-autonomes-sec1';
+
+    expect(sec1.flatMap((section) => section.items.map((item) => item.to))).toContain(route);
+    expect(reception.flatMap((section) => section.items.map((item) => item.to))).not.toContain(route);
+  });
 });

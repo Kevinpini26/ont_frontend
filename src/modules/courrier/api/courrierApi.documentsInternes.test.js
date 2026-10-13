@@ -3,10 +3,14 @@ import { apiClient } from '../../../shared/api/client';
 import {
   creerDocumentInterneAutonome,
   getDocumentInterneAutonome,
+  getEtatAutonomeSec1,
+  listDocumentsAutonomesAcceptesSec1,
   listDocumentsInternesAutonomes,
   demanderCorrectionDocumentProduit,
+  prendreEnChargeAutonomeSec1,
   sauvegarderDocumentInterneAutonome,
   soumettreDocumentInterneAutonome,
+  transmettreAutonomeDgDepuisSec1,
   validerDocumentProduit,
 } from './courrierApi';
 
@@ -65,5 +69,29 @@ describe('API des documents internes autonomes', () => {
       motif: 'Préciser la période',
     });
     expect(apiClient.post).toHaveBeenNthCalledWith(2, '/documents-produits-direction/7/valider');
+  });
+
+  test('utilise les endpoints dédiés SEC1 pour la file, la prise en charge et la transmission DG', async () => {
+    const element = { id: 7, statut: 'entre_circuit' };
+    const resultatPagine = { data: [element], meta: { current_page: 2 } };
+    const resultatDetail = { data: element };
+    apiClient.get
+      .mockResolvedValueOnce({ data: resultatPagine })
+      .mockResolvedValueOnce({ data: resultatDetail });
+    apiClient.post.mockResolvedValue({ data: resultatDetail });
+    const signal = new AbortController().signal;
+
+    await expect(listDocumentsAutonomesAcceptesSec1(2, signal)).resolves.toEqual(resultatPagine);
+    await expect(getEtatAutonomeSec1(7, signal)).resolves.toEqual(element);
+    await expect(prendreEnChargeAutonomeSec1(7)).resolves.toEqual(element);
+    await expect(transmettreAutonomeDgDepuisSec1(7)).resolves.toEqual(element);
+
+    expect(apiClient.get).toHaveBeenNthCalledWith(1, '/documents-produits-direction/autonomes-sec1', {
+      params: { page: 2 },
+      signal,
+    });
+    expect(apiClient.get).toHaveBeenNthCalledWith(2, '/documents-produits-direction/7/controle-sec1', { signal });
+    expect(apiClient.post).toHaveBeenNthCalledWith(1, '/documents-produits-direction/7/prendre-en-charge-sec1');
+    expect(apiClient.post).toHaveBeenNthCalledWith(2, '/documents-produits-direction/7/transmettre-dg-sec1');
   });
 });

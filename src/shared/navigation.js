@@ -1,4 +1,4 @@
-import { BarChart3, BookOpen, Building2, CalendarCheck, ClipboardList, Clock, FileClock, History, Inbox, LayoutDashboard, Mail, ScanLine, ScrollText, Settings, Target, Users } from 'lucide-react';
+import { BarChart3, BookOpen, Building2, CalendarCheck, ClipboardList, Clock, FileClock, FileText, History, Inbox, LayoutDashboard, Mail, ScanLine, ScrollText, Settings, Target, Users } from 'lucide-react';
 import { estDirecteurDirection, ROLES } from '../modules/kernel/constants';
 
 /**
@@ -142,6 +142,7 @@ export function navigationForUser(user) {
     // Lot C : la statistique de justesse du tri n'a de sens que pour
     // celui qui trie.
     if (user.poste === 'secretariat_1') {
+      items.push({ label: 'Documents autonomes', to: '/circuit/documents-autonomes-sec1', icon: FileText });
       items.push({ label: 'Instructions DG', to: '/circuit/instructions-dg', icon: ClipboardList });
       items.push({ label: 'Justesse du tri', to: '/circuit/justesse-tri', icon: Target });
     }

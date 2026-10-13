@@ -277,6 +277,25 @@ export async function demanderCorrectionDocumentAutonomeReception(id, motif) {
   const { data } = await apiClient.post(`/documents-produits-direction/${id}/demander-correction-reception`, { motif });
   return data.data;
 }
+export async function listDocumentsAutonomesAcceptesSec1(page = 1, signal) {
+  const { data } = await apiClient.get('/documents-produits-direction/autonomes-sec1', {
+    params: { page },
+    signal,
+  });
+  return data;
+}
+export async function getEtatAutonomeSec1(id, signal) {
+  const { data } = await apiClient.get(`/documents-produits-direction/${id}/controle-sec1`, { signal });
+  return data.data;
+}
+export async function prendreEnChargeAutonomeSec1(id) {
+  const { data } = await apiClient.post(`/documents-produits-direction/${id}/prendre-en-charge-sec1`);
+  return data.data;
+}
+export async function transmettreAutonomeDgDepuisSec1(id) {
+  const { data } = await apiClient.post(`/documents-produits-direction/${id}/transmettre-dg-sec1`);
+  return data.data;
+}
 export async function listDocumentsInternesAutonomes(page = 1, signal) {
   const { data } = await apiClient.get('/documents-produits-direction', {
     params: { origine: 'autonome', page },

@@ -53,6 +53,7 @@ const DocumentInterneAutonomePage = lazy(() => import('./modules/courrier/pages/
 const DocumentsInternesDirecteurPage = lazy(() => import('./modules/courrier/pages/DocumentsInternesDirecteurPage').then((m) => ({ default: m.DocumentsInternesDirecteurPage })));
 const DocumentInterneDirecteurPage = lazy(() => import('./modules/courrier/pages/DocumentInterneDirecteurPage').then((m) => ({ default: m.DocumentInterneDirecteurPage })));
 const DocumentsInternesReceptionPage = lazy(() => import('./modules/courrier/pages/DocumentsInternesReceptionPage').then((m) => ({ default: m.DocumentsInternesReceptionPage })));
+const DocumentsAutonomesSec1Page = lazy(() => import('./modules/courrier/pages/DocumentsAutonomesSec1Page').then((m) => ({ default: m.DocumentsAutonomesSec1Page })));
 const ClassementArchivesPage = lazy(() => import('./modules/courrier/pages/ClassementArchivesPage').then((m) => ({ default: m.ClassementArchivesPage })));
 const PosteDeTravailTriPage = lazy(() =>
   import('./modules/courrier/pages/PosteDeTravailTriPage').then((m) => ({ default: m.PosteDeTravailTriPage })),
@@ -218,6 +219,7 @@ export function AppRoutes() {
           <Route element={<ProtectedRoute roles={[ROLES.AGENT_CIRCUIT_COURRIER]} postes={['secretariat_1']} />}>
             <Route path="/circuit/secretariat_1" element={<PosteDeTravailTriPage />} />
             <Route path="/circuit/instructions-dg" element={<CircuitQueuePage instructionsSeulement />} />
+            <Route path="/circuit/documents-autonomes-sec1" element={<DocumentsAutonomesSec1Page />} />
           </Route>
           <Route element={<ProtectedRoute roles={[ROLES.AGENT_CIRCUIT_COURRIER]} postes={['secretariat_2']} />}>
             <Route path="/circuit/centre-dispatch" element={<CentreDispatchPage />} />
