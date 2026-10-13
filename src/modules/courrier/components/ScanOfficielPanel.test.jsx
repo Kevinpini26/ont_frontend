@@ -61,6 +61,25 @@ test('confirme explicitement, interdit le double envoi et actualise sans modifie
   expect(sessionStorage.getItem(marqueur)).toBeNull();
 });
 
+test('permet un nouveau scan après correction et nouvelle validation du Directeur', async () => {
+  const documentRevalide = {
+    ...documentValide,
+    correction_demandee_at: '2026-10-13T13:00:00Z',
+    transmis_reception_at: '2026-10-13T12:00:00Z',
+    transmis_reception_par: { id: 4, name: 'Secrétaire ONT' },
+    historique: [
+      ...documentEnregistre.historique,
+      { action: 'document_direction.autonome_transmis_reception', acteur: { name: 'Secrétaire ONT' }, date: '2026-10-13T12:00:00Z' },
+    ],
+  };
+
+  render(<ScanOfficielPanel document={documentRevalide} onUpdated={vi.fn()} />);
+
+  expect(screen.getByLabelText('Scan PDF signé et cacheté (obligatoire)')).toBeInTheDocument();
+  await preparer();
+  expect(await screen.findByRole('dialog')).toHaveTextContent('Confirmer le dépôt');
+});
+
 test('503 : conserve la clé après remontage et vérifie exclusivement par GET, même si le statut reste valide', async () => {
   deposerScanOfficiel.mockRejectedValue({ response: { status: 503 } });
   getDocumentInterneAutonome.mockResolvedValue(documentValide);

@@ -73,9 +73,16 @@ export function ScanOfficielPanel({ document: documentMetier, onUpdated, modeRec
   const consultation = secretariat || (memeDirection && estDirecteurDirection(utilisateur)
     && String(utilisateur.id) === String(documentMetier.directeur_id) && Boolean(documentMetier.soumis_at))
     || (agentReception && modeReception && transmissionComplete);
-  const peutDeposer = secretariat && documentMetier.statut === 'valide' && !enregistre && !historiqueDepot && !incertain;
+  const nouveauScanApresCorrection = Boolean(documentMetier.correction_demandee_at)
+    && Boolean(documentMetier.transmis_reception_at)
+    && Boolean(documentMetier.transmis_reception_par);
+  const peutDeposer = secretariat && documentMetier.statut === 'valide' && !enregistre
+    && (!historiqueDepot || nouveauScanApresCorrection) && !incertain;
+  const repriseApresCorrection = Boolean(documentMetier.correction_demandee_at)
+    && Boolean(documentMetier.transmis_reception_at)
+    && Boolean(documentMetier.transmis_reception_par);
   const peutTransmettre = secretariat && documentMetier.statut === 'scan_enregistre' && enregistre
-    && !transmis && !historiqueTransmission && !transmissionIncertaine;
+    && !transmis && (!historiqueTransmission || repriseApresCorrection) && !transmissionIncertaine;
 
   function oublierMarqueur() {
     try { sessionStorage.removeItem(marqueur); } catch { /* Le verrou local reste conservateur. */ }
