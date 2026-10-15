@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { Clock, FileSearch, Mail } from 'lucide-react';
@@ -13,6 +13,8 @@ import { SkeletonChart, SkeletonLines, SkeletonStatCards } from '../../../shared
 import { CHART_COLORS } from '../../../shared/chartColors';
 import { InstitutionBanner } from '../../../shared/components/InstitutionBanner';
 import { useAuthStore } from '../../kernel/store/authStore';
+import { Alert } from '../../../shared/components/ui/Alert';
+import { Button } from '../../../shared/components/ui/Button';
 
 const AXIS_TICK = { fill: CHART_COLORS.axisTick, fontSize: 11 };
 
@@ -36,8 +38,9 @@ function DureeTooltip({ active, payload, label }) {
   );
 }
 
-function ListeCourriers({ courriers, chargement }) {
+function ListeCourriers({ courriers, chargement, erreur, reessayer }) {
   if (chargement) return <SkeletonLines lignes={5} />;
+  if (erreur) return <div className="space-y-3"><Alert tone="error">{erreur}</Alert><Button onClick={reessayer}>Réessayer</Button></div>;
   if (courriers.length === 0) return <EmptyState icon={<Mail size={28} />} title="Aucun courrier pour le moment" />;
   return (
     <ul className="divide-y divide-border">
@@ -69,24 +72,43 @@ export function CourrierCircuitDashboardPage() {
   const [chargement, setChargement] = useState(true);
   const [enregistres, setEnregistres] = useState([]);
   const [chargementEnregistres, setChargementEnregistres] = useState(true);
+  const [erreurEnregistres, setErreurEnregistres] = useState(false);
   const [recents, setRecents] = useState([]);
   const [chargementRecents, setChargementRecents] = useState(true);
+  const [erreurRecents, setErreurRecents] = useState(false);
+  const [erreurStats, setErreurStats] = useState(false);
 
-  useEffect(() => {
+  const chargerStats = useCallback(() => {
+    setChargement(true);
+    setErreurStats(false);
     getCourriersStatistiques()
       .then(setStats)
+      .catch(() => setErreurStats(true))
       .finally(() => setChargement(false));
+  }, []);
 
+  const chargerEnregistres = useCallback(() => {
     setChargementEnregistres(true);
+    setErreurEnregistres(false);
     listCourriers({ statut: 'enregistre' })
       .then(({ data }) => setEnregistres([...data].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 5)))
+      .catch(() => setErreurEnregistres(true))
       .finally(() => setChargementEnregistres(false));
+  }, []);
 
+  const chargerRecents = useCallback(() => {
     setChargementRecents(true);
     listCourriers()
       .then(({ data }) => setRecents([...data].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 5)))
+      .catch(() => setErreurRecents(true))
       .finally(() => setChargementRecents(false));
   }, []);
+
+  useEffect(() => {
+    chargerStats();
+    chargerEnregistres();
+    chargerRecents();
+  }, [chargerStats, chargerEnregistres, chargerRecents]);
 
   return (
     <div>
@@ -98,7 +120,12 @@ export function CourrierCircuitDashboardPage() {
         description="Le système documentaire de l’ONT garantit la continuité, la traçabilité et la conservation de chaque décision institutionnelle."
       />
 
-      {chargement || !stats ? (
+      {erreurStats ? (
+        <div className="mb-6 space-y-3">
+          <Alert tone="error">Impossible de charger les indicateurs du circuit. Réessayez.</Alert>
+          <Button onClick={chargerStats}>Réessayer</Button>
+        </div>
+      ) : chargement || !stats ? (
         <>
           <SkeletonStatCards count={3} />
           <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -181,14 +208,14 @@ export function CourrierCircuitDashboardPage() {
         <Card>
           <CardHeader title="Derniers courriers enregistrés" />
           <CardBody>
-            <ListeCourriers courriers={enregistres} chargement={chargementEnregistres} />
+            <ListeCourriers courriers={enregistres} chargement={chargementEnregistres} erreur={erreurEnregistres ? 'Impossible de charger les courriers enregistrés. Réessayez.' : null} reessayer={chargerEnregistres} />
           </CardBody>
         </Card>
 
         <Card>
           <CardHeader title="Courriers récemment reçus" />
           <CardBody>
-            <ListeCourriers courriers={recents} chargement={chargementRecents} />
+            <ListeCourriers courriers={recents} chargement={chargementRecents} erreur={erreurRecents ? 'Impossible de charger les courriers récents. Réessayez.' : null} reessayer={chargerRecents} />
           </CardBody>
         </Card>
       </div>

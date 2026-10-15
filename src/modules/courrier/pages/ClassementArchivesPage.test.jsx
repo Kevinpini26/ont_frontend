@@ -22,6 +22,22 @@ afterEach(() => {
 });
 
 describe('ClassementArchivesPage — réception SEC2 du dispatch de classement', () => {
+  test('ne révèle pas les détails techniques et permet de relancer le chargement', async () => {
+    const user = userEvent.setup();
+    mocks.listCentreDispatchPage
+      .mockRejectedValueOnce({ response: { status: 500, data: { message: 'SQLSTATE database host' } } })
+      .mockResolvedValueOnce({ data: [], meta: {} });
+    mocks.listClassementsDocuments.mockResolvedValue({ data: [], current_page: 1, last_page: 1, total: 0 });
+
+    render(<MemoryRouter><ClassementArchivesPage /></MemoryRouter>);
+
+    expect(await screen.findByText('Impossible de charger les classements et archives. Réessayez.')).toBeInTheDocument();
+    expect(screen.queryByText(/SQLSTATE|database host/i)).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Réessayer' }));
+    await waitFor(() => expect(mocks.listCentreDispatchPage).toHaveBeenCalledTimes(2));
+    expect(await screen.findByText('Classements à exécuter')).toBeInTheDocument();
+  });
+
   test('accuse le dispatch moderne avant de permettre le classement', async () => {
     const user = userEvent.setup();
     let dispatch = {

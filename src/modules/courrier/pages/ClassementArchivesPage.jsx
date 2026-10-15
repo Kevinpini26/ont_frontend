@@ -10,6 +10,12 @@ import { LoadingBlock } from '../../../shared/components/ui/Spinner';
 import { Pagination } from '../../../shared/components/ui/Pagination';
 import { Alert } from '../../../shared/components/ui/Alert';
 
+function messageErreurChargement(erreur) {
+  if (erreur.response?.status === 401) return 'Votre session a expiré. Connectez-vous à nouveau.';
+  if (erreur.response?.status === 403) return 'Vous n’êtes pas autorisé à consulter ces documents.';
+  return 'Impossible de charger les classements et archives. Réessayez.';
+}
+
 export function ClassementArchivesPage() {
   const [donnees, setDonnees] = useState(null);
   const [saisie, setSaisie] = useState({});
@@ -25,13 +31,19 @@ export function ClassementArchivesPage() {
         listClassementsDocuments(page),
       ]);
       setDonnees({ dispatchs, classements });
-    } catch (err) { setErreur(err.response?.data?.message ?? 'Chargement impossible.'); }
+    } catch (err) { setErreur(messageErreurChargement(err)); }
   }, [page, pageDispatch]);
   useEffect(() => { charger(); }, [charger]);
   async function executer(action) {
     setEnCours(true); setErreur(null);
     try { await action(); await charger(); }
-    catch (err) { setErreur(err.response?.data?.message ?? 'Action impossible.'); }
+    catch (err) {
+      setErreur(err.response?.status === 401
+        ? 'Votre session a expiré. Connectez-vous à nouveau.'
+        : err.response?.status === 403
+          ? 'Vous n’êtes pas autorisé à effectuer cette action.'
+          : 'Action impossible. Vérifiez l’état du document puis réessayez.');
+    }
     finally { setEnCours(false); }
   }
   function confirmerReception(dispatch) {
@@ -40,7 +52,12 @@ export function ClassementArchivesPage() {
   const modifier = (cle, champ, valeur) => setSaisie((s) => ({ ...s, [cle]: { ...s[cle], [champ]: valeur } }));
   if (!donnees && !erreur) return <LoadingBlock />;
   return <div><PageHeader title="Classement & archives" description="Classement et archivage documentaire SEC2. L’archivage du dossier exige une décision distincte DG/DGA." />
-    {erreur && <Alert tone="error">{erreur}</Alert>}
+    {erreur && <Alert tone="error">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <span>{erreur}</span>
+        <Button disabled={enCours} onClick={charger}>Réessayer</Button>
+      </div>
+    </Alert>}
     {donnees && <div className="space-y-4">
       <h2 className="font-semibold">Classements à exécuter</h2>
       {donnees.dispatchs.data.map((d) => <Card key={d.id}><CardBody className="space-y-3">

@@ -1,11 +1,15 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { CircuitQueuePage } from './CircuitQueuePage';
 import { initierCourrierDg } from '../api/courrierApi';
 import { creerInstructionCourrierDg, ouvrirInstructionCourrierDg } from '../api/instructionCourrierDgApi';
 
-const contexte = vi.hoisted(() => ({ user: { id: 1, poste: 'secretariat_1' }, instructions: [] }));
+const contexte = vi.hoisted(() => ({
+  user: { id: 1, poste: 'secretariat_1' },
+  instructions: [],
+  fileCourriers: null,
+}));
 
 vi.mock('../api/courrierApi', () => ({
   accuserReception: vi.fn(),
@@ -23,7 +27,9 @@ vi.mock('../api/instructionCourrierDgApi', () => ({
   ouvrirInstructionCourrierDg: vi.fn(),
 }));
 vi.mock('../../../shared/hooks/useRequete', () => ({
-  useRequete: () => ({ donnees: { data: contexte.instructions }, chargement: false, recharger: vi.fn().mockResolvedValue(undefined) }),
+  useRequete: (fetcher) => fetcher.toString().includes('listCourriers')
+    ? contexte.fileCourriers
+    : { donnees: { data: contexte.instructions }, chargement: false, erreur: null, recharger: vi.fn().mockResolvedValue(undefined) },
 }));
 vi.mock('../../kernel/store/authStore', () => ({
   useAuthStore: (selecteur) => selecteur({ user: contexte.user }),
@@ -38,7 +44,93 @@ vi.mock('../components/TipTapEditor', () => ({ TipTapEditor: () => <div>Éditeur
 beforeEach(() => {
   contexte.user = { id: 1, poste: 'secretariat_1' };
   contexte.instructions = [];
+  contexte.fileCourriers = {
+    donnees: { data: [] },
+    chargement: false,
+    erreur: null,
+    recharger: vi.fn().mockResolvedValue(undefined),
+  };
   vi.clearAllMocks();
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
+describe('état de chargement de la file « À traiter »', () => {
+  function afficherReception() {
+    render(
+      <MemoryRouter initialEntries={['/circuit/reception']}>
+        <Routes>
+          <Route path="/circuit/:poste" element={<CircuitQueuePage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+  }
+
+  test.each([
+    [403, 'Access denied'],
+    [500, 'SQLSTATE[42703]: Undefined column; database=systeme_ont; host=db.internal; at /srv/app/Query.php:42; stack trace'],
+  ])('affiche une erreur HTTP %i sans la présenter comme une file vide ni révéler le détail serveur', async (status, message) => {
+    contexte.fileCourriers = {
+      donnees: null,
+      chargement: false,
+      erreur: { response: { status, data: { message } }, message: `Request failed with status code ${status}` },
+      recharger: vi.fn().mockResolvedValue(undefined),
+    };
+    afficherReception();
+
+    expect(await screen.findByText(`Impossible de charger les courriers. Veuillez réessayer. (HTTP ${status}).`, { exact: true })).toBeInTheDocument();
+    expect(screen.queryByText(/SQLSTATE|systeme_ont|db\.internal|\/srv\/app|stack trace|Access denied|Request failed/i)).not.toBeInTheDocument();
+    expect(screen.queryByText('Rien à traiter pour le moment')).not.toBeInTheDocument();
+    expect(screen.queryByText('À traiter (0)')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Réessayer' })).toBeInTheDocument();
+  });
+
+  test('le bouton Réessayer relance la requête via useRequete', () => {
+    const recharger = vi.fn().mockResolvedValue(undefined);
+    contexte.fileCourriers = {
+      donnees: null,
+      chargement: false,
+      erreur: { response: { status: 403, data: { message: 'Accès refusé' } }, message: 'Forbidden' },
+      recharger,
+    };
+    afficherReception();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Réessayer' }));
+
+    expect(recharger).toHaveBeenCalledTimes(1);
+  });
+
+  test('affiche l’état vide uniquement après une réponse réussie sans courrier', () => {
+    contexte.fileCourriers = {
+      donnees: { data: [] },
+      chargement: false,
+      erreur: null,
+      recharger: vi.fn().mockResolvedValue(undefined),
+    };
+    afficherReception();
+
+    expect(screen.getByText('À traiter (0)')).toBeInTheDocument();
+    expect(screen.getByText('Rien à traiter pour le moment')).toBeInTheDocument();
+  });
+
+  test('affiche le chargement sans annoncer une file vide', () => {
+    vi.stubGlobal('ResizeObserver', class {
+      observe() {}
+      disconnect() {}
+    });
+    contexte.fileCourriers = {
+      donnees: null,
+      chargement: true,
+      erreur: null,
+      recharger: vi.fn().mockResolvedValue(undefined),
+    };
+    afficherReception();
+
+    expect(screen.queryByText('Rien à traiter pour le moment')).not.toBeInTheDocument();
+    expect(screen.queryByText('À traiter (0)')).not.toBeInTheDocument();
+  });
 });
 
 describe('route de circuit par poste', () => {

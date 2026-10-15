@@ -92,6 +92,7 @@ export function CircuitQueuePage({ instructionsSeulement = false }) {
   const {
     donnees: courriersReponse,
     chargement,
+    erreur: erreurChargement,
     recharger: charger,
   } = useRequete((signal) => listCourriers({}, signal), [poste]);
   const courriers = courriersReponse?.data ?? [];
@@ -663,7 +664,7 @@ export function CircuitQueuePage({ instructionsSeulement = false }) {
 
       <Card>
         <CardHeader
-          title={`À traiter (${enAttente.length})`}
+          title={`À traiter${!chargement && !erreurChargement ? ` (${enAttente.length})` : ''}`}
           action={<SearchBar value={recherche} onChange={setRecherche} />}
         />
         {selection.length > 0 && (
@@ -680,7 +681,17 @@ export function CircuitQueuePage({ instructionsSeulement = false }) {
         )}
         <CardBody className="p-0">
           <AnnonceChargement chargement={chargement} count={enAttente.length} libelle="courrier(s) à traiter" />
-          {!chargement && enAttente.length === 0 ? (
+          {erreurChargement ? (
+            <div className="p-4">
+              <Alert tone="error" className="flex flex-wrap items-center justify-between gap-3">
+                <span>
+                  Impossible de charger les courriers. Veuillez réessayer.
+                  {erreurChargement.response?.status ? ` (HTTP ${erreurChargement.response.status})` : ''}.
+                </span>
+                <Button type="button" variant="secondary" onClick={charger}>Réessayer</Button>
+              </Alert>
+            </div>
+          ) : !chargement && enAttente.length === 0 ? (
             <div className="p-6">
               <EmptyState icon={<Inbox size={32} />} title="Rien à traiter pour le moment" description="Les nouveaux courriers apparaîtront ici dès qu'ils arrivent à votre poste." />
             </div>

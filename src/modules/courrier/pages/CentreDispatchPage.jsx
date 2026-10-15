@@ -22,7 +22,7 @@ function messageErreur(erreur, action) {
     case 403:
     case 404: return 'Vous n’êtes pas autorisé à consulter ou traiter ce dispatch.';
     case 409:
-    case 422: return erreur.response?.data?.message ?? 'Le dispatch a changé d’état. Vérifiez son état avant toute nouvelle action.';
+    case 422: return 'Le dispatch a changé d’état ou ne peut pas être traité. Vérifiez son état avant toute nouvelle action.';
     default: return `Le résultat de ${action} est incertain. Vérifiez l’état avant toute nouvelle action.`;
   }
 }
@@ -56,7 +56,11 @@ export function CentreDispatchPage() {
       setErreur('');
       return resultat.data;
     } catch (err) {
-      setErreur(err.response?.data?.message ?? 'Chargement impossible.');
+      setErreur(err.response?.status === 401
+        ? 'Votre session a expiré. Connectez-vous à nouveau.'
+        : err.response?.status === 403
+          ? 'Vous n’êtes pas autorisé à consulter le centre de dispatch.'
+          : 'Impossible de charger les dispatchs. Réessayez.');
       return null;
     }
   }, [page, type, statut]);
@@ -160,7 +164,7 @@ export function CentreDispatchPage() {
       await executerDispatch(dispatch.id, saisie[dispatch.id]?.reference, saisie[dispatch.id]?.preuve);
       await charger();
     } catch (err) {
-      setErreur(err.response?.data?.message ?? 'Exécution impossible.');
+      setErreur(messageErreur(err, 'la transmission'));
     } finally {
       setActionEnCours(null);
     }
@@ -174,7 +178,14 @@ export function CentreDispatchPage() {
         title="Centre de dispatch SEC2"
         description="Prise en charge des décisions DG/DGA, puis transmission explicite à la direction destinataire."
       />
-      {erreur && <Alert tone="error" className="mb-4">{erreur}</Alert>}
+      {erreur && (
+        <Alert tone="error" className="mb-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <span>{erreur}</span>
+            <Button disabled={actionEnCours !== null} onClick={charger}>Réessayer</Button>
+          </div>
+        </Alert>
+      )}
       <div className="mb-4 flex flex-wrap gap-3">
         <select aria-label="Type de dispatch" className={inputClass} value={type} onChange={(event) => { setType(event.target.value); setPage(1); }}>
           <option value="direction">Dispatch interne</option>
@@ -187,9 +198,9 @@ export function CentreDispatchPage() {
           <option value="annule">Annulés</option>
         </select>
       </div>
-      {!dispatchs || dispatchs.length === 0 ? (
+      {dispatchs && dispatchs.length === 0 ? (
         <EmptyState title="Aucun dispatch" />
-      ) : (
+      ) : dispatchs && (
         <div className="space-y-4">
           {dispatchs.map((dispatch) => {
             const autonome = Boolean(dispatch.document_autonome);
